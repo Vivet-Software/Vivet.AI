@@ -30,7 +30,10 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
+// BUG: Complete readme and License. 
 // BUG: Test health-checks
+
+// BUG: Deployment (check Vivet Software defailt and repo setup, e.g. branch protection)
 
 // TODO: AI Services
 // - Read the rest of MS web pages
