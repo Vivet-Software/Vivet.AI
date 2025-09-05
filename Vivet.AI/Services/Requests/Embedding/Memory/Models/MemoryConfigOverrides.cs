@@ -1,0 +1,22 @@
+﻿using System.ComponentModel.DataAnnotations;
+using Vivet.AI.Services.Models.ConfigOverrides;
+
+namespace Vivet.AI.Services.Requests.Embedding.Memory.Models;
+
+/// <summary>
+/// Represents configuration overrides specific to memory operations.
+/// </summary>
+public class MemoryConfigOverrides : BaseConfigOverrides
+{
+    /// <summary>
+    /// Metadata retrieval overrides.
+    /// </summary>
+    [Required]
+    public virtual EmbeddingMetadataConfigOverrides Metadata { get; set; } = new();
+
+    /// <summary>
+    /// Summarization overrides.
+    /// </summary>
+    [Required] 
+    public virtual EmbeddingSummarizationConfigOverrides Summarization { get; set; } = new();
+}

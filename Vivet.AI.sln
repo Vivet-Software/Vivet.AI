@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35521.163
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vivet.AI", "Vivet.AI\Vivet.AI.csproj", "{2E77F711-6E92-4467-9F8A-282D96DE293F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".solution", ".solution", "{0F9BF377-25E4-4954-A1F9-CB43D51C7D0F}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		icon.png = icon.png
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".tests", ".tests", "{2C64BD9C-4CCD-4149-9DED-4AA486CF7EF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests.Vivet.AI", ".tests\Tests.Vivet.AI\Tests.Vivet.AI.csproj", "{8CB17E7E-5C51-400A-8D10-E67E2F39B376}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{0058EFEC-F3DA-456D-89FB-11F7CCD957DC}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build-and-deploy.yml = .github\workflows\build-and-deploy.yml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2E77F711-6E92-4467-9F8A-282D96DE293F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E77F711-6E92-4467-9F8A-282D96DE293F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E77F711-6E92-4467-9F8A-282D96DE293F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E77F711-6E92-4467-9F8A-282D96DE293F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CB17E7E-5C51-400A-8D10-E67E2F39B376}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CB17E7E-5C51-400A-8D10-E67E2F39B376}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CB17E7E-5C51-400A-8D10-E67E2F39B376}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CB17E7E-5C51-400A-8D10-E67E2F39B376}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8CB17E7E-5C51-400A-8D10-E67E2F39B376} = {2C64BD9C-4CCD-4149-9DED-4AA486CF7EF6}
+		{0058EFEC-F3DA-456D-89FB-11F7CCD957DC} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3548EF1D-5788-4694-A87D-A751E0EA35AE}
+	EndGlobalSection
+EndGlobal

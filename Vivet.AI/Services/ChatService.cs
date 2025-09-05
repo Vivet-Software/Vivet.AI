@@ -1,0 +1,436 @@
+﻿using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Vivet.AI.Services.Extensions;
+using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Requests.Chat;
+using Vivet.AI.Services.Responses.Chat;
+using Vivet.AI.Services.Requests.Embedding.Knowledge;
+using Vivet.AI.Services.Requests.Embedding.Memory;
+using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
+using Vivet.AI.Config;
+using Vivet.AI.Services.Responses.Embeddings.Knowledge.Models;
+using Vivet.AI.Services.Responses.Embeddings.Memory;
+using Vivet.AI.Extensions;
+using Vivet.AI.Services.Helpers;
+using Vivet.AI.Services.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Vivet.AI.Services.Exceptions;
+using Vivet.AI.Services.Serialization;
+
+namespace Vivet.AI.Services;
+
+/// <inheritdoc cref="IChatService"/>
+public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionService chatCompletionService, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null, IEmbeddingKnowledgeService embeddingKnowledgeService = null) 
+    : BaseService, IChatService
+{
+    private readonly ChatOptions options = options ?? throw new ArgumentNullException(nameof(options));
+    private readonly IChatCompletionService chatCompletionService = chatCompletionService ?? throw new ArgumentNullException(nameof(chatCompletionService));
+    private readonly PromptExecutionSettings promptExecutionSettings = promptExecutionSettings ?? throw new ArgumentNullException(nameof(promptExecutionSettings));
+
+    /// <inheritdoc />
+    public virtual async Task<ChatResponse> ChatAsync(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+    {
+        var response = await this.ChatAsync<string>(request, onMemoryIndexed, cancellationToken)
+            .ConfigureAwait(false);
+
+        return new ChatResponse
+        {
+            Answer = response.Answer,
+            Reasoning = response.Reasoning,
+            Thinking = response.Thinking,
+            InputPrompt = response.InputPrompt,
+            ElapsedTime = response.ElapsedTime,
+            RawResponse = response.RawResponse,
+            TokenUsage = response.TokenUsage
+        };
+    }
+
+    /// <inheritdoc />
+    public virtual async Task<ChatResponse<T>> ChatAsync<T>(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default) 
+        where T : class
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var stopwatch = new Stopwatch();
+        stopwatch
+            .Start();
+
+        var chatHistory = await this.BuildChatHistory(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        var executionSettings = this.promptExecutionSettings
+            .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
+
+        var chatMessageContent = await this.chatCompletionService
+            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel: kernel, cancellationToken: cancellationToken) // TODO: Kernel, add to metadata and summarization
+            .ConfigureAwait(false);
+
+        if (chatMessageContent.Content == null)
+        {
+            return null;
+        }
+
+        var answer = chatMessageContent.Content
+            .GetChatResponseAnswer();
+
+        var response = ChatService.GetResponseOrDefault<T>(answer);
+
+        if (response == null)
+        {
+            return null;
+        }
+
+        var thinking = chatMessageContent.Content
+            .GetChatResponseThinking();
+
+        var prompt = chatHistory
+            .GetPromptAsText();
+
+        response.Thinking = thinking;
+        response.RawResponse = chatMessageContent.Content;
+        response.ElapsedTime = stopwatch.Elapsed;
+        response.InputPrompt = prompt;
+        response.TokenUsage = chatMessageContent
+            .GetTokenUsage();
+
+        stopwatch
+            .Stop();
+
+        _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken);
+
+        return response;
+    }
+
+    /// <inheritdoc />
+    public virtual async IAsyncEnumerable<string> ChatStreamingAsync(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, Func<ChatResponse, Task> onChatStreamingComplete = null, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var stopwatch = new Stopwatch();
+        stopwatch
+            .Start();
+
+        var chatHistory = await this.BuildChatHistory(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        var executionSettings = this.promptExecutionSettings
+            .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
+
+        var streamingChatMessageContents = this.chatCompletionService
+            .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, cancellationToken: cancellationToken);
+
+        var contentString = new StringBuilder();
+        await foreach (var streamingChatMessageContent in streamingChatMessageContents.ConfigureAwait(false))
+        {
+            if (!string.IsNullOrEmpty(streamingChatMessageContent.Content))
+            {
+                contentString
+                    .Append(streamingChatMessageContent.Content);
+
+                yield return streamingChatMessageContent.Content;
+            }
+        }
+
+        var rawContent = contentString
+            .ToString();
+
+        var answer = rawContent
+            .GetChatResponseAnswer();
+
+        var response = ChatService.GetResponseOrDefault(answer);
+
+        var thinking = rawContent
+            .GetChatResponseThinking();
+
+        response.Thinking = thinking;
+        response.RawResponse = rawContent;
+        response.TokenUsage = null; // TODO: Chat Streaming Token Usage (not possible through SK yet)
+        response.ElapsedTime = stopwatch.Elapsed;
+
+        stopwatch
+            .Stop();
+
+        _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (onChatStreamingComplete != null)
+        {
+            _ = Task.Run(() => onChatStreamingComplete
+                .Invoke(response), cancellationToken);
+        }
+    }
+
+
+    private async Task<ChatHistory> BuildChatHistory(ChatRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var knowledgeTask = this.GetMatchingKnowledges(request, cancellationToken);
+        var memoriesTask = this.GetMatchingMemories(request, cancellationToken);
+
+        var knowledgeResults = await knowledgeTask.ConfigureAwait(false);
+        var memoryResults = await memoriesTask.ConfigureAwait(false);
+
+        var chatHistory = new ChatHistory();
+        chatHistory
+            .AddChatSystemPrompt(request.SystemMessage)
+            .AddChatKnowledgePrompt(knowledgeResults)
+            .AddChatMemoryPrompt(memoryResults, this.options.Memory.CounterpartContextQueryLimit);
+
+        var dataUris = await Task.WhenAll(request.Blobs
+                .Select(async x =>
+                {
+                    var blobData = await x
+                        .GetBlobData()
+                        .ConfigureAwait(false);
+
+                    return blobData.DataUri;
+                }))
+            .ConfigureAwait(false);
+
+        chatHistory
+            .AddChatUserPrompt(request.Question, dataUris);
+
+        return chatHistory;
+    }
+    private async Task<MemoryResult[]> GetMatchingMemories(ChatRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        if (embeddingMemoryService == null)
+        {
+            return [];
+        }
+
+        if (request.ConfigOverrides.Memory.SkipMemoryContext)
+        {
+            return [];
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        var fromAt = now
+            .AddDays(-this.options.Memory.RetentionInDays);
+
+        var limit = this.options.Memory.UseQueryDeduplication
+            ? this.options.Memory.ContextQueryLimit * 2 
+            : this.options.Memory.ContextQueryLimit;
+
+        var response = await embeddingMemoryService
+            .SearchAsync(new SearchMemoryRequest
+            {
+                Query = request.Question,
+                Criteria =
+                {
+                    UserId = request.UserId,
+                    ScopeId = request.ScopeId,
+                    AgentId = request.AgentId,
+                    DateRange = new DateRange
+                    {
+                        FromAt = fromAt
+                    }
+                },
+                CurrentThreadId = request.CurrentThreadId,
+                Limit = limit
+            }, cancellationToken)
+            .ConfigureAwait(false);
+
+
+        var results = response.Results
+            .Select(x => x.Result)
+            .ToArray();
+
+        if (this.options.Memory.UseQueryDeduplication)
+        {
+            var deduplicatedResults = Deduplicator.DeduplicateMemoryResults(results, this.options.Memory.DeduplicationMatchScoreThreshold);
+
+            return deduplicatedResults
+                .Take(this.options.Memory.ContextQueryLimit)
+                .ToArray();
+        }
+
+        return results;
+    }
+    private async Task<KnowledgeResult[]> GetMatchingKnowledges(ChatRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        if (embeddingKnowledgeService == null)
+        {
+            return [];
+        }
+
+        if (request.ConfigOverrides.Knowledge.SkipKnowledgeContext)
+        {
+            return [];
+        }
+
+        var limit = this.options.Knowledge.UseQueryDeduplication
+            ? this.options.Knowledge.ContextQueryLimit * 2
+            : this.options.Knowledge.ContextQueryLimit;
+
+        var response = await embeddingKnowledgeService
+            .SearchAsync(new SearchKnowledgeRequest
+            {
+                Query = request.Question,
+                Criteria =
+                {
+                    TenantId = request.TenantId,
+                    SubTenantId = request.SubTenantId,
+                    ScopeId = request.ScopeId,
+                    UserId = request.UserId
+                },
+                Limit = limit
+            }, cancellationToken)
+            .ConfigureAwait(false);
+
+        var results = response.Results
+            .Select(x => x.Result)
+            .ToArray();
+
+        if (this.options.Knowledge.UseQueryDeduplication)
+        {
+            var deduplicatedResults = Deduplicator.DeduplicateKnowledgeResults(results, this.options.Knowledge.DeduplicationMatchScoreThreshold);
+
+            return deduplicatedResults
+                .Take(this.options.Knowledge.ContextQueryLimit)
+                .ToArray();
+        }
+
+        return results;
+    }
+    private static ChatResponse GetResponseOrDefault(string answer)
+    {
+        if (answer == null)
+        {
+            return null;
+        }
+
+        var response = JsonConvert.DeserializeObject<ChatResponse>(answer, Settings.ResponseSerializerSettings);
+
+        if (response.ErrorMessage != null)
+        {
+            throw new AiException(response.ErrorMessage);
+        }
+
+        response.Answer = answer;
+
+        return response;
+    }
+    private static ChatResponse<T> GetResponseOrDefault<T>(string answer)
+        where T : class
+    {
+        if (answer == null)
+        {
+            return null;
+        }
+
+        var response = JsonConvert.DeserializeObject<ChatResponse<T>>(answer, Settings.ResponseSerializerSettings);
+
+        if (response.ErrorMessage != null)
+        {
+            throw new AiException(response.ErrorMessage);
+        }
+
+        var responseType = response
+            .GetType();
+
+        var jObject = JsonConvert.DeserializeObject<JObject>(answer);
+
+        if (response.ErrorMessage != null)
+        {
+            throw new AiException(response.ErrorMessage);
+        }
+
+        var answerToken = jObject[nameof(ChatResponse.Answer)];
+
+        if (response is ChatResponse<string> stringResponse)
+        {
+            if (answerToken != null)
+            {
+                stringResponse.Answer = answerToken.Type == JTokenType.String
+                    ? answerToken.Value<string>()
+                    : answerToken.ToString();
+            }
+        }
+        else if (responseType is { IsGenericType: true } && responseType.GetGenericTypeDefinition() == typeof(ChatResponse<>))
+        {
+            if (answerToken != null)
+            {
+                var answerType = responseType.GetGenericArguments()[0];
+
+                var answerValue = answerToken.Type == JTokenType.String
+                    ? JsonConvert.DeserializeObject(answerToken.Value<string>(), answerType)
+                    : answerToken.ToObject(answerType);
+
+                var propertyInfo = responseType
+                    .GetProperty(nameof(ChatResponse<object>.Answer));
+
+                propertyInfo?
+                    .SetValue(response, answerValue);
+            }
+        }
+
+        return response;
+    }
+    private Task SaveMemory<T>(ChatRequest request, ChatResponse<T> response, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+        where T : class
+    {
+        if (request == null) 
+            throw new ArgumentNullException(nameof(request));
+        
+        if (response == null) 
+            throw new ArgumentNullException(nameof(response));
+        
+        if (embeddingMemoryService == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (request.ConfigOverrides.Memory.SkipSaveMemoryContext)
+        {
+            return Task.CompletedTask;
+        }
+
+        return Task.Run(async () =>
+        {
+            var indexResponse = await embeddingMemoryService
+                .IndexAsync(new IndexMemoryRequest<T>
+                    {
+                        Question = request.Question,
+                        Answer = response.Answer,
+                        UserId = request.UserId,
+                        ThreadId = request.CurrentThreadId,
+                        Language = request.Language,
+                        Blobs = request.Blobs,
+                        ConfigOverrides =
+                        {
+                            Metadata = request.ConfigOverrides.Memory.Metadata,
+                            Summarization = request.ConfigOverrides.Memory.Summarization
+                        }
+                    },
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            if (onMemoryIndexed != null)
+            {
+                await onMemoryIndexed(indexResponse)
+                    .ConfigureAwait(false);
+            }
+        }, cancellationToken);
+    }
+}
