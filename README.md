@@ -4,7 +4,6 @@
 [![NuGet](https://img.shields.io/nuget/v/Vivet.AI.svg)](https://www.nuget.org/packages/Vivet.AI)
 ![GitHub License](https://img.shields.io/github/license/Vivet-Software/Vivet.AI)
 ![GitHub Issues](https://img.shields.io/github/issues/Vivet-Software/Vivet.AI)
-![GitHub Activity](https://img.shields.io/github/commit-activity/w/Vivet-Software/Vivet.AI)
 
 Unlock the full power of AI in your .NET applications with a **comprehensive library** for chat, embeddings, memory, 
 knowledge, metadata, and summarization. Instantly enrich conversations and documents with **context, structured metadata, 
@@ -75,6 +74,8 @@ Before using Vivet.AI, you must specify the license to use. This is done via the
 * For noncommercial use, set the ExcelPackage.License.SetNonCommercialOrganization(string) or ExcelPackage.License.SetNonCommercialPersonal(string) with your name as argument. 
 
 You can also configure these settings in the configuration files or in an environment varialble:
+
+CONFIG Ai.LicenseKey  
 
 ## 🎛️ Orchestrations
 The library provides a **unified orchestration layer** across multiple AI providers, allowing you to integrate, configure, and switch between them with minimal effort.  

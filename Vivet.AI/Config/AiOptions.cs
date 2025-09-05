@@ -11,6 +11,11 @@ public class AiOptions
     internal static string SectionName => "Ai";
 
     /// <summary>
+    /// The license key for commercial license.
+    /// </summary>
+    public virtual string LicenseKey { get; set; }
+
+    /// <summary>
     /// The Endpoint of the AI provider.
     /// <list type="bullet">
     /// <item><description>OpenAI: Required</description></item>

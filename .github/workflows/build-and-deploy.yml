@@ -6,8 +6,7 @@
 # env:
 #   APP_NAME: Vivet.AI
 #   VERSION: 0.8.0-preview
-#   NUGET_HOST: ${{ secrets.NUGET_HOST }}
-#   NUGET_PASSWORD: ${{ secrets.NUGET_APIKEY }}
+#   NUGET_HOST: https://www.nuget.org
 #   NUGET_APIKEY: ${{ secrets.NUGET_APIKEY }}
 # jobs:
 #   build-and-deploy:
