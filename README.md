@@ -1171,14 +1171,14 @@ When working with embeddings and vector search, it’s common to retrieve **high
 This library includes a **context deduplication engine** that automatically merges or removes near-duplicate results,  
 ensuring cleaner and more meaningful responses.  
 
-### Key Features  
+#### Key Features  
 - **Semantic deduplication** – Results with highly similar text (`similarityThreshold`, default `0.90`) are merged into a single entry.  
 - **Blob-aware detection** – If results reference the same underlying blob (file, document, etc.), they are automatically deduplicated by hash.  
 - **Recency preference** – When duplicates are found, the most recent result is kept while older context is merged into it.  
 - **Memory Question/Answer pair collapsing** – Questions and their corresponding answers are recognized and merged together, reducing redundancy.  
 - **Configurable thresholds** – Fine-tune the similarity threshold for different use cases (memory recall vs. knowledge retrieval).  
 
-### Benefits  
+#### Benefits  
 - Prevents **duplicate or repetitive answers** in retrieval.  
 - Keeps **question/answer pairs clean and consistent**.  
 - Improves **retrieval accuracy** by reducing noise in memory and knowledge results.  
