@@ -1129,7 +1129,8 @@ For guidance on setting up and using a commercial license, see [Licensing](#-lic
 <br /><br />
 
 ### ⚙️ Appsettings
-FIX: General about configuration, that most have default values that works for most cases. Fill out Endpoint, APikey, vector stores and the model names.  
+Most settings have sensible defaults that work out of the box.  
+For minimal configuration, you only need to provide **Endpoint**, **API Key**, a **vector store**, and the **model names** to use.  
 
 #### Minimal Configuration without default values
 ```json
