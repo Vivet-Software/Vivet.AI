@@ -979,7 +979,9 @@ Example `appsettings.json` snippet showing how to configure `IMetadataService` u
 ```json
 "Ai": {
   "Metadata": {
-    "Model": { /* chat model */ },
+    "Model": {
+      "Name": "<your-metadata-chat-model>",
+    }
     "SummaryMaxWords": 30,
     "DescriptionMaxWords": 90,
     "Timeout": "00:01:00"
@@ -1070,7 +1072,9 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
 ```json
 "Ai": {
   "Summarization": {
-    "Model": { /* chat model */ },
+    "Model": {
+      "Name": "<your-summarization-chat-model>",
+    }
     "SummarizationDegree": 25,
     "Timeout": "00:01:00"
   }
