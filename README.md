@@ -34,7 +34,7 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔹 [Postgres (pgvector)](#-postgres-pgvector)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔹 [Azure AI Search](#-azure-ai-search)  
 
-### ✨ Services
+### ✨ [Services](#-services-1)
 &nbsp;&nbsp;&nbsp;&nbsp;🗨️ [Chat](#%EF%B8%8F-chat-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;🧩 [Embedding](#-embedding)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧠 [Memory](#-embedding-memory-service)  
@@ -58,7 +58,7 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;⚙️ [Complete Configuration](#%EF%B8%8F-appsettings)
 <br /><br /><br />
 
-## License
+## Licensing
 Vivet.AI has a dual license model with a community license for noncommercial use: [Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). 
 With this license Vivet.AI is free to use for personal/noncommercial use, A Commercial licenses, which includes support, is required for commercial use 
 and can be purchased by sending a request to **licensing@vivetonline.com**  
@@ -355,7 +355,12 @@ Provision an Azure AI Search resource in the Azure portal.
 
 #### Dashboard: 
 https://portal.azure.com ⤴
+<br /><br />
 
+## ✨ Services
+The library provides a rich set of services including **Chat**, **Embedding**, **Embedding Memory**, **Embedding Knowledge**, **Metadata**, and **Summarization**. Each service is designed to be modular, configurable, and optimized for advanced AI workflows. They can be used independently or combined to build powerful orchestration pipelines. New services and AI model integrations are continuously being added to expand functionality of the library and keep pace with the AI ecosystem.  
+
+Detailed explanations and usage examples for each service are provided in the following sections.
 <br /><br />
 
 ## 🗨️ Chat Service
