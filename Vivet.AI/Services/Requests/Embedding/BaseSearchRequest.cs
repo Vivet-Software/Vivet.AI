@@ -29,5 +29,5 @@ public abstract class BaseSearchRequest<TCollection, TCriteria>
     /// Gets or sets the maximum number of results to return.
     /// </summary>
     [Required]
-    public virtual int Limit { get; set; } = 25;
+    public virtual int Limit { get; set; } = 5;
 }

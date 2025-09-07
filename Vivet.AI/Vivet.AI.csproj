@@ -33,7 +33,6 @@
 			- Free for non-commercial use. Commercial use requires a license
 		</PackageReleaseNotes>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageLicenseExpression>PolyForm-Noncommercial-1.0.0</PackageLicenseExpression>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageIcon>icon.png</PackageIcon>
 		<PackageIconUrl />
@@ -54,6 +53,12 @@
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\LICENSE.md" Pack="true" Visible="false" PackagePath="" />
+		<None Include="..\README.md" Pack="true" Visible="false" PackagePath="" />
+		<None Include="..\icon.png" Pack="true" Visible="false" PackagePath="" />
 	</ItemGroup>
 
 	<ItemGroup>

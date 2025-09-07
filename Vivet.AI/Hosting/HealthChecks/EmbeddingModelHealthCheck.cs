@@ -23,10 +23,7 @@ public class EmbeddingModelHealthCheck(IEmbeddingGenerator<string, Embedding<flo
 
         try
         {
-            var embeddingGenerationOptions = new EmbeddingGenerationOptions
-            {
-                Dimensions = 1
-            };
+            var embeddingGenerationOptions = new EmbeddingGenerationOptions();
 
             var embeddings = await this.embeddingGenerator
                 .GenerateAsync(["ping"], embeddingGenerationOptions, cancellationToken)

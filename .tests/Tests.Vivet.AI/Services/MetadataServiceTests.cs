@@ -16,7 +16,7 @@ namespace Tests.Vivet.AI.Services;
 [TestClass]
 public class MetadataServiceTests : BaseTests
 {
-    private IMetadataService MetadataService => this.serviceProvider.GetRequiredService<IMetadataService>();
+    private IMetadataService MetadataService => this.ServiceProvider.GetRequiredService<IMetadataService>();
 
     [TestMethod]
     public async Task GetWhenImageTest()

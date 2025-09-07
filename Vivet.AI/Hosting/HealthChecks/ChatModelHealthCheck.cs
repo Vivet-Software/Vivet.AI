@@ -25,13 +25,8 @@ public class ChatModelHealthCheck(IChatCompletionService chatCompletionService, 
 
         try
         {
-            var executionSettings = this.promptExecutionSettings
-                .Clone();
-
-            executionSettings.ModelId = context.Registration.Name;
-
             var chatMessageContent = await this.chatCompletionService
-                .GetChatMessageContentAsync("ping", executionSettings, cancellationToken: cancellationToken)
+                .GetChatMessageContentAsync("ping", this.promptExecutionSettings, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
             if (string.IsNullOrWhiteSpace(chatMessageContent.Content))

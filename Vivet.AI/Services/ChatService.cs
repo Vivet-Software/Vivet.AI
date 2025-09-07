@@ -255,7 +255,7 @@ public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionServ
 
         if (this.options.Memory.UseQueryDeduplication)
         {
-            var deduplicatedResults = Deduplicator.DeduplicateMemoryResults(results, this.options.Memory.DeduplicationMatchScoreThreshold);
+            var deduplicatedResults = ContextDeduplicator.DeduplicateMemoryResults(results, this.options.Memory.DeduplicationMatchScoreThreshold);
 
             return deduplicatedResults
                 .Take(this.options.Memory.ContextQueryLimit)
@@ -304,7 +304,7 @@ public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionServ
 
         if (this.options.Knowledge.UseQueryDeduplication)
         {
-            var deduplicatedResults = Deduplicator.DeduplicateKnowledgeResults(results, this.options.Knowledge.DeduplicationMatchScoreThreshold);
+            var deduplicatedResults = ContextDeduplicator.DeduplicateKnowledgeResults(results, this.options.Knowledge.DeduplicationMatchScoreThreshold);
 
             return deduplicatedResults
                 .Take(this.options.Knowledge.ContextQueryLimit)

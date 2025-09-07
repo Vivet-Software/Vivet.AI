@@ -18,7 +18,6 @@ using Vivet.AI.Extensions.Embeddings.Pinecone;
 using Vivet.AI.Extensions.Embeddings.Postgres;
 using Vivet.AI.Extensions.Embeddings.Qdrant;
 using Vivet.AI.Extensions.Embeddings.Weaviate;
-using Vivet.AI.Hosting.HealthChecks;
 using Vivet.AI.Models;
 using Vivet.AI.Services;
 using Vivet.AI.Services.Interfaces;
@@ -170,7 +169,7 @@ internal static class ServiceCollectionExtensions
 
         services
             .AddHealthChecks()
-            .AddCheck<EmbeddingModelHealthCheck>(ServiceIds.EMBEDDING_SERVICE_ID);
+            .AddEmbeddingModelCheck(ServiceIds.EMBEDDING_SERVICE_ID);
 
         return services;
     }
@@ -445,8 +444,8 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddVectorStoreHealthCheck<TEmbedding>(this IServiceCollection services, VectorStoreOptions options)
-        where TEmbedding : BaseEmbedding
+    private static IServiceCollection AddVectorStoreHealthCheck<TCollection>(this IServiceCollection services, VectorStoreOptions options)
+        where TCollection : BaseEmbedding
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -459,11 +458,9 @@ internal static class ServiceCollectionExtensions
             return services;
         }
 
-        var name = $"{typeof(TEmbedding).Name}_vector_store";
-
         services
             .AddHealthChecks()
-            .AddCheck<VectorStoreHealthCheck<VectorStoreCollection<Guid, TEmbedding>>>(name);
+            .AddVectorStoreCheck<TCollection>();
 
         return services;
     }

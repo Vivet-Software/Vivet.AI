@@ -11,7 +11,9 @@ namespace Tests.Vivet.AI;
 
 public class BaseTests
 {
-    protected IServiceProvider serviceProvider;
+    protected readonly ServiceCollection services = [];
+
+    protected IServiceProvider ServiceProvider => this.services.BuildServiceProvider();
 
     protected readonly string tenantId = "5232f275-40e2-4d18-9dce-d619b6180b40";
     protected readonly string subTenantId = "bed6e482-6bcb-447b-b509-65d7c833e698a";
@@ -21,10 +23,8 @@ public class BaseTests
     protected readonly string source = "source";
 
     [TestInitialize]
-    public void TestSetup()
+    public virtual void TestSetup()
     {
-        var services = new ServiceCollection();
-
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
@@ -32,14 +32,11 @@ public class BaseTests
             .AddUserSecrets(Assembly.GetExecutingAssembly())
             .Build();
 
-        services
+        this.services
             .AddSingleton<IConfiguration>(configuration)
             .AddLogging(x => x.AddConsole());
 
-        services
+        this.services
             .AddAzureAiInference();
-
-        this.serviceProvider = services
-            .BuildServiceProvider();
     }
 }

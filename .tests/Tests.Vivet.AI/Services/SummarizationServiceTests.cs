@@ -11,7 +11,7 @@ namespace Tests.Vivet.AI.Services;
 [TestClass]
 public class SummarizationServiceTests : BaseTests
 {
-    private ISummarizationService SummarizationService => this.serviceProvider.GetRequiredService<ISummarizationService>();
+    private ISummarizationService SummarizationService => this.ServiceProvider.GetRequiredService<ISummarizationService>();
 
     [TestMethod]
     public async Task SummarizeMemoryWhenDefaultTest()

@@ -19,7 +19,7 @@ namespace Tests.Vivet.AI.Services;
 [TestClass]
 public class EmbeddingMemoryServiceTests : BaseTests
 {
-    private IEmbeddingMemoryService EmbeddingMemoryService => this.serviceProvider.GetRequiredService<IEmbeddingMemoryService>();
+    private IEmbeddingMemoryService EmbeddingMemoryService => this.ServiceProvider.GetRequiredService<IEmbeddingMemoryService>();
 
     internal sealed class JsonClass
     {

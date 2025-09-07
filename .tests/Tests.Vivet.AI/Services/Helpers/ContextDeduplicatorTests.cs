@@ -9,7 +9,7 @@ using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
 namespace Tests.Vivet.AI.Services.Helpers;
 
 [TestClass]
-public class DeduplicatorTests
+public class ContextDeduplicatorTests
 {
     [TestMethod]
     public void DeduplicateMemoryResultsTest()
@@ -24,7 +24,7 @@ public class DeduplicatorTests
             CounterpartContext = [ANSWER]
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question]);
         Assert.AreEqual(1, results.Length);
 
         Assert.IsTrue(results[0].IsQuestion);
@@ -35,7 +35,7 @@ public class DeduplicatorTests
     [TestMethod]
     public void DeduplicateMemoryResultsWhenThrowsArgumentNullExceptionTest()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => Deduplicator.DeduplicateMemoryResults(null));
+        Assert.ThrowsException<ArgumentNullException>(() => ContextDeduplicator.DeduplicateMemoryResults(null));
     }
 
     [TestMethod]
@@ -51,7 +51,7 @@ public class DeduplicatorTests
             CounterpartContext = [ANSWER]
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question]);
         Assert.AreEqual(1, results.Length);
 
         Assert.IsTrue(results[0].IsQuestion);
@@ -72,7 +72,7 @@ public class DeduplicatorTests
             CounterpartContext = [QUESTION]
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([answer]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([answer]);
         Assert.AreEqual(1, results.Length);
 
         Assert.IsTrue(results[0].IsAnswer);
@@ -100,7 +100,7 @@ public class DeduplicatorTests
             CounterpartContext = [QUESTION]
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question, answer]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question, answer]);
         Assert.AreEqual(1, results.Length);
 
         Assert.IsTrue(results[0].IsQuestion);
@@ -145,7 +145,7 @@ public class DeduplicatorTests
             CounterpartContext = [QUESTION_2]
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question1, answer1, question2, answer2]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question1, answer1, question2, answer2]);
         Assert.AreEqual(2, results.Length);
 
         Assert.IsTrue(results[0].IsQuestion);
@@ -178,7 +178,7 @@ public class DeduplicatorTests
             CounterpartContext = [ANSWER_2]
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question1, question2]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question1, question2]);
         Assert.AreEqual(1, results.Length);
 
         Assert.IsTrue(results[0].IsQuestion);
@@ -205,7 +205,7 @@ public class DeduplicatorTests
             CreatedAt = DateTime.UtcNow
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question1, question2]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question1, question2]);
 
         Assert.AreEqual(1, results.Length);
         Assert.IsTrue(results[0].IsQuestion);
@@ -233,7 +233,7 @@ public class DeduplicatorTests
             CounterpartContext = [QUESTION_2]
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([answer1, answer2]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([answer1, answer2]);
         Assert.AreEqual(1, results.Length);
 
         Assert.IsTrue(results[0].IsAnswer);
@@ -261,7 +261,7 @@ public class DeduplicatorTests
             CreatedAt = DateTime.UtcNow
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([answer1, answer2]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([answer1, answer2]);
 
         Assert.AreEqual(1, results.Length);
         Assert.IsTrue(results[0].IsAnswer);
@@ -297,7 +297,7 @@ public class DeduplicatorTests
             CounterpartContext = [QUESTION_1]
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question1, question2, answer1]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question1, question2, answer1]);
         Assert.AreEqual(3, results.Length);
 
         Assert.IsTrue(results[0].IsQuestion);
@@ -342,7 +342,7 @@ public class DeduplicatorTests
             }
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults(questions);
+        var results = ContextDeduplicator.DeduplicateMemoryResults(questions);
 
         Assert.AreEqual(1, results.Length);
         Assert.AreEqual("h1", results[0].Blob.Hash);
@@ -368,7 +368,7 @@ public class DeduplicatorTests
             }
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults(questions);
+        var results = ContextDeduplicator.DeduplicateMemoryResults(questions);
 
         Assert.AreEqual(1, results.Length);
     }
@@ -393,7 +393,7 @@ public class DeduplicatorTests
             }
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults(questions, 0.50);
+        var results = ContextDeduplicator.DeduplicateMemoryResults(questions, 0.50);
         Assert.AreEqual(1, results.Length);
     }
 
@@ -414,7 +414,7 @@ public class DeduplicatorTests
             CreatedAt = now.AddMinutes(1)
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([questions, questionLowercase]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([questions, questionLowercase]);
 
         Assert.AreEqual(1, results.Length);
         Assert.AreEqual(questionLowercase.FullContext, results[0].FullContext);
@@ -437,7 +437,7 @@ public class DeduplicatorTests
             CreatedAt = now.AddMinutes(1)
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question, questionWhitespace]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question, questionWhitespace]);
 
         Assert.AreEqual(1, results.Length);
         Assert.AreEqual(questionWhitespace.FullContext, results[0].FullContext);
@@ -463,7 +463,7 @@ public class DeduplicatorTests
             CreatedAt = now
         };
 
-        var results = Deduplicator.DeduplicateMemoryResults([question, answer]);
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question, answer]);
 
         Assert.AreEqual(2, results.Length);
         Assert.IsTrue(results.Any(x => x.IsQuestion));
@@ -488,7 +488,7 @@ public class DeduplicatorTests
             }
         };
 
-        var results = Deduplicator.DeduplicateKnowledgeResults(knowledges);
+        var results = ContextDeduplicator.DeduplicateKnowledgeResults(knowledges);
 
         Assert.AreEqual(2, results.Length);
     }
@@ -496,7 +496,7 @@ public class DeduplicatorTests
     [TestMethod]
     public void DeduplicateKnowledgeResultsWhenThrowsArgumentNullExceptionTest()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => Deduplicator.DeduplicateKnowledgeResults(null));
+        Assert.ThrowsException<ArgumentNullException>(() => ContextDeduplicator.DeduplicateKnowledgeResults(null));
     }
 
     [TestMethod]
@@ -525,7 +525,7 @@ public class DeduplicatorTests
             }
         };
 
-        var results = Deduplicator.DeduplicateKnowledgeResults(knowledges);
+        var results = ContextDeduplicator.DeduplicateKnowledgeResults(knowledges);
 
         Assert.AreEqual(1, results.Length);
         Assert.AreEqual("hash123", results[0].Blob.Hash);
@@ -549,7 +549,7 @@ public class DeduplicatorTests
             }
         };
 
-        var results = Deduplicator.DeduplicateKnowledgeResults(knowledges);
+        var results = ContextDeduplicator.DeduplicateKnowledgeResults(knowledges);
 
         Assert.AreEqual(1, results.Length);
     }
@@ -572,7 +572,7 @@ public class DeduplicatorTests
             }
         };
 
-        var results = Deduplicator.DeduplicateKnowledgeResults(knowledges, 0.85);
+        var results = ContextDeduplicator.DeduplicateKnowledgeResults(knowledges, 0.85);
 
         Assert.AreEqual(1, results.Length);
     }

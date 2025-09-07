@@ -8,7 +8,7 @@ using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
 
 namespace Vivet.AI.Services.Helpers;
 
-internal static class Deduplicator
+internal static class ContextDeduplicator
 {
     public static MemoryResult[] DeduplicateMemoryResults(IEnumerable<MemoryResult> results, double similarityThreshold = 0.90)
     {

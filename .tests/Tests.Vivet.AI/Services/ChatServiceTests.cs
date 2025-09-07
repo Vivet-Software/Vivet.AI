@@ -16,7 +16,7 @@ namespace Tests.Vivet.AI.Services;
 [TestClass]
 public class ChatServiceTests : BaseTests
 {
-    private IChatService ChatService => this.serviceProvider.GetRequiredService<IChatService>();
+    private IChatService ChatService => this.ServiceProvider.GetRequiredService<IChatService>();
 
     internal sealed class JsonClass
     {
@@ -190,7 +190,7 @@ public class ChatServiceTests : BaseTests
     [TestMethod]
     public async Task ChatWhenMemoryTest()
     {
-        var embeddingMemoryService = this.serviceProvider.GetService<IEmbeddingMemoryService>();
+        var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
 
         var threadId = Guid.NewGuid().ToString();
         var localUserId = Guid.NewGuid().ToString();
@@ -228,7 +228,7 @@ public class ChatServiceTests : BaseTests
     [TestMethod]
     public async Task ChatWhenMemoryAndDeplicationTest()
     {
-        var embeddingMemoryService = this.serviceProvider.GetService<IEmbeddingMemoryService>();
+        var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
 
         var threadId = Guid.NewGuid().ToString();
         var localUserId = Guid.NewGuid().ToString();
@@ -287,7 +287,7 @@ public class ChatServiceTests : BaseTests
     [TestMethod]
     public async Task ChatWhenKnowledgeTest()
     {
-        var embeddingKnowledgeService = this.serviceProvider.GetService<IEmbeddingKnowledgeService>();
+        var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
         var scopeId = Guid.NewGuid().ToString();
         var localUserId = Guid.NewGuid().ToString();
@@ -320,7 +320,7 @@ public class ChatServiceTests : BaseTests
     [TestMethod]
     public async Task ChatWhenMemoryAndKnowledgeAndDeplicationTest()
     {
-        var embeddingKnowledgeService = this.serviceProvider.GetService<IEmbeddingKnowledgeService>();
+        var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
         var scopeId = Guid.NewGuid().ToString();
         var localUserId = Guid.NewGuid().ToString();

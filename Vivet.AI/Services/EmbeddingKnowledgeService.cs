@@ -30,11 +30,6 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// BUG: Complete readme and License. 
-// BUG: Test health-checks
-
-// BUG: Deployment (check Vivet Software defailt and repo setup, e.g. branch protection)
-
 // TODO: AI Services
 // - Read the rest of MS web pages
 // - Check common services (Azure, HuggingFace) and consider whether we should integrate them into the library
@@ -59,6 +54,8 @@ namespace Vivet.AI.Services;
 // ----------------------------------------------------------------------------------------------------------------------
 
 // TODO: Functions / Plugins (check other TODO's)
+
+// TODO: Deployment (check Vivet Software defailt and repo setup, e.g. branch protection, etc)
 
 /// <inheritdoc cref="IEmbeddingKnowledgeService"/>
 public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator, KnowledgeVectorStore vectorStore, IMetadataService metadataService = null)

@@ -21,7 +21,7 @@ namespace Tests.Vivet.AI.Services;
 [TestClass]
 public class EmbeddingKnowledgeServiceTests : BaseTests
 {
-    private IEmbeddingKnowledgeService EmbeddingKnowledgeService => this.serviceProvider.GetRequiredService<IEmbeddingKnowledgeService>();
+    private IEmbeddingKnowledgeService EmbeddingKnowledgeService => this.ServiceProvider.GetRequiredService<IEmbeddingKnowledgeService>();
 
     internal sealed class JsonClass
     {
