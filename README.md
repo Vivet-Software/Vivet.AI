@@ -1107,11 +1107,40 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 
 ## 💡 Other Highlighted Features
 ### 🔀 Advanced Text Chunking  
-Coming...  
+When storing embeddings in a vector store, the quality of retrieval depends heavily on how the original text is chunked.  
+This library includes an **advanced text-chunking engine** that goes far beyond simple paragraph or sentence splitting.  
+
+#### Key Features  
+- **Paragraph-aware splitting** – Text is first divided into paragraphs to keep logical boundaries intact.  
+- **Mixed content handling** – Embedded **JSON** or **XML** blocks are detected and treated as atomic units, preventing them from being broken into invalid fragments.  
+- **Smart sentence detection** – Sentences are split carefully, accounting for edge cases like abbreviations (`e.g.`, `U.S.`), decimals (`3.14`), and initials (`J.R.R.`), so chunks don’t split in the wrong places.  
+- **Dynamic token-based merging** – Sentences are merged into chunks based on configurable **min/max token thresholds**. This ensures chunks are neither too small (losing context) nor too large (exceeding embedding model limits). Oversized blocks (like large JSON/XML) are preserved as standalone chunks.  
+- **Context-aware retrieval** – Neighboring chunks can be retrieved alongside a target chunk, optionally restricted to the same paragraph, providing more coherent context for embeddings and downstream LLM calls.  
+
+#### Benefits  
+- Produces **high-quality, semantically coherent chunks** optimized for embeddings.  
+- Works reliably with **mixed structured/unstructured content**.  
+- Reduces **duplicate or fragmented embeddings**, improving retrieval accuracy.  
+- Easy to configure with `minTokensPerChunk` and `maxTokensPerChunk` settings.  
 <br /><br />
 
 ### 🧹 Context Deduplication
-Coming...  
+When working with embeddings and vector search, it’s common to retrieve **highly similar or duplicate results**.  
+This library includes a **context deduplication engine** that automatically merges or removes near-duplicate results,  
+ensuring cleaner and more meaningful responses.  
+
+### Key Features  
+- **Semantic deduplication** – Results with highly similar text (`similarityThreshold`, default `0.90`) are merged into a single entry.  
+- **Blob-aware detection** – If results reference the same underlying blob (file, document, etc.), they are automatically deduplicated by hash.  
+- **Recency preference** – When duplicates are found, the most recent result is kept while older context is merged into it.  
+- **Memory Question/Answer pair collapsing** – Questions and their corresponding answers are recognized and merged together, reducing redundancy.  
+- **Configurable thresholds** – Fine-tune the similarity threshold for different use cases (memory recall vs. knowledge retrieval).  
+
+### Benefits  
+- Prevents **duplicate or repetitive answers** in retrieval.  
+- Keeps **question/answer pairs clean and consistent**.  
+- Improves **retrieval accuracy** by reducing noise in memory and knowledge results.  
+- Ensures the **freshest and most relevant context** is always retained.
 <br /><br />
 
 ## 📎 Appendix
