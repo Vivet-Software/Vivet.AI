@@ -16,8 +16,6 @@ Every service follows a **request/response pattern**, includes **token and perfo
 configuration overrides**.    
 
 ## Table of Contents
-### 🔑 [Licensing](#-licensing)
-
 ### 🎛️ [Orchestrations](#%EF%B8%8F-orchestrations-1)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔹 [OpenAI](#-azure-openai)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔹 [Azure OpenAI](#-azure-openai)  
@@ -55,16 +53,8 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;🧹 [Context Deduplication](#-context-deduplication)  
 
 ### 📎 [Appendix](#-appendix-1)
+&nbsp;&nbsp;&nbsp;&nbsp;🔑 [Licensing](#-licensing)
 &nbsp;&nbsp;&nbsp;&nbsp;⚙️ [Complete Configuration](#%EF%B8%8F-appsettings)
-<br /><br /><br />
-
-## Licensing
-Vivet.AI has a dual license model with a community license for noncommercial use: [Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). 
-With this license Vivet.AI is free to use for personal/noncommercial use, A Commercial licenses, which includes support, is required for commercial use 
-and can be purchased by sending a request to **licensing@vivetonline.com**  
-
-You can read the full [Vivet.AI License](https://raw.githubusercontent.com/vivet-software/Vivet.AI/refs/heads/master/LICENSE) here.  
-For guidance on setting up and using a commercial license, see [Licensing](#-licensing).
 <br /><br /><br />
 
 ## 🎛️ Orchestrations
@@ -1129,6 +1119,15 @@ Coming...
 <br /><br />
 
 ## 📎 Appendix
+### 🔑 Licensing
+Vivet.AI has a dual license model with a community license for noncommercial use: [Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). 
+With this license Vivet.AI is free to use for personal/noncommercial use, A Commercial licenses, which includes support, is required for commercial use 
+and can be purchased by sending a request to **licensing@vivetonline.com**  
+
+You can read the full [Vivet.AI License](https://raw.githubusercontent.com/vivet-software/Vivet.AI/refs/heads/master/LICENSE) here.  
+For guidance on setting up and using a commercial license, see [Licensing](#-licensing).
+<br /><br />
+
 ### ⚙️ Appsettings
 FIX: General about configuration, that most have default values that works for most cases. Fill out Endpoint, APikey, vector stores and the model names.  
 
