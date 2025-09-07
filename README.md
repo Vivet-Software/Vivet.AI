@@ -42,7 +42,7 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;🗂️ [Metadata Service](#%EF%B8%8F-metadata-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;✂️ [Summarization Service](#%EF%B8%8F-summarization-service)  
 
-### ⚡ Core Service Concepts
+### ⚡ [Core Service Concepts](#-core-service-concepts-1)
 &nbsp;&nbsp;&nbsp;&nbsp;📩 [Request/Response Pattern](#-requestresponse-pattern)  
 &nbsp;&nbsp;&nbsp;&nbsp;⚙️ [Request Configuration Overrides](#-request-configuration-overrides)  
 &nbsp;&nbsp;&nbsp;&nbsp;⛔ [Error Handling](#-error-handling)  
@@ -50,11 +50,11 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;🛠️ [Extensible Implementations](#%EF%B8%8F-extensible-implementations)  
 &nbsp;&nbsp;&nbsp;&nbsp;💚 [Health Checks](#-health-checks)  
 
-### 💡 Other Highlighted Features
+### 💡 [Other Highlighted Features](#-other-highlighted-features-1)
 &nbsp;&nbsp;&nbsp;&nbsp;🔀 [Advanced Text Chunking](#-advanced-text-chunking)  
 &nbsp;&nbsp;&nbsp;&nbsp;🧹 [Context Deduplication](#-context-deduplication)  
 
-### 📎 Appendix
+### 📎 [Appendix](#-appendix-1)
 &nbsp;&nbsp;&nbsp;&nbsp;⚙️ [Complete Configuration](#%EF%B8%8F-appsettings)
 <br /><br /><br />
 
