@@ -290,9 +290,9 @@ In this library, they are used with the **Embedding Memory** and **Embedding Kno
 
 #### Start with Docker
 ```powershell
-docker run -p 6333:6333 -p 6334:6334 \
-  -v qdrant_storage:/qdrant/storage \
-  -e QDRANT__SERVICE__API_KEY=secret \
+docker run -p 6333:6333 -p 6334:6334 `
+  -v qdrant_storage:/qdrant/storage `
+  -e QDRANT__SERVICE__API_KEY=secret `
   qdrant/qdrant
 ```
 
@@ -313,8 +313,8 @@ https://app.pinecone.io ⤴
 
 #### Start with Docker
 ```powershell
-docker run -p 8080:8080 \
-  -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true \
+docker run -p 8080:8080 `
+  -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true `
   semitechnologies/weaviate
 ```
 
@@ -327,8 +327,8 @@ http://localhost:8080 ⤴
 
 #### Start with Docker
 ```powershell
-docker run -p 5432:5432 \
-  -e POSTGRES_PASSWORD=secret \
+docker run -p 5432:5432 `
+  -e POSTGRES_PASSWORD=secret `
   ankane/pgvector
 ```
 
