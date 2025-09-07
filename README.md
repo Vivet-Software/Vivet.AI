@@ -15,14 +15,6 @@ The library supports **all major orchestration frameworks** and a variety of **v
 Every service follows a **request/response pattern**, includes **token and performance tracking**, and allows **per-request 
 configuration overrides**.    
 
-## License
-Vivet.AI has a dual license model with a community license for noncommercial use: [Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). 
-With this license Vivet.AI is free to use for personal/noncommercial use, A Commercial licenses, which includes support, is required for commercial use 
-and can be purchased by sending a request to **licensing@vivetonline.com**  
-
-You can read the full [Vivet.AI License](https://raw.githubusercontent.com/vivet-software/Vivet.AI/refs/heads/master/LICENSE) here.  
-For guidance on setting up and using a commercial license, see [Licensing](#-licensing).
-
 ## Table of Contents
 ### 🔑 [Licensing](#-licensing)
 
@@ -64,17 +56,16 @@ For guidance on setting up and using a commercial license, see [Licensing](#-lic
 
 ### 📎 Appendix
 &nbsp;&nbsp;&nbsp;&nbsp;⚙️ [Complete Configuration](#%EF%B8%8F-appsettings)
-<br />
+<br /><br /><br />
 
-## License 
-Before using Vivet.AI, you must specify the license to use. This is done via the static License property of the License class
+## License
+Vivet.AI has a dual license model with a community license for noncommercial use: [Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). 
+With this license Vivet.AI is free to use for personal/noncommercial use, A Commercial licenses, which includes support, is required for commercial use 
+and can be purchased by sending a request to **licensing@vivetonline.com**  
 
-* For commercial use, set the License.SetCommercial(string), with your license key as argument.  
-* For noncommercial use, set the ExcelPackage.License.SetNonCommercialOrganization(string) or ExcelPackage.License.SetNonCommercialPersonal(string) with your name as argument. 
-
-You can also configure these settings in the configuration files or in an environment varialble:
-
-CONFIG Ai.LicenseKey  
+You can read the full [Vivet.AI License](https://raw.githubusercontent.com/vivet-software/Vivet.AI/refs/heads/master/LICENSE) here.  
+For guidance on setting up and using a commercial license, see [Licensing](#-licensing).
+<br /><br /><br />
 
 ## 🎛️ Orchestrations
 The library provides a **unified orchestration layer** across multiple AI providers, allowing you to integrate, configure, and switch between them with minimal effort.  
@@ -147,7 +138,6 @@ The table summarizes parameter support for each provider.
 | `ReasoningEffort`    | ✅    | ✅           | ❌                | ❌          | ❌     | ❌            | ❌             |
 
 > ℹ️ Consult the individual provider sections below for details on support for chat model parameters.
-<br />
 
 ### 🔹 OpenAI
 OpenAI provides access to the GPT-family models.  
@@ -298,7 +288,8 @@ The table summarizes parameter support across the available models.
 | `TopP`               | ✅     | ✅             | ✅               | ✅         | ✅            | ✅      | ✅    | ✅     |
 | `TopK`               | ✅     | ✅             | ✅               | ❌         | ❌            | ✅      | ❌    | ❌     |
 | `ReasoningEffort`    | ❌     | ❌             | ❌               | ❌         | ❌            | ❌      | ❌    | ❌     |
-<br />
+
+<br /><br />
 
 ## 🗄️ Vector Stores
 Vector stores are specialized databases designed for storing and searching embeddings.  
@@ -364,7 +355,7 @@ Provision an Azure AI Search resource in the Azure portal.
 
 #### Dashboard: 
 https://portal.azure.com ⤴
-<br /><br />
+<br /><br /><br />
 
 ## 🗨️ Chat Service
 The `IChatService` combines LLMs, memory, knowledge bases, and multimodal context into a single conversational API. It supports both **plain text and typed JSON responses**, **real-time streaming**, and automatic **memory + knowledge enrichment**. Developers can attach blobs (documents, images, audio, video), and the service will automatically extract **summary and description metadata** to ground the conversation. With built-in support for **reasoning transparency**, **token usage tracking**, and **automatic memory indexing**, `ChatService` provides everything needed to build intelligent, context-aware chat applications on .NET.
@@ -530,7 +521,7 @@ await foreach (var chunk in chatService
     Console.Write(chunk);
 }
 ```
-<br />
+<br /><br /><br />
 
 ## 🧩 Embedding
 The **Embedding** configuration contains settings shared by both **Memory** and **Knowledge**, including the embedding **model**, **vector size**, **match score threshold**, and **timeout**.
@@ -615,7 +606,6 @@ Defines the weight configuration for **approximate nearest neighbor search (ANN)
 | `RecencyDecayDays`        | double | `30`     | Days until recency boost becomes negligible.                                                        |
 | `RecencySigmoidSteepness` | double | `1.0`    | Steepness of the curve (only used for Sigmoid).                                                     |
 
-
 #### 🗄️ Vector Store
 Defines which vector database to use for embedding storage and retrieval.
 ```json
@@ -638,7 +628,8 @@ Defines which vector database to use for embedding storage and retrieval.
 | `ApiKey`         | string   | `null`      | Required if authentication is enabled.                                                                             |
 | `Timeout`        | TimeSpan | `00:00:30`  | Query timeout.                                                                                                     |
 | `UseHealthCheck` | bool     | `true`      | Whether to check connectivity on startup.                                                                          |
-<br />
+
+<br /><br /><br />
 
 ## 🧠 Embedding Memory Service
 The `IEmbeddingMemoryService` provides semantic memory storage and retrieval built on embeddings.  
@@ -777,7 +768,7 @@ await embeddingMemoryService.DeleteAsync(new DeleteRequest
     Ids = ["id"]
 });
 ```
-<br />
+<br /><br /><br />
 
 ## 📚 Embedding Knowledge Service
 The `IEmbeddingKnowledgeService` provides semantic knowledge storage and retrieval built on embeddings.  
@@ -931,7 +922,7 @@ await embeddingMemoryService.DeleteAsync(new DeleteRequest
     Ids = ["id"]
 });
 ```
-<br />
+<br /><br /><br />
 
 ## 🗂️ Metadata Service
 The `IMetadataService` provides structured metadata extraction from binary blob content such as **images, audio, video, and documents**. It uses a **chat completion model** with prompt templates to retrieve metadata automatically. The service supports both **basic metadata** (summary and description) and **strongly-typed additional metadata**. Every response also includes **elapsed time, token usage, and internal error information**, making it easy to track usage and performance.  
@@ -1008,7 +999,7 @@ Console.WriteLine($"Invoice Number: {response.AdditionalMetadata.InvoiceNumber}"
 Console.WriteLine($"Invoice Date: {response.AdditionalMetadata.InvoiceDate}");
 Console.WriteLine($"Total Amount: {response.AdditionalMetadata.TotalAmount}");
 ```
-<br />
+<br /><br /><br />
 
 ## ✂️ Summarization Service
 The `ISummarizationService` provides **memory summarization** for questions and answers using an LLM chat completion service. It supports **custom summarization degrees**, leaving inline JSON or XML untouched. Every response includes **elapsed time, token usage, and internal error information**, making it easy to track performance and usage.  
