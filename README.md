@@ -13,20 +13,9 @@ Build **smarter, faster, and context-aware AI experiences** with minimal boilerp
 
 The library supports **all major orchestration frameworks** and a variety of **vector stores** for memory and knowledge management. 
 Every service follows a **request/response pattern**, includes **token and performance tracking**, and allows **per-request 
-configuration overrides**. With built-in extensibility, developers can replace any service with their own implementation while still 
-benefiting from **robust memory, metadata, and summarization workflows**.  
-
-## License
-Vivet.AI has a dual license model with a community license for noncommercial use: [Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). 
-With this license Vivet.AI is free to use for personal/noncommercial use, A Commercial licenses, which includes support, is required for commercial use 
-and can be purchased by sending a request to **licensing@vivetonline.com**  
-
-You can read the full [Vivet.AI License](https://raw.githubusercontent.com/vivet-software/Vivet.AI/refs/heads/master/LICENSE) here.  
-For guidance on setting up and using a commercial license, see [Licensing](#-licensing).
+configuration overrides**.    
 
 ## Table of Contents
-### 🔑 [Licensing](#-licensing)
-
 ### 🎛️ [Orchestrations](#%EF%B8%8F-orchestrations-1)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔹 [OpenAI](#-azure-openai)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔹 [Azure OpenAI](#-azure-openai)  
@@ -43,7 +32,7 @@ For guidance on setting up and using a commercial license, see [Licensing](#-lic
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔹 [Postgres (pgvector)](#-postgres-pgvector)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔹 [Azure AI Search](#-azure-ai-search)  
 
-### ✨ Services
+### ✨ [Services](#-services-1)
 &nbsp;&nbsp;&nbsp;&nbsp;🗨️ [Chat](#%EF%B8%8F-chat-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;🧩 [Embedding](#-embedding)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧠 [Memory](#-embedding-memory-service)  
@@ -51,7 +40,7 @@ For guidance on setting up and using a commercial license, see [Licensing](#-lic
 &nbsp;&nbsp;&nbsp;&nbsp;🗂️ [Metadata Service](#%EF%B8%8F-metadata-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;✂️ [Summarization Service](#%EF%B8%8F-summarization-service)  
 
-### ⚡ Core Service Concepts
+### ⚡ [Core Service Concepts](#-core-service-concepts-1)
 &nbsp;&nbsp;&nbsp;&nbsp;📩 [Request/Response Pattern](#-requestresponse-pattern)  
 &nbsp;&nbsp;&nbsp;&nbsp;⚙️ [Request Configuration Overrides](#-request-configuration-overrides)  
 &nbsp;&nbsp;&nbsp;&nbsp;⛔ [Error Handling](#-error-handling)  
@@ -59,23 +48,14 @@ For guidance on setting up and using a commercial license, see [Licensing](#-lic
 &nbsp;&nbsp;&nbsp;&nbsp;🛠️ [Extensible Implementations](#%EF%B8%8F-extensible-implementations)  
 &nbsp;&nbsp;&nbsp;&nbsp;💚 [Health Checks](#-health-checks)  
 
-### 💡 Other Highlighted Features
+### 💡 [Other Highlighted Features](#-other-highlighted-features-1)
 &nbsp;&nbsp;&nbsp;&nbsp;🔀 [Advanced Text Chunking](#-advanced-text-chunking)  
 &nbsp;&nbsp;&nbsp;&nbsp;🧹 [Context Deduplication](#-context-deduplication)  
 
-### 📎 Appendix
+### 📎 [Appendix](#-appendix-1)
+&nbsp;&nbsp;&nbsp;&nbsp;🔑 [Licensing](#-licensing)  
 &nbsp;&nbsp;&nbsp;&nbsp;⚙️ [Complete Configuration](#%EF%B8%8F-appsettings)
-<br />
-
-## License 
-Before using Vivet.AI, you must specify the license to use. This is done via the static License property of the License class
-
-* For commercial use, set the License.SetCommercial(string), with your license key as argument.  
-* For noncommercial use, set the ExcelPackage.License.SetNonCommercialOrganization(string) or ExcelPackage.License.SetNonCommercialPersonal(string) with your name as argument. 
-
-You can also configure these settings in the configuration files or in an environment varialble:
-
-CONFIG Ai.LicenseKey  
+<br /><br /><br />
 
 ## 🎛️ Orchestrations
 The library provides a **unified orchestration layer** across multiple AI providers, allowing you to integrate, configure, and switch between them with minimal effort.  
@@ -148,7 +128,6 @@ The table summarizes parameter support for each provider.
 | `ReasoningEffort`    | ✅    | ✅           | ❌                | ❌          | ❌     | ❌            | ❌             |
 
 > ℹ️ Consult the individual provider sections below for details on support for chat model parameters.
-<br />
 
 ### 🔹 OpenAI
 OpenAI provides access to the GPT-family models.  
@@ -299,7 +278,8 @@ The table summarizes parameter support across the available models.
 | `TopP`               | ✅     | ✅             | ✅               | ✅         | ✅            | ✅      | ✅    | ✅     |
 | `TopK`               | ✅     | ✅             | ✅               | ❌         | ❌            | ✅      | ❌    | ❌     |
 | `ReasoningEffort`    | ❌     | ❌             | ❌               | ❌         | ❌            | ❌      | ❌    | ❌     |
-<br />
+
+<br /><br />
 
 ## 🗄️ Vector Stores
 Vector stores are specialized databases designed for storing and searching embeddings.  
@@ -310,9 +290,9 @@ In this library, they are used with the **Embedding Memory** and **Embedding Kno
 
 #### Start with Docker
 ```powershell
-docker run -p 6333:6333 -p 6334:6334 \
-  -v qdrant_storage:/qdrant/storage \
-  -e QDRANT__SERVICE__API_KEY=secret \
+docker run -p 6333:6333 -p 6334:6334 `
+  -v qdrant_storage:/qdrant/storage `
+  -e QDRANT__SERVICE__API_KEY=secret `
   qdrant/qdrant
 ```
 
@@ -333,8 +313,8 @@ https://app.pinecone.io ⤴
 
 #### Start with Docker
 ```powershell
-docker run -p 8080:8080 \
-  -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true \
+docker run -p 8080:8080 `
+  -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true `
   semitechnologies/weaviate
 ```
 
@@ -347,8 +327,8 @@ http://localhost:8080 ⤴
 
 #### Start with Docker
 ```powershell
-docker run -p 5432:5432 \
-  -e POSTGRES_PASSWORD=secret \
+docker run -p 5432:5432 `
+  -e POSTGRES_PASSWORD=secret `
   ankane/pgvector
 ```
 
@@ -365,6 +345,12 @@ Provision an Azure AI Search resource in the Azure portal.
 
 #### Dashboard: 
 https://portal.azure.com ⤴
+<br /><br />
+
+## ✨ Services
+The library provides a rich set of services including **Chat**, **Embedding**, **Embedding Memory**, **Embedding Knowledge**, **Metadata**, and **Summarization**. Each service is designed to be modular, configurable, and optimized for advanced AI workflows. They can be used independently or combined to build powerful orchestration pipelines. New services and AI model integrations are continuously being added to expand functionality of the library and keep pace with the AI ecosystem.  
+
+Detailed explanations and usage examples for each service are provided in the following sections.
 <br /><br />
 
 ## 🗨️ Chat Service
@@ -403,7 +389,7 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 "Ai": {
   "Chat": {
     "Model": {
-      "Name": null,
+      "Name": "<your-chat-model>",
       "UseHealthCheck": true,
       "Parameters": {
         "MaxOutputTokens": 2048,
@@ -531,7 +517,7 @@ await foreach (var chunk in chatService
     Console.Write(chunk);
 }
 ```
-<br />
+<br /><br />
 
 ## 🧩 Embedding
 The **Embedding** configuration contains settings shared by both **Memory** and **Knowledge**, including the embedding **model**, **vector size**, **match score threshold**, and **timeout**.
@@ -542,7 +528,7 @@ The **Embedding** configuration contains settings shared by both **Memory** and 
 "Ai": {
   "Embedding": {
     "Model": {
-      "Name": null,
+      "Name": "<your-embedding-model>",
       "UseHealthCheck": true
     },
     "VectorSize": 1536,
@@ -616,7 +602,6 @@ Defines the weight configuration for **approximate nearest neighbor search (ANN)
 | `RecencyDecayDays`        | double | `30`     | Days until recency boost becomes negligible.                                                        |
 | `RecencySigmoidSteepness` | double | `1.0`    | Steepness of the curve (only used for Sigmoid).                                                     |
 
-
 #### 🗄️ Vector Store
 Defines which vector database to use for embedding storage and retrieval.
 ```json
@@ -639,7 +624,8 @@ Defines which vector database to use for embedding storage and retrieval.
 | `ApiKey`         | string   | `null`      | Required if authentication is enabled.                                                                             |
 | `Timeout`        | TimeSpan | `00:00:30`  | Query timeout.                                                                                                     |
 | `UseHealthCheck` | bool     | `true`      | Whether to check connectivity on startup.                                                                          |
-<br />
+
+<br /><br />
 
 ## 🧠 Embedding Memory Service
 The `IEmbeddingMemoryService` provides semantic memory storage and retrieval built on embeddings.  
@@ -702,51 +688,64 @@ var embeddingMemoryService = serviceProvider.GetService<IEmbeddingMemoryService>
 ```
 #### Index a memory entry
 ```csharp
-var indexResponse = await embeddingMemoryService.IndexAsync(new IndexMemoryRequest<string>
+var indexRequest = new IndexMemoryRequest<string>
 {
     ThreadId = "thread-id",
     UserId = "user-id",
     Question = "What is the customer's preferred communication channel?",
     Answer = "Email",
     Blobs = new BaseBlobMetadata[] { } // optional
-});
+    // optional: Language, Config Overrides, etc.
+};
+
+var indexResponse = await embeddingMemoryService
+    .IndexAsync(indexRequest);
 
 Console.WriteLine($"Indexed embeddings: {indexResponse.TotalEmbeddings}");
 Console.WriteLine($"Indexed embeddings size: {indexResponse.TotalEmbeddingsSize}");
 ```
 #### Index typed a memory entry (json embedding)
 ```csharp
-public class CustomerProfile
+public class Customer
 {
     public string Name { get; set; }
     public string Email { get; set; }
     public string PreferredChannel { get; set; }
 }
 
-var indexResponse = await embeddingMemoryService.IndexAsync(new IndexMemoryRequest<CustomerProfile>
+var indexRequest = new IndexMemoryRequest<Customer>
 {
     ThreadId = "thread-id",
     UserId = "user-id",
-    Question = "Customer profile details",
-    Answer = new CustomerProfile { Name = "Alice Johnson", Email = "alice@example.com", PreferredChannel = "Email" },
+    Question = "Customer details",
+    Answer = new Customer { Name = "Alice Johnson", Email = "alice@example.com", PreferredChannel = "Email" },
     Blobs = new BaseBlobMetadata[] { } // optional
-});
+    // optional: Language, Config Overrides, etc.
+};
+
+var indexResponse = await embeddingMemoryService
+    .IndexAsync(indexRequest);
 
 Console.WriteLine($"Indexed embeddings: {indexResponse.TotalEmbeddings}");
 Console.WriteLine($"Elapsed time: {indexResponse.ElapsedTime}");
 ```
 #### Search for memories based on a query
 ```csharp
-var searchResponse = await embeddingMemoryService.SearchAsync(new SearchMemoryRequest
+var searchRequest = new SearchMemoryRequest
 {
     Query = "Preferred communication channel",
     Criteria = new MemoryCriteria
     {
         UserId = "user-id"
         ThreadId = "thread-id",
+        // additional criteria
     },
-    Limit = 5
-});
+    Limit = 5,
+    CurrentThreadId = "current-thread" // optional: For boosting results of the current thread.
+};
+
+var searchResponse = await embeddingMemoryService
+    .SearchAsync(searchRequest);
 
 foreach (var result in searchResponse.Results)
 {
@@ -755,16 +754,20 @@ foreach (var result in searchResponse.Results)
 ```
 #### Query memories directly with filtering and paging
 ```csharp
-var queryResponse = await embeddingMemoryService.QueryAsync(new QueryMemoryRequest
+var queryRequest = new QueryMemoryRequest
 {
     Criteria = new MemoryCriteria
     {
         UserId = "user-id"
         ThreadId = "thread-id",
+        // additional criteria
     },
     Limit = 5,
     Skip = 0
-});
+}
+
+var queryResponse = await embeddingMemoryService
+    .QueryAsync(queryRequest);
 
 foreach (var memory in queryResponse.Results)
 {
@@ -773,12 +776,15 @@ foreach (var memory in queryResponse.Results)
 ```
 #### Delete specific memories by ID
 ```csharp
-await embeddingMemoryService.DeleteAsync(new DeleteRequest
+var deleteRequest = new DeleteRequest
 {
     Ids = ["id"]
-});
+};
+
+await embeddingMemoryService
+    .DeleteAsync(deleteRequest);
 ```
-<br />
+<br /><br />
 
 ## 📚 Embedding Knowledge Service
 The `IEmbeddingKnowledgeService` provides semantic knowledge storage and retrieval built on embeddings.  
@@ -834,73 +840,75 @@ var embeddingKnowledgeService = serviceProvider.GetService<IEmbeddingKnowledgeSe
 ```
 #### Index plain text
 ```csharp
-var indexResponse = await knowledgeService.IndexAsync(new IndexTextRequest
+var indexRequest = new IndexTextRequest
 {
-    TenantId = "tenant-id",
-    SubTenantId = "sub-tenant-id",
-    ScopeId = "scope-id",
-    UserId = "user-id",
-    Source = "importer",
-    CreatedBy = "importer",
-    Tags = new[] { "product", "spec" },
     Text = "This device supports Bluetooth 5.3 and WiFi 6E."
-});
+    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, Config Overrides, etc
+};
+
+var indexResponse = await knowledgeService
+    .IndexAsync(indexRequest);
 
 Console.WriteLine($"Total embeddings: {indexResponse.TotalEmbeddings}");
 Console.WriteLine($"Total size: {indexResponse.TotalEmbeddingsSize}");
 ```
 #### Index typed a knowledge entry (json embedding)
 ```csharp
-public class ProductSpec
+public class Product
 {
     public string Name { get; set; }
     public string[] Features { get; set; }
 }
-var typedIndexResponse = await knowledgeService.IndexAsync(new IndexTextRequest<ProductSpec>
-{
-    TenantId = "tenant-id",
-    Tags = new[] { "product" },
-    Text = new ProductSpec { Name = "SmartSensor 3000", Features = new[] { "Bluetooth 5.3", "WiFi 6E", "10-year battery" } };
-});
 
-Console.WriteLine($"Total embeddings (typed): {typedIndexResponse.TotalEmbeddings}");
+var indexRequest = new IndexTextRequest<Product>
+{
+    Text = new Product { Name = "SmartSensor 3000", Features = new[] { "Bluetooth 5.3", "WiFi 6E", "10-year battery" } };
+    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, Config Overrides, etc.
+}
+
+var indexResponse = await knowledgeService
+    .IndexAsync(indexRequest);
+
+Console.WriteLine($"Total embeddings (typed): {indexResponse.TotalEmbeddings}");
 ```
 #### Index a blob (document/audio/image/video)
 ```csharp
-var documentRequest = new IndexDocumentRequest
+var indexRequest = new IndexImageRequest
 {
-    TenantId = "tenant-id",
-    SubTenantId = "sub-tenant-id",
-    ScopeId = "scope-id",
-    UserId = "user-123",
-    Source = "upload",
-    CreatedBy = "uploader",
-    Tags = new[] { "product", "smart-sensor" },
-    Blob = new DocumentBlobMetadata("manual.pdf")
+    Blob = new ImageBlob
     {
-        // Metadata = null -> will be auto-retrieved if UseAutomaticMetadataRetrieval is enabled
-        Metadata = null
+        Data = new BlobDataBase64 { Base64 = "base64" }, // or File, Uri, Stream, etc. 
+        MimeType = ImageMimeType.Png,
+        Metadata = new Metadata  // If Metadata is null, it will be automatically retrieved from the blob if Metadata is configured in appsettings.
+        {
+            Title = "Quarterly Report Graph",
+            Description = "Q2 financial summary graph"
+        }
     }
+    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, etc.
 };
 
-var docIndexResponse = await knowledgeService.IndexAsync(documentRequest);
+var indexResponse = await knowledgeService
+    .IndexAsync(indexRequest);
 
-Console.WriteLine($"Indexed blob embeddings: {docIndexResponse.TotalEmbeddings}");
-Console.WriteLine($"Metadata token usage: {docIndexResponse.MetadataTokenUsage?.InputTokens ?? 0}");
+Console.WriteLine($"Indexed blob embeddings: {indexResponse.TotalEmbeddings}");
+Console.WriteLine($"Metadata token usage: {indexResponse.MetadataTokenUsage?.InputTokens ?? 0}");
 ```
 #### Search knowledge (semantic similarity)
 ```csharp
-var searchResponse = await knowledgeService.SearchAsync(new SearchKnowledgeRequest
+var searchRequest = new SearchKnowledgeRequest
 {
     Query = "Which devices support WiFi 6E?",
-    Limit = 5,
     Criteria = new KnowledgeCriteria
     {
         TenantId = "tenant-id",
-        Tag = "product",
-        // optional: Language, SubTenantId, UserId, ScopeId, SearchFor, etc.
-    }
-});
+        // additional criteria
+    },
+    Limit = 5,
+};
+
+var searchResponse = await knowledgeService
+    .SearchAsync(searchRequest);
 
 foreach (var result in searchResponse.Results)
 {
@@ -909,16 +917,19 @@ foreach (var result in searchResponse.Results)
 ```
 #### Query knowledge (filtering / paging — no semantic scoring)
 ```csharp
-var queryResponse = await knowledgeService.QueryAsync(new QueryKnowledgeRequest
+var queryRequest = new QueryKnowledgeRequest
 {
     Criteria = new KnowledgeCriteria
     {
         TenantId = "tenant-id",
-        Tag = "manual"
+        // additional criteria
     },
     Limit = 10,
     Skip = 0
-});
+};
+
+var queryResponse = await knowledgeService
+    .QueryAsync(queryRequest);
 
 foreach (var result in queryResponse.Results)
 {
@@ -927,12 +938,15 @@ foreach (var result in queryResponse.Results)
 ```
 #### Delete specific knowledge by ID
 ```csharp
-await embeddingMemoryService.DeleteAsync(new DeleteRequest
+var deleteRequest = new DeleteRequest
 {
     Ids = ["id"]
-});
+};
+
+await embeddingMemoryService
+    .DeleteAsync(deleteRequest);
 ```
-<br />
+<br /><br />
 
 ## 🗂️ Metadata Service
 The `IMetadataService` provides structured metadata extraction from binary blob content such as **images, audio, video, and documents**. It uses a **chat completion model** with prompt templates to retrieve metadata automatically. The service supports both **basic metadata** (summary and description) and **strongly-typed additional metadata**. Every response also includes **elapsed time, token usage, and internal error information**, making it easy to track usage and performance.  
@@ -965,7 +979,9 @@ Example `appsettings.json` snippet showing how to configure `IMetadataService` u
 ```json
 "Ai": {
   "Metadata": {
-    "Model": { },
+    "Model": {
+      "Name": "<your-metadata-chat-model>",
+    }
     "SummaryMaxWords": 30,
     "DescriptionMaxWords": 90,
     "Timeout": "00:01:00"
@@ -995,12 +1011,21 @@ public class InvoiceMetadata
     public DateTime? InvoiceDate { get; set; }
     public decimal? TotalAmount { get; set; }
 }
-var request = new GetMetadataRequest
+
+var metadataRequest = new GetMetadataRequest
 {
-    Blob = new FileBlob("invoice.pdf")
+    Blob = new DocumentBlob
+    {
+        Data = new BlobDataBase64
+        {
+            Base64 = "base64"
+        },
+        MimeType = ImageMimeType.Jpg
+    }
 };
 
-var response = await metadataService.GetAsync<InvoiceMetadata>(request);
+var response = await metadataService
+    .GetAsync<InvoiceMetadata>(metadataRequest);
 
 Console.WriteLine($"Summary: {response.Metadata.Summary}");
 Console.WriteLine($"Description: {response.Metadata.Description}");
@@ -1009,7 +1034,7 @@ Console.WriteLine($"Invoice Number: {response.AdditionalMetadata.InvoiceNumber}"
 Console.WriteLine($"Invoice Date: {response.AdditionalMetadata.InvoiceDate}");
 Console.WriteLine($"Total Amount: {response.AdditionalMetadata.TotalAmount}");
 ```
-<br />
+<br /><br />
 
 ## ✂️ Summarization Service
 The `ISummarizationService` provides **memory summarization** for questions and answers using an LLM chat completion service. It supports **custom summarization degrees**, leaving inline JSON or XML untouched. Every response includes **elapsed time, token usage, and internal error information**, making it easy to track performance and usage.  
@@ -1047,7 +1072,9 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
 ```json
 "Ai": {
   "Summarization": {
-    "Model": { },
+    "Model": {
+      "Name": "<your-summarization-chat-model>",
+    }
     "SummarizationDegree": 25,
     "Timeout": "00:01:00"
   }
@@ -1059,7 +1086,7 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
 | --------------------------------- | -------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Summarization                     |          |           | Summarization service configuration.                                                                                                          |
 | Summarization.Model               |          |           | Chat model configuration for summarization. The model configuration is identical to [Chat Model Configuration](#-chat-configuration-details)  |
-| Summarization.SummarizationDegree | int      | 25        | Controls how aggressively content is summarized (0 - 100).                                                                                                        |
+| Summarization.SummarizationDegree | int      | 25        | Controls how aggressively content is summarized (0 - 100).                                                                                    |
 | Summarization.Timeout             | TimeSpan | 00:01:00  | Maximum time allowed for a summarization request.                                                                                             |
 
 ### 🚀 Example Usage
@@ -1069,25 +1096,26 @@ var summarizationService = serviceProvider.GetService<ISummarizationService>();
 ```
 #### Get metadata
 ```csharp
-var request = new SummarizeMemoryRequest
+var summarizationRequest = new SummarizeMemoryRequest
 {
     Question = "What were the main points of the meeting?",
     Answer = "We discussed the quarterly financials, the upcoming project deadlines, and team restructuring.",
     SummarizationDegree = 50
 };
 
-var response = await summarizationService.SummarizeMemoryAsync(request);
+var response = await summarizationService
+    .SummarizeMemoryAsync(summarizationRequest);
 
 Console.WriteLine($"Question Summarized: {response.QuestionSummarized}");
 Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 ```
-<br />
+<br /><br />
 
-## 💡 Other Highlighted Features
+## ⚡ Core Service Concepts
 ### 📩 Request/Response Pattern
 - All services follow a **request/response pattern**, where requests contain input data and optional configuration, and responses return structured results along with metadata such as **elapsed time** and **token usage**.
 - Responses may include additional strongly-typed data depending on the service (e.g., additional metadata or summarized content).
-- Asynchronous processing is supported throughout to ensure non-blocking operations.
+- Asynchronous processing is supported throughout to ensure non-blocking operations.  
 <br />
 
 ### 🧰 Request Configuration Overrides
@@ -1115,40 +1143,76 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 <br />
 
 ### 💚 Health Checks
-Health-checks can be enabled for all services (models) in confiugration. When enabling and ASP.NET Core health-check middleware is configured in your application, each service will invoke periodic health requests to your models and ensure they are alive. The request simply invokes a prompt "ping", and expect to get one token back for success.
+- Health-checks can be enabled for all services (models) in confiugration. When enabling and ASP.NET Core health-check middleware is configured in your application, each service will invoke periodic health requests to your models and ensure they are alive. The request simply invokes a prompt "ping", and expect to get one token back for success.
+<br />
 <br />
 
 ## 💡 Other Highlighted Features
 ### 🔀 Advanced Text Chunking  
-Coming...  
-// BUG: Readme: EMBEDDING: Check that we have included the support for indexing json and xml
-// add more notes in readme about the prompts. e.g. that json / xml is never summarized
-// json response in embedding memory is never summarized
-<br />
+When storing embeddings in a vector store, the quality of retrieval depends heavily on how the original text is chunked.  
+This library includes an **advanced text-chunking engine** that goes far beyond simple paragraph or sentence splitting.  
+
+#### Key Features  
+- **Paragraph-aware splitting** – Text is first divided into paragraphs to keep logical boundaries intact.  
+- **Mixed content handling** – Embedded **JSON** or **XML** blocks are detected and treated as atomic units, preventing them from being broken into invalid fragments.  
+- **Smart sentence detection** – Sentences are split carefully, accounting for edge cases like abbreviations (`e.g.`, `U.S.`), decimals (`3.14`), and initials (`J.R.R.`), so chunks don’t split in the wrong places.  
+- **Dynamic token-based merging** – Sentences are merged into chunks based on configurable **min/max token thresholds**. This ensures chunks are neither too small (losing context) nor too large (exceeding embedding model limits). Oversized blocks (like large JSON/XML) are preserved as standalone chunks.  
+- **Context-aware retrieval** – Neighboring chunks can be retrieved alongside a target chunk, optionally restricted to the same paragraph, providing more coherent context for embeddings and downstream LLM calls.  
+
+#### Benefits  
+- Produces **high-quality, semantically coherent chunks** optimized for embeddings.  
+- Works reliably with **mixed structured/unstructured content**.  
+- Reduces **duplicate or fragmented embeddings**, improving retrieval accuracy.  
+- Easy to configure with `minTokensPerChunk` and `maxTokensPerChunk` settings.  
+<br /><br />
 
 ### 🧹 Context Deduplication
-Coming...  
-<br />
+When working with embeddings and vector search, it’s common to retrieve **highly similar or duplicate results**.  
+This library includes a **context deduplication engine** that automatically merges or removes near-duplicate results,  
+ensuring cleaner and more meaningful responses.  
+
+#### Key Features  
+- **Semantic deduplication** – Results with highly similar text (`similarityThreshold`, default `0.90`) are merged into a single entry.  
+- **Blob-aware detection** – If results reference the same underlying blob (file, document, etc.), they are automatically deduplicated by hash.  
+- **Recency preference** – When duplicates are found, the most recent result is kept while older context is merged into it.  
+- **Memory Question/Answer pair collapsing** – Questions and their corresponding answers are recognized and merged together, reducing redundancy.  
+- **Configurable thresholds** – Fine-tune the similarity threshold for different use cases (memory recall vs. knowledge retrieval).  
+
+#### Benefits  
+- Prevents **duplicate or repetitive answers** in retrieval.  
+- Keeps **question/answer pairs clean and consistent**.  
+- Improves **retrieval accuracy** by reducing noise in memory and knowledge results.  
+- Ensures the **freshest and most relevant context** is always retained.
+<br /><br /><br />
 
 ## 📎 Appendix
+### 🔑 Licensing
+Vivet.AI has a dual license model with a community license for noncommercial use: [Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). 
+With this license Vivet.AI is free to use for personal/noncommercial use, A Commercial licenses, which includes support, is required for commercial use 
+and can be purchased by sending a request to **licensing@vivetonline.com**  
+
+You can read the full [Vivet.AI License](https://raw.githubusercontent.com/vivet-software/Vivet.AI/refs/heads/master/LICENSE) here.  
+For guidance on setting up and using a commercial license, see [Licensing](#-licensing).
+<br /><br />
+
 ### ⚙️ Appsettings
-General about configuration, that most have default values that works for most cases. Fill out Endpoint, APikey, vector stores and the model names.  
+Most settings have sensible defaults that work out of the box.  
+For minimal configuration, you only need to provide **Endpoint**, **API Key**, a **vector store**, and the **model names** to use.  
 
 #### Minimal Configuration without default values
 ```json
 {
   "Ai": {
-    "Endpoint": "endpoint",
-    "ApiKey": "apiey",
-    "ApiKeyId": null,
+    "Endpoint": "<your-endpoint>",
+    "ApiKey": "<youe-apikey>",
     "Chat": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
       }
     },
     "Embedding": {
       "Model": {
-        "Name": "text-embedding-ada-002",
+        "Name": "<youe-embedding-model>",
       },
       "Memory": {
         "VectorStore": {
@@ -1165,12 +1229,12 @@ General about configuration, that most have default values that works for most c
     },
     "Metadata": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
       }
     },
     "Summarization": {
       "Model": {
-        "Name": "gpt-4.1"
+        "Name": "<youe-chat-model>",
       }
     }
   }
@@ -1180,12 +1244,12 @@ General about configuration, that most have default values that works for most c
 ```json
 {
   "Ai": {
-    "Endpoint": null,
-    "ApiKey": null,
+    "Endpoint": "<your-endpoint>",
+    "ApiKey": "<youe-apikey>",
     "ApiKeyId": null,
     "Chat": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
@@ -1217,7 +1281,7 @@ General about configuration, that most have default values that works for most c
     },
     "Embedding": {
       "Model": {
-        "Name": "text-embedding-ada-002",
+        "Name": "<youe-embedding-model>",
         "UseHealthCheck": true
       },
       "VectorSize": 1536,
@@ -1281,7 +1345,7 @@ General about configuration, that most have default values that works for most c
     },
     "Metadata": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
@@ -1303,7 +1367,7 @@ General about configuration, that most have default values that works for most c
     },
     "Summarization": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
@@ -1325,4 +1389,3 @@ General about configuration, that most have default values that works for most c
   }
 }
 ```
-<br />
