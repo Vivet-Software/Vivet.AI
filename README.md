@@ -1067,7 +1067,6 @@ var response = await summarizationService.SummarizeMemoryAsync(request);
 Console.WriteLine($"Question Summarized: {response.QuestionSummarized}");
 Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 ```
-
 <br /><br />
 
 ## ⚡ Core Service Concepts
@@ -1109,9 +1108,6 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 ## 💡 Other Highlighted Features
 ### 🔀 Advanced Text Chunking  
 Coming...  
-// BUG: Readme: EMBEDDING: Check that we have included the support for indexing json and xml
-// add more notes in readme about the prompts. e.g. that json / xml is never summarized
-// json response in embedding memory is never summarized
 <br /><br />
 
 ### 🧹 Context Deduplication
@@ -1136,17 +1132,16 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
 ```json
 {
   "Ai": {
-
     "Endpoint": "<your-endpoint>",
     "ApiKey": "<youe-apikey>",
     "Chat": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
       }
     },
     "Embedding": {
       "Model": {
-        "Name": "text-embedding-ada-002",
+        "Name": "<youe-embedding-model>",
       },
       "Memory": {
         "VectorStore": {
@@ -1163,12 +1158,12 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     },
     "Metadata": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
       }
     },
     "Summarization": {
       "Model": {
-        "Name": "gpt-4.1"
+        "Name": "<youe-chat-model>",
       }
     }
   }
@@ -1179,11 +1174,11 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
 {
   "Ai": {
     "Endpoint": "<your-endpoint>",
-    "ApiKey": null,
+    "ApiKey": "<youe-apikey>",
     "ApiKeyId": null,
     "Chat": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
@@ -1215,7 +1210,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     },
     "Embedding": {
       "Model": {
-        "Name": "text-embedding-ada-002",
+        "Name": "<youe-embedding-model>",
         "UseHealthCheck": true
       },
       "VectorSize": 1536,
@@ -1279,7 +1274,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     },
     "Metadata": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
@@ -1301,7 +1296,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     },
     "Summarization": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": "<youe-chat-model>",
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
