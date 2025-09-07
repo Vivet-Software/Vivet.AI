@@ -389,7 +389,7 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 "Ai": {
   "Chat": {
     "Model": {
-      "Name": null,
+      "Name": "<your-chat-model>",
       "UseHealthCheck": true,
       "Parameters": {
         "MaxOutputTokens": 2048,
@@ -528,7 +528,7 @@ The **Embedding** configuration contains settings shared by both **Memory** and 
 "Ai": {
   "Embedding": {
     "Model": {
-      "Name": null,
+      "Name": "<your-embedding-model>",
       "UseHealthCheck": true
     },
     "VectorSize": 1536,
@@ -688,51 +688,64 @@ var embeddingMemoryService = serviceProvider.GetService<IEmbeddingMemoryService>
 ```
 #### Index a memory entry
 ```csharp
-var indexResponse = await embeddingMemoryService.IndexAsync(new IndexMemoryRequest<string>
+var indexRequest = new IndexMemoryRequest<string>
 {
     ThreadId = "thread-id",
     UserId = "user-id",
     Question = "What is the customer's preferred communication channel?",
     Answer = "Email",
     Blobs = new BaseBlobMetadata[] { } // optional
-});
+    // optional: Language, Config Overrides, etc.
+};
+
+var indexResponse = await embeddingMemoryService
+    .IndexAsync(indexRequest);
 
 Console.WriteLine($"Indexed embeddings: {indexResponse.TotalEmbeddings}");
 Console.WriteLine($"Indexed embeddings size: {indexResponse.TotalEmbeddingsSize}");
 ```
 #### Index typed a memory entry (json embedding)
 ```csharp
-public class CustomerProfile
+public class Customer
 {
     public string Name { get; set; }
     public string Email { get; set; }
     public string PreferredChannel { get; set; }
 }
 
-var indexResponse = await embeddingMemoryService.IndexAsync(new IndexMemoryRequest<CustomerProfile>
+var indexRequest = new IndexMemoryRequest<Customer>
 {
     ThreadId = "thread-id",
     UserId = "user-id",
-    Question = "Customer profile details",
-    Answer = new CustomerProfile { Name = "Alice Johnson", Email = "alice@example.com", PreferredChannel = "Email" },
+    Question = "Customer details",
+    Answer = new Customer { Name = "Alice Johnson", Email = "alice@example.com", PreferredChannel = "Email" },
     Blobs = new BaseBlobMetadata[] { } // optional
-});
+    // optional: Language, Config Overrides, etc.
+};
+
+var indexResponse = await embeddingMemoryService
+    .IndexAsync(indexRequest);
 
 Console.WriteLine($"Indexed embeddings: {indexResponse.TotalEmbeddings}");
 Console.WriteLine($"Elapsed time: {indexResponse.ElapsedTime}");
 ```
 #### Search for memories based on a query
 ```csharp
-var searchResponse = await embeddingMemoryService.SearchAsync(new SearchMemoryRequest
+var searchRequest = new SearchMemoryRequest
 {
     Query = "Preferred communication channel",
     Criteria = new MemoryCriteria
     {
         UserId = "user-id"
         ThreadId = "thread-id",
+        // additional criteria
     },
-    Limit = 5
-});
+    Limit = 5,
+    CurrentThreadId = "current-thread" // optional: For boosting results of the current thread.
+};
+
+var searchResponse = await embeddingMemoryService
+    .SearchAsync(searchRequest);
 
 foreach (var result in searchResponse.Results)
 {
@@ -741,16 +754,20 @@ foreach (var result in searchResponse.Results)
 ```
 #### Query memories directly with filtering and paging
 ```csharp
-var queryResponse = await embeddingMemoryService.QueryAsync(new QueryMemoryRequest
+var queryRequest = new QueryMemoryRequest
 {
     Criteria = new MemoryCriteria
     {
         UserId = "user-id"
         ThreadId = "thread-id",
+        // additional criteria
     },
     Limit = 5,
     Skip = 0
-});
+}
+
+var queryResponse = await embeddingMemoryService
+    .QueryAsync(queryRequest);
 
 foreach (var memory in queryResponse.Results)
 {
@@ -759,10 +776,13 @@ foreach (var memory in queryResponse.Results)
 ```
 #### Delete specific memories by ID
 ```csharp
-await embeddingMemoryService.DeleteAsync(new DeleteRequest
+var deleteRequest = new DeleteRequest
 {
     Ids = ["id"]
-});
+};
+
+await embeddingMemoryService
+    .DeleteAsync(deleteRequest);
 ```
 <br /><br />
 
@@ -820,73 +840,75 @@ var embeddingKnowledgeService = serviceProvider.GetService<IEmbeddingKnowledgeSe
 ```
 #### Index plain text
 ```csharp
-var indexResponse = await knowledgeService.IndexAsync(new IndexTextRequest
+var indexRequest = new IndexTextRequest
 {
-    TenantId = "tenant-id",
-    SubTenantId = "sub-tenant-id",
-    ScopeId = "scope-id",
-    UserId = "user-id",
-    Source = "importer",
-    CreatedBy = "importer",
-    Tags = new[] { "product", "spec" },
     Text = "This device supports Bluetooth 5.3 and WiFi 6E."
-});
+    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, Config Overrides, etc
+};
+
+var indexResponse = await knowledgeService
+    .IndexAsync(indexRequest);
 
 Console.WriteLine($"Total embeddings: {indexResponse.TotalEmbeddings}");
 Console.WriteLine($"Total size: {indexResponse.TotalEmbeddingsSize}");
 ```
 #### Index typed a knowledge entry (json embedding)
 ```csharp
-public class ProductSpec
+public class Product
 {
     public string Name { get; set; }
     public string[] Features { get; set; }
 }
-var typedIndexResponse = await knowledgeService.IndexAsync(new IndexTextRequest<ProductSpec>
-{
-    TenantId = "tenant-id",
-    Tags = new[] { "product" },
-    Text = new ProductSpec { Name = "SmartSensor 3000", Features = new[] { "Bluetooth 5.3", "WiFi 6E", "10-year battery" } };
-});
 
-Console.WriteLine($"Total embeddings (typed): {typedIndexResponse.TotalEmbeddings}");
+var indexRequest = new IndexTextRequest<Product>
+{
+    Text = new Product { Name = "SmartSensor 3000", Features = new[] { "Bluetooth 5.3", "WiFi 6E", "10-year battery" } };
+    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, Config Overrides, etc.
+}
+
+var indexResponse = await knowledgeService
+    .IndexAsync(indexRequest);
+
+Console.WriteLine($"Total embeddings (typed): {indexResponse.TotalEmbeddings}");
 ```
 #### Index a blob (document/audio/image/video)
 ```csharp
-var documentRequest = new IndexDocumentRequest
+var indexRequest = new IndexImageRequest
 {
-    TenantId = "tenant-id",
-    SubTenantId = "sub-tenant-id",
-    ScopeId = "scope-id",
-    UserId = "user-123",
-    Source = "upload",
-    CreatedBy = "uploader",
-    Tags = new[] { "product", "smart-sensor" },
-    Blob = new DocumentBlobMetadata("manual.pdf")
+    Blob = new ImageBlob
     {
-        // Metadata = null -> will be auto-retrieved if UseAutomaticMetadataRetrieval is enabled
-        Metadata = null
+        Data = new BlobDataBase64 { Base64 = "base64" }, // or File, Uri, Stream, etc. 
+        MimeType = ImageMimeType.Png,
+        Metadata = new Metadata  // If Metadata is null, it will be automatically retrieved from the blob if Metadata is configured in appsettings.
+        {
+            Title = "Quarterly Report Graph",
+            Description = "Q2 financial summary graph"
+        }
     }
+    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, etc.
 };
 
-var docIndexResponse = await knowledgeService.IndexAsync(documentRequest);
+var indexResponse = await knowledgeService
+    .IndexAsync(indexRequest);
 
-Console.WriteLine($"Indexed blob embeddings: {docIndexResponse.TotalEmbeddings}");
-Console.WriteLine($"Metadata token usage: {docIndexResponse.MetadataTokenUsage?.InputTokens ?? 0}");
+Console.WriteLine($"Indexed blob embeddings: {indexResponse.TotalEmbeddings}");
+Console.WriteLine($"Metadata token usage: {indexResponse.MetadataTokenUsage?.InputTokens ?? 0}");
 ```
 #### Search knowledge (semantic similarity)
 ```csharp
-var searchResponse = await knowledgeService.SearchAsync(new SearchKnowledgeRequest
+var searchRequest = new SearchKnowledgeRequest
 {
     Query = "Which devices support WiFi 6E?",
-    Limit = 5,
     Criteria = new KnowledgeCriteria
     {
         TenantId = "tenant-id",
-        Tag = "product",
-        // optional: Language, SubTenantId, UserId, ScopeId, SearchFor, etc.
-    }
-});
+        // additional criteria
+    },
+    Limit = 5,
+};
+
+var searchResponse = await knowledgeService
+    .SearchAsync(searchRequest);
 
 foreach (var result in searchResponse.Results)
 {
@@ -895,16 +917,19 @@ foreach (var result in searchResponse.Results)
 ```
 #### Query knowledge (filtering / paging — no semantic scoring)
 ```csharp
-var queryResponse = await knowledgeService.QueryAsync(new QueryKnowledgeRequest
+var queryRequest = new QueryKnowledgeRequest
 {
     Criteria = new KnowledgeCriteria
     {
         TenantId = "tenant-id",
-        Tag = "manual"
+        // additional criteria
     },
     Limit = 10,
     Skip = 0
-});
+};
+
+var queryResponse = await knowledgeService
+    .QueryAsync(queryRequest);
 
 foreach (var result in queryResponse.Results)
 {
@@ -913,10 +938,13 @@ foreach (var result in queryResponse.Results)
 ```
 #### Delete specific knowledge by ID
 ```csharp
-await embeddingMemoryService.DeleteAsync(new DeleteRequest
+var deleteRequest = new DeleteRequest
 {
     Ids = ["id"]
-});
+};
+
+await embeddingMemoryService
+    .DeleteAsync(deleteRequest);
 ```
 <br /><br />
 
@@ -951,7 +979,7 @@ Example `appsettings.json` snippet showing how to configure `IMetadataService` u
 ```json
 "Ai": {
   "Metadata": {
-    "Model": { },
+    "Model": { /* chat model */ },
     "SummaryMaxWords": 30,
     "DescriptionMaxWords": 90,
     "Timeout": "00:01:00"
@@ -981,12 +1009,21 @@ public class InvoiceMetadata
     public DateTime? InvoiceDate { get; set; }
     public decimal? TotalAmount { get; set; }
 }
-var request = new GetMetadataRequest
+
+var metadataRequest = new GetMetadataRequest
 {
-    Blob = new FileBlob("invoice.pdf")
+    Blob = new DocumentBlob
+    {
+        Data = new BlobDataBase64
+        {
+            Base64 = "base64"
+        },
+        MimeType = ImageMimeType.Jpg
+    }
 };
 
-var response = await metadataService.GetAsync<InvoiceMetadata>(request);
+var response = await metadataService
+    .GetAsync<InvoiceMetadata>(metadataRequest);
 
 Console.WriteLine($"Summary: {response.Metadata.Summary}");
 Console.WriteLine($"Description: {response.Metadata.Description}");
@@ -1033,7 +1070,7 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
 ```json
 "Ai": {
   "Summarization": {
-    "Model": { },
+    "Model": { /* chat model */ },
     "SummarizationDegree": 25,
     "Timeout": "00:01:00"
   }
@@ -1055,14 +1092,15 @@ var summarizationService = serviceProvider.GetService<ISummarizationService>();
 ```
 #### Get metadata
 ```csharp
-var request = new SummarizeMemoryRequest
+var summarizationRequest = new SummarizeMemoryRequest
 {
     Question = "What were the main points of the meeting?",
     Answer = "We discussed the quarterly financials, the upcoming project deadlines, and team restructuring.",
     SummarizationDegree = 50
 };
 
-var response = await summarizationService.SummarizeMemoryAsync(request);
+var response = await summarizationService
+    .SummarizeMemoryAsync(summarizationRequest);
 
 Console.WriteLine($"Question Summarized: {response.QuestionSummarized}");
 Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
