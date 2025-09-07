@@ -53,7 +53,7 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;🧹 [Context Deduplication](#-context-deduplication)  
 
 ### 📎 [Appendix](#-appendix-1)
-&nbsp;&nbsp;&nbsp;&nbsp;🔑 [Licensing](#-licensing)
+&nbsp;&nbsp;&nbsp;&nbsp;🔑 [Licensing](#-licensing)  
 &nbsp;&nbsp;&nbsp;&nbsp;⚙️ [Complete Configuration](#%EF%B8%8F-appsettings)
 <br /><br /><br />
 
