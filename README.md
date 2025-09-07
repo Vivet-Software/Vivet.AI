@@ -1072,13 +1072,14 @@ var response = await summarizationService.SummarizeMemoryAsync(request);
 Console.WriteLine($"Question Summarized: {response.QuestionSummarized}");
 Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 ```
-<br />
 
-## 💡 Other Highlighted Features
+<br /><br />
+
+## ⚡ Core Service Concepts
 ### 📩 Request/Response Pattern
 - All services follow a **request/response pattern**, where requests contain input data and optional configuration, and responses return structured results along with metadata such as **elapsed time** and **token usage**.
 - Responses may include additional strongly-typed data depending on the service (e.g., additional metadata or summarized content).
-- Asynchronous processing is supported throughout to ensure non-blocking operations.
+- Asynchronous processing is supported throughout to ensure non-blocking operations.  
 <br />
 
 ### 🧰 Request Configuration Overrides
@@ -1108,6 +1109,7 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 ### 💚 Health Checks
 - Health-checks can be enabled for all services (models) in confiugration. When enabling and ASP.NET Core health-check middleware is configured in your application, each service will invoke periodic health requests to your models and ensure they are alive. The request simply invokes a prompt "ping", and expect to get one token back for success.
 <br />
+<br />
 
 ## 💡 Other Highlighted Features
 ### 🔀 Advanced Text Chunking  
@@ -1115,23 +1117,23 @@ Coming...
 // BUG: Readme: EMBEDDING: Check that we have included the support for indexing json and xml
 // add more notes in readme about the prompts. e.g. that json / xml is never summarized
 // json response in embedding memory is never summarized
-<br />
+<br /><br />
 
 ### 🧹 Context Deduplication
 Coming...  
-<br />
+<br /><br />
 
 ## 📎 Appendix
 ### ⚙️ Appsettings
-General about configuration, that most have default values that works for most cases. Fill out Endpoint, APikey, vector stores and the model names.  
+FIX: General about configuration, that most have default values that works for most cases. Fill out Endpoint, APikey, vector stores and the model names.  
 
 #### Minimal Configuration without default values
 ```json
 {
   "Ai": {
-    "Endpoint": "endpoint",
-    "ApiKey": "apiey",
-    "ApiKeyId": null,
+
+    "Endpoint": "<your-endpoint>",
+    "ApiKey": "<youe-apikey>",
     "Chat": {
       "Model": {
         "Name": "gpt-4.1",
@@ -1171,7 +1173,7 @@ General about configuration, that most have default values that works for most c
 ```json
 {
   "Ai": {
-    "Endpoint": null,
+    "Endpoint": "<your-endpoint>",
     "ApiKey": null,
     "ApiKeyId": null,
     "Chat": {
@@ -1316,4 +1318,3 @@ General about configuration, that most have default values that works for most c
   }
 }
 ```
-<br />
