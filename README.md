@@ -13,8 +13,7 @@ Build **smarter, faster, and context-aware AI experiences** with minimal boilerp
 
 The library supports **all major orchestration frameworks** and a variety of **vector stores** for memory and knowledge management. 
 Every service follows a **request/response pattern**, includes **token and performance tracking**, and allows **per-request 
-configuration overrides**. With built-in extensibility, developers can replace any service with their own implementation while still 
-benefiting from **robust memory, metadata, and summarization workflows**.  
+configuration overrides**.    
 
 ## License
 Vivet.AI has a dual license model with a community license for noncommercial use: [Polyform Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). 
