@@ -355,7 +355,8 @@ Provision an Azure AI Search resource in the Azure portal.
 
 #### Dashboard: 
 https://portal.azure.com ⤴
-<br /><br /><br />
+
+<br /><br />
 
 ## 🗨️ Chat Service
 The `IChatService` combines LLMs, memory, knowledge bases, and multimodal context into a single conversational API. It supports both **plain text and typed JSON responses**, **real-time streaming**, and automatic **memory + knowledge enrichment**. Developers can attach blobs (documents, images, audio, video), and the service will automatically extract **summary and description metadata** to ground the conversation. With built-in support for **reasoning transparency**, **token usage tracking**, and **automatic memory indexing**, `ChatService` provides everything needed to build intelligent, context-aware chat applications on .NET.
@@ -521,7 +522,7 @@ await foreach (var chunk in chatService
     Console.Write(chunk);
 }
 ```
-<br /><br /><br />
+<br /><br />
 
 ## 🧩 Embedding
 The **Embedding** configuration contains settings shared by both **Memory** and **Knowledge**, including the embedding **model**, **vector size**, **match score threshold**, and **timeout**.
@@ -629,7 +630,7 @@ Defines which vector database to use for embedding storage and retrieval.
 | `Timeout`        | TimeSpan | `00:00:30`  | Query timeout.                                                                                                     |
 | `UseHealthCheck` | bool     | `true`      | Whether to check connectivity on startup.                                                                          |
 
-<br /><br /><br />
+<br /><br />
 
 ## 🧠 Embedding Memory Service
 The `IEmbeddingMemoryService` provides semantic memory storage and retrieval built on embeddings.  
@@ -768,7 +769,7 @@ await embeddingMemoryService.DeleteAsync(new DeleteRequest
     Ids = ["id"]
 });
 ```
-<br /><br /><br />
+<br /><br />
 
 ## 📚 Embedding Knowledge Service
 The `IEmbeddingKnowledgeService` provides semantic knowledge storage and retrieval built on embeddings.  
@@ -922,7 +923,7 @@ await embeddingMemoryService.DeleteAsync(new DeleteRequest
     Ids = ["id"]
 });
 ```
-<br /><br /><br />
+<br /><br />
 
 ## 🗂️ Metadata Service
 The `IMetadataService` provides structured metadata extraction from binary blob content such as **images, audio, video, and documents**. It uses a **chat completion model** with prompt templates to retrieve metadata automatically. The service supports both **basic metadata** (summary and description) and **strongly-typed additional metadata**. Every response also includes **elapsed time, token usage, and internal error information**, making it easy to track usage and performance.  
@@ -999,7 +1000,7 @@ Console.WriteLine($"Invoice Number: {response.AdditionalMetadata.InvoiceNumber}"
 Console.WriteLine($"Invoice Date: {response.AdditionalMetadata.InvoiceDate}");
 Console.WriteLine($"Total Amount: {response.AdditionalMetadata.TotalAmount}");
 ```
-<br /><br /><br />
+<br /><br />
 
 ## ✂️ Summarization Service
 The `ISummarizationService` provides **memory summarization** for questions and answers using an LLM chat completion service. It supports **custom summarization degrees**, leaving inline JSON or XML untouched. Every response includes **elapsed time, token usage, and internal error information**, making it easy to track performance and usage.  
@@ -1049,7 +1050,7 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
 | --------------------------------- | -------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Summarization                     |          |           | Summarization service configuration.                                                                                                          |
 | Summarization.Model               |          |           | Chat model configuration for summarization. The model configuration is identical to [Chat Model Configuration](#-chat-configuration-details)  |
-| Summarization.SummarizationDegree | int      | 25        | Controls how aggressively content is summarized (0 - 100).                                                                                                        |
+| Summarization.SummarizationDegree | int      | 25        | Controls how aggressively content is summarized (0 - 100).                                                                                    |
 | Summarization.Timeout             | TimeSpan | 00:01:00  | Maximum time allowed for a summarization request.                                                                                             |
 
 ### 🚀 Example Usage
@@ -1105,7 +1106,7 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 <br />
 
 ### 💚 Health Checks
-Health-checks can be enabled for all services (models) in confiugration. When enabling and ASP.NET Core health-check middleware is configured in your application, each service will invoke periodic health requests to your models and ensure they are alive. The request simply invokes a prompt "ping", and expect to get one token back for success.
+- Health-checks can be enabled for all services (models) in confiugration. When enabling and ASP.NET Core health-check middleware is configured in your application, each service will invoke periodic health requests to your models and ensure they are alive. The request simply invokes a prompt "ping", and expect to get one token back for success.
 <br />
 
 ## 💡 Other Highlighted Features
