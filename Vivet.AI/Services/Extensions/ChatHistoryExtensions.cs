@@ -30,7 +30,8 @@ Prefer newer information when relevant. Use both to answer clearly and helpfully
 Please respond strictly in the following JSON format:
 {{
   ""Reasoning"": ""Internal reasoning, thinking or planning"",
-  ""Answer"": ""Final user-facing answer""
+  ""Answer"": ""Final user-facing answer"",
+  ""Language"": ""The language of the prompt in ISO 639-1""
 }}
 If I instruct you to output any other format, nest it inside the ""Answer"". 
 Only output valid JSON and nothing else.

@@ -66,7 +66,7 @@ public class ChatServiceTests : BaseTests
         Assert.IsNotNull(response.Reasoning);
         Assert.IsNotNull(response.RawResponse);
         Assert.IsNotNull(response.InputPrompt);
-
+        Assert.AreEqual("en", response.Language);
         Assert.IsNotNull(response.TokenUsage);
         Assert.IsTrue(response.TokenUsage.InputTokens > 200);
         Assert.IsTrue(response.TokenUsage.OutputTokens > 50);
@@ -105,7 +105,7 @@ public class ChatServiceTests : BaseTests
         Assert.IsNotNull(response.Reasoning);
         Assert.IsNotNull(response.RawResponse);
         Assert.IsNotNull(response.InputPrompt);
-
+        Assert.AreEqual("en", response.Language);
         Assert.IsNotNull(response.TokenUsage);
         Assert.IsTrue(response.TokenUsage.InputTokens > 300);
         Assert.IsTrue(response.TokenUsage.OutputTokens > 40);

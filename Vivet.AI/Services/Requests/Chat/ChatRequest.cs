@@ -61,11 +61,6 @@ public class ChatRequest
     public virtual string CurrentThreadId { get; set; }
 
     /// <summary>
-    /// The language of the request, typically for localization or model selection.
-    /// </summary>
-    public virtual string Language { get; set; }
-
-    /// <summary>
     /// Collection of optional blobs associated with the request.
     /// These may provide additional context for answering the question.
     /// </summary>

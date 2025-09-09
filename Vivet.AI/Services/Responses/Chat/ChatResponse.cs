@@ -42,4 +42,9 @@ public class ChatResponse<T> : BaseResponse
     /// because the Semantic Kernel connector may do additional formatting (e.g., JSON serialization, role tags, or system messages merged differently).
     /// </summary>
     public virtual string InputPrompt { get; set; }
+
+    /// <summary>
+    /// The language detected of the input prompt.
+    /// </summary>
+    public virtual string Language { get; set; }
 }

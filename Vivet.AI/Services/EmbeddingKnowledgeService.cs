@@ -30,9 +30,6 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// BUG: setting the Language on memory
-// We could for memory just let the chat model return it as part of the json???? GOOD IDEA
-
 // TODO: AI Services
 // - Read the rest of MS web pages
 // - Check common services (Azure, HuggingFace) and consider whether we should integrate them into the library

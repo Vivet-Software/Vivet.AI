@@ -4,7 +4,6 @@
 		<TargetFramework>net9.0</TargetFramework>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
-		<UserSecretsId>2c12163e-ca30-4c6e-9199-d23b0033995e</UserSecretsId>
 		<nowarn>SKEXP0001</nowarn>
 	</PropertyGroup>
 

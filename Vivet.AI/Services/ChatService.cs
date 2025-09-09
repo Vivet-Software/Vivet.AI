@@ -50,6 +50,7 @@ public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionServ
             InputPrompt = response.InputPrompt,
             ElapsedTime = response.ElapsedTime,
             RawResponse = response.RawResponse,
+            Language = response.Language,
             TokenUsage = response.TokenUsage
         };
     }
@@ -415,7 +416,7 @@ public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionServ
                         Answer = response.Answer,
                         UserId = request.UserId,
                         ThreadId = request.CurrentThreadId,
-                        Language = request.Language,
+                        Language = response.Language, 
                         Blobs = request.Blobs,
                         ConfigOverrides =
                         {
