@@ -35,7 +35,6 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<PackageIcon>icon.png</PackageIcon>
-		<PackageIconUrl />
 		<PackageMetadata>
 			<Summary>Free for non-commercial use. Commercial use requires a license. See https://github.com/Vivet-Software/Vivet.AI/blob/master/README.md#license.</Summary>
 		</PackageMetadata>

@@ -30,6 +30,9 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
+// BUG: setting the Language on memory
+// We could for memory just let the chat model return it as part of the json???? GOOD IDEA
+
 // TODO: AI Services
 // - Read the rest of MS web pages
 // - Check common services (Azure, HuggingFace) and consider whether we should integrate them into the library
@@ -50,12 +53,11 @@ namespace Vivet.AI.Services;
 // - SK: Audio to Text (Experimental) ???
 // - Azure.AI.DocumentIntelligence + There was a package also to store files available to the LLM on blob. Check it out.
 // TODO: Automatic Language Detection usig AI, and setting the Language on memory / knowledge
+// We could for memory just let the chat model return it as part of the json???? GOOD IDEA
 
 // ----------------------------------------------------------------------------------------------------------------------
 
 // TODO: Functions / Plugins (check other TODO's)
-
-// TODO: Deployment (check Vivet Software defailt and repo setup, e.g. branch protection, etc)
 
 /// <inheritdoc cref="IEmbeddingKnowledgeService"/>
 public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator, KnowledgeVectorStore vectorStore, IMetadataService metadataService = null)
