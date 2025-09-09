@@ -36,7 +36,7 @@ jobs:
               throw "Build failed";
           };
 
-          dotnet test .\.tests\Tests.$env:APP_NAME\UnitTests.$env:APP_NAME.csproj
+          dotnet test .\.tests\UnitTests.$env:APP_NAME\UnitTests.$env:APP_NAME.csproj
           if ($LastExitCode -ne 0)
           { 
               throw "Tests failed";
