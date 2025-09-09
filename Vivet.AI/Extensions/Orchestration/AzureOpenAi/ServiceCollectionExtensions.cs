@@ -87,8 +87,10 @@ public static class ServiceCollectionExtensions
                 if (options.Embedding != null)
                 {
                     builder
-                        .AddAzureOpenAIEmbeddingGenerator(options.Embedding.Model.Name, options.Endpoint, options.ApiKey)
-                        .AddVectorStoreSearches(x);
+                        .AddAzureOpenAIEmbeddingGenerator(options.Embedding.Model.Name, options.Endpoint, options.ApiKey);
+
+                    //builder
+                    //    .AddVectorStoreSearches(x); // TODO: Kernel: fails with kernel
                 }
 
                 return builder

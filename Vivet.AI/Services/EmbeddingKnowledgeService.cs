@@ -30,10 +30,10 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-
 // TODO: AI Services
 // - Read the rest of MS web pages
 // - Check common services (Azure, HuggingFace) and consider whether we should integrate them into the library
+//   - Check in Azure AI Foundry which types of models that can be deployed (when deploying a model there is a list to filter model types)
 //   - SemanticKernel Services: https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/integrations
 //   - all azure ai services: https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/overview (Azure Document Intelligence)
 //   - Text Analytics: Azure Cognitive Services Text Analytics is a cloud service that provides advanced natural language processing over raw text,
@@ -56,6 +56,9 @@ namespace Vivet.AI.Services;
 // ----------------------------------------------------------------------------------------------------------------------
 
 // TODO: Functions / Plugins (check other TODO's)
+
+// TODO: Check CodeQL and add as check in branch protection when merging to master (it won't trigger before it seems)
+// TODO: Check Sponsors (GitHub is reviewing)
 
 /// <inheritdoc cref="IEmbeddingKnowledgeService"/>
 public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator, KnowledgeVectorStore vectorStore, IMetadataService metadataService = null)

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Vivet.AI.Extensions.Orchestration.AzureInferenceAi;
+using Vivet.AI.Extensions.Orchestration.AzureOpenAi;
 
 namespace IntegrationTests.Vivet.AI;
 
@@ -37,6 +38,7 @@ public class BaseTests
             .AddLogging(x => x.AddConsole());
 
         this.services
-            .AddAzureAiInference();
+            .AddAzureOpenAi();
+            //.AddAzureAiInference();
     }
 }
