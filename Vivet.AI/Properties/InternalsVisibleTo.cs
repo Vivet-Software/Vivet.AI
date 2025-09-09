@@ -1,3 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Tests.Vivet.AI")]
+[assembly: InternalsVisibleTo("UnitTests.Vivet.AI")]
+[assembly: InternalsVisibleTo("IntegrationTests.Vivet.AI")]
