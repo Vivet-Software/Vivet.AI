@@ -17,7 +17,7 @@ using Vivet.AI.Services.Exceptions;
 namespace Vivet.AI.Services;
 
 /// <inheritdoc cref="ISummarizationService"/>
-public class SummarizationService(SummarizationOptions summarizationOptions, IChatCompletionService chatCompletionService, PromptExecutionSettings promptExecutionSettings) 
+public class SummarizationService(SummarizationOptions summarizationOptions, IChatCompletionService chatCompletionService, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings) 
     : BaseService, ISummarizationService
 {
     private readonly SummarizationOptions summarizationOptions = summarizationOptions ?? throw new ArgumentNullException(nameof(summarizationOptions));
@@ -52,8 +52,17 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
             var executionSettings = this.promptExecutionSettings
                 .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
 
+            var kernel = kernelBuilder
+                .Build();
+
+            foreach (var requestPlguin in request.Plugins)
+            {
+                kernel.Plugins
+                    .AddFromObject(requestPlguin);
+            }
+
             chatMessageContent = await this.chatCompletionService
-                .GetChatMessageContentAsync(chatHistory, executionSettings, cancellationToken: cancellationToken)
+                .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
                 .ConfigureAwait(false);
 
             var answer = chatMessageContent.Content

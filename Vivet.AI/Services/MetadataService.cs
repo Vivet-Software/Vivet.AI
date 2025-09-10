@@ -17,7 +17,7 @@ using Vivet.AI.Services.Serialization;
 namespace Vivet.AI.Services;
 
 /// <inheritdoc cref="IMetadataService"/>
-public class MetadataService(MetadataOptions metadataOptions, IChatCompletionService chatCompletionService, PromptExecutionSettings promptExecutionSettings) 
+public class MetadataService(MetadataOptions metadataOptions, IChatCompletionService chatCompletionService, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings) 
     : BaseService, IMetadataService
 {
     private readonly MetadataOptions metadataOptions = metadataOptions ?? throw new ArgumentNullException(nameof(metadataOptions));
@@ -70,9 +70,18 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
 
         var executionSettings = this.promptExecutionSettings
             .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
-        
+
+        var kernel = kernelBuilder
+            .Build();
+
+        foreach (var requestPlguin in request.Plugins)
+        {
+            kernel.Plugins
+                .AddFromObject(requestPlguin);
+        }
+
         var chatMessageContent = await this.chatCompletionService
-            .GetChatMessageContentAsync(chatHistory, executionSettings, cancellationToken: cancellationToken)
+            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
             .ConfigureAwait(false);
 
         var answer = chatMessageContent.Content

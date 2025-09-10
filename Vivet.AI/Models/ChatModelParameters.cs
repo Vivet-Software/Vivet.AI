@@ -14,8 +14,6 @@ using Vivet.AI.Models.Enums;
 
 namespace Vivet.AI.Models;
 
-// TODO: Kernel: FunctionChoiceBehavior commented out
-
 /// <summary>
 /// The parameters for the chat model.
 /// Not all parameters are supported by all orchestrations, and even if an orchestration supports a parameters it's not garanteed that all available models supports specific parameters.
@@ -364,7 +362,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Temperature = this.Temperature,
             TopP = this.TopP,
             PresencePenalty = this.PresencePenalty,
@@ -394,7 +392,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Temperature = this.Temperature,
             TopP = this.TopP,
             PresencePenalty = this.PresencePenalty,
@@ -424,7 +422,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Stop = this.StopSequences.ToList(),
             Temperature = this.Temperature,
             TopP = this.TopP,
@@ -438,7 +436,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Temperature = this.Temperature ?? 1.0F,
             TopP = this.TopP,
             TopK = this.TopK,
@@ -465,7 +463,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(), // TODO: Kernel
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             ExtraParameters = null,
             FrequencyPenalty = this.FrequencyPenalty,
             PresencePenalty = this.PresencePenalty,
@@ -484,7 +482,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Temperature = this.Temperature,
             TopP = this.TopP,
             TopK = this.TopK,
@@ -492,7 +490,7 @@ public class ChatModelParameters
             CandidateCount = 1,
             StopSequences = this.StopSequences,
             SafetySettings = null,
-            ToolCallBehavior = null,
+            ToolCallBehavior = GeminiToolCallBehavior.AutoInvokeKernelFunctions,
             AudioTimestamp = null,
             ResponseMimeType = "text/plain",
             ResponseSchema = null,
@@ -505,7 +503,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             MaxTokensToSample = this.MaxOuputTokens,
             StopSequences = this.StopSequences,
             Temperature = this.Temperature,
@@ -519,7 +517,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Temperature = this.Temperature,
             TopK = this.TopK,
             TopP = this.TopP,
@@ -538,7 +536,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             ChatHistory = null,
             Documents = null,
             SearchQueriesOnly = null,
@@ -564,7 +562,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Temperature = this.Temperature,
             TopP = this.TopP,
             MaxTokens = this.MaxOuputTokens,
@@ -580,7 +578,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Temperature = this.Temperature,
             TopP = this.TopP,
             MaxTokens = this.MaxOuputTokens,
@@ -596,7 +594,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             MaxTokens = this.MaxOuputTokens,
             StopSequences = this.StopSequences,
             Temperature = this.Temperature,
@@ -610,7 +608,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             TopP = this.TopP,
             Temperature = this.Temperature,
             MaxTokenCount = this.MaxOuputTokens,
@@ -623,7 +621,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            //FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
             Temperature = this.Temperature,
             TopP = this.TopP,
             MaxGenLen = this.MaxOuputTokens

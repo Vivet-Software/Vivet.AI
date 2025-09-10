@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
-    public static IServiceCollection AddOpenAi(this IServiceCollection services)
+    public static IServiceCollection AddVivetOpenAi(this IServiceCollection services)
     {
         if (services == null) 
             throw new ArgumentNullException(nameof(services));
@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The service collection to add services to.</param>
     /// <param name="configureOptions">An action to configure <see cref="AiOptions"/>.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
-    public static IServiceCollection AddOpenAi(this IServiceCollection services, Action<AiOptions> configureOptions)
+    public static IServiceCollection AddVivetOpenAi(this IServiceCollection services, Action<AiOptions> configureOptions)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -70,30 +70,6 @@ public static class ServiceCollectionExtensions
             .AddOpenAiEmbeddingServices(options)
             .AddOpenAiMetadataServices(options)
             .AddOpenAiSummarizationServices(options);
-
-        // TODO: Kernel, Check this
-        services
-            .AddTransient(x =>
-            {
-                var builder = Kernel.CreateBuilder();
-
-                if (options.Chat != null)
-                {
-                    builder
-                        .AddOpenAIChatClient(options.Chat.Model.Name, options.Endpoint, options.ApiKey)
-                        .AddOpenAIChatCompletion(options.Chat.Model.Name, options.Endpoint, options.ApiKey);
-                }
-
-                if (options.Embedding != null)
-                {
-                    builder
-                        .AddOpenAIEmbeddingGenerator(options.Embedding.Model.Name, options.Endpoint, options.ApiKey)
-                        .AddVectorStoreSearches(x);
-                }
-
-                return builder
-                    .Build();
-            });
 
         return services;
     }

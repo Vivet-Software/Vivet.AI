@@ -30,36 +30,6 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// TODO: AI Services
-// - Read the rest of MS web pages
-// - Check common services (Azure, HuggingFace) and consider whether we should integrate them into the library
-//   - Check in Azure AI Foundry which types of models that can be deployed (when deploying a model there is a list to filter model types)
-//   - SemanticKernel Services: https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/integrations
-//   - all azure ai services: https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/overview (Azure Document Intelligence)
-//   - Text Analytics: Azure Cognitive Services Text Analytics is a cloud service that provides advanced natural language processing over raw text,
-//     and features like Language Detection, Sentiment Analysis, Key Phrase Extraction, Named Entity Recognition, Personally Identifiable Information (PII) Recognition,
-//     Linked Entity Recognition, Text Analytics for Health, and more.
-// - https://mem0.ai memory service
-// - https://n8n.io - Flexible AI workflow automation for technical teams
-// - FlowiseAI, CrewA (from wastehero add, what is it?)
-// - https://learn.microsoft.com/en-us/microsoft-copilot-studio/fundamentals-what-is-copilot-studio  -  Copilot Studio is a graphical, low-code tool for building agents and agent flows.
-// - https://dev.to/zenstack/turning-your-database-into-an-mcp-server-with-auth-32mp - Turning Your Database Into an MCP Server With Auth
-// - https://dev.to/copilotkit/30-mcp-ideas-with-complete-source-code-d8e - 30+ MCP Ideas with Complete Source Code
-// - Vision models
-// TODO: Handle Blobs better. (after AI Services, e.g. Docuemnt Intelligence)
-// - SK: Image to Text (Experimental) ???
-// - SK: Audio to Text (Experimental) ???
-// - Azure.AI.DocumentIntelligence + There was a package also to store files available to the LLM on blob. Check it out.
-// TODO: Automatic Language Detection usig AI, and setting the Language on memory / knowledge
-// We could for memory just let the chat model return it as part of the json???? GOOD IDEA
-
-// ----------------------------------------------------------------------------------------------------------------------
-
-// TODO: Functions / Plugins (check other TODO's)
-
-// TODO: Check CodeQL and add as check in branch protection when merging to master (it won't trigger before it seems)
-// TODO: Check Sponsors (GitHub is reviewing)
-
 /// <inheritdoc cref="IEmbeddingKnowledgeService"/>
 public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator, KnowledgeVectorStore vectorStore, IMetadataService metadataService = null)
     : BaseEmbeddingService(options, embeddingGenerator, metadataService), IEmbeddingKnowledgeService

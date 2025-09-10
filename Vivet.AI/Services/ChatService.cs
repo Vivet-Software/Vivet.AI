@@ -29,7 +29,7 @@ using Vivet.AI.Services.Serialization;
 namespace Vivet.AI.Services;
 
 /// <inheritdoc cref="IChatService"/>
-public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionService chatCompletionService, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null, IEmbeddingKnowledgeService embeddingKnowledgeService = null) 
+public class ChatService(ChatOptions options, IChatCompletionService chatCompletionService, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null, IEmbeddingKnowledgeService embeddingKnowledgeService = null) 
     : BaseService, IChatService
 {
     private readonly ChatOptions options = options ?? throw new ArgumentNullException(nameof(options));
@@ -69,11 +69,12 @@ public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionServ
         var chatHistory = await this.BuildChatHistory(request, cancellationToken)
             .ConfigureAwait(false);
 
-        var executionSettings = this.promptExecutionSettings
-            .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
+        var executionSettings = this.GetPromptExecutionSettings(request);
+
+        var kernel = this.GetKernel(request);
 
         var chatMessageContent = await this.chatCompletionService
-            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel: kernel, cancellationToken: cancellationToken) // TODO: Kernel, add to metadata and summarization
+            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken) 
             .ConfigureAwait(false);
 
         if (chatMessageContent.Content == null)
@@ -125,11 +126,12 @@ public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionServ
         var chatHistory = await this.BuildChatHistory(request, cancellationToken)
             .ConfigureAwait(false);
 
-        var executionSettings = this.promptExecutionSettings
-            .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
+        var executionSettings = this.GetPromptExecutionSettings(request);
+
+        var kernel = this.GetKernel(request);
 
         var streamingChatMessageContents = this.chatCompletionService
-            .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, cancellationToken: cancellationToken);
+            .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
 
         var contentString = new StringBuilder();
         await foreach (var streamingChatMessageContent in streamingChatMessageContents.ConfigureAwait(false))
@@ -205,6 +207,32 @@ public class ChatService(Kernel kernel, ChatOptions options, IChatCompletionServ
             .AddChatUserPrompt(request.Question, dataUris);
 
         return chatHistory;
+    }
+    private PromptExecutionSettings GetPromptExecutionSettings(ChatRequest request)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var executionSettings = this.promptExecutionSettings
+            .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
+
+        return executionSettings;
+    }
+    private Kernel GetKernel(ChatRequest request)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var kernel = kernelBuilder
+            .Build();
+
+        foreach (var requestPlguin in request.Plugins)
+        {
+            kernel.Plugins
+                .AddFromObject(requestPlguin);
+        }
+
+        return kernel;
     }
     private async Task<MemoryResult[]> GetMatchingMemories(ChatRequest request, CancellationToken cancellationToken = default)
     {

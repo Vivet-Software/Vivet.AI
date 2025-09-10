@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
-    public static IServiceCollection AddHuggingFace(this IServiceCollection services)
+    public static IServiceCollection AddVivetHuggingFace(this IServiceCollection services)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The service collection to add services to.</param>
     /// <param name="configureOptions">An action to configure <see cref="AiOptions"/>.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
-    public static IServiceCollection AddHuggingFace(this IServiceCollection services, Action<AiOptions> configureOptions)
+    public static IServiceCollection AddVivetHuggingFace(this IServiceCollection services, Action<AiOptions> configureOptions)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -73,29 +73,6 @@ public static class ServiceCollectionExtensions
             .AddHuggingFaceEmbeddingServices(options)
             .AddHuggingFaceMetadataServices(options)
             .AddHuggingFaceSummarizationServices(options);
-
-        // TODO: Kernel, Check this
-        services
-            .AddTransient(x =>
-            {
-                var builder = Kernel.CreateBuilder();
-
-                if (options.Chat != null)
-                {
-                    builder
-                        .AddHuggingFaceChatCompletion(options.Chat.Model.Name, new Uri(options.Endpoint), options.ApiKey);
-                }
-
-                if (options.Embedding != null)
-                {
-                    builder
-                        .AddHuggingFaceEmbeddingGenerator(options.Embedding.Model.Name, new Uri(options.Endpoint), options.ApiKey)
-                        .AddVectorStoreSearches(x);
-                }
-
-                return builder
-                    .Build();
-            });
 
         return services;
     }

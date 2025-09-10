@@ -20,7 +20,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
-    public static IServiceCollection AddOllama(this IServiceCollection services)
+    public static IServiceCollection AddVivetOllama(this IServiceCollection services)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The service collection to add services to.</param>
     /// <param name="configureOptions">An action to configure <see cref="AiOptions"/>.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
-    public static IServiceCollection AddOllama(this IServiceCollection services, Action<AiOptions> configureOptions)
+    public static IServiceCollection AddVivetOllama(this IServiceCollection services, Action<AiOptions> configureOptions)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -75,34 +75,6 @@ public static class ServiceCollectionExtensions
             .AddOllamaEmbeddingServices(options)
             .AddOllamaMetadataServices(options)
             .AddOllamaSummarizationServices(options);
-
-        // TODO: Kernel, Check this
-        services
-            .AddTransient(x =>
-            {
-                var builder = Kernel.CreateBuilder();
-
-                if (options.Chat != null)
-                {
-                    var client = new OllamaApiClient(options.Endpoint, options.Chat.Model.Name);
-
-                    builder
-                        .AddOllamaChatClient(client)
-                        .AddOllamaChatCompletion(client);
-                }
-
-                if (options.Embedding != null)
-                {
-                    var client = new OllamaApiClient(options.Endpoint, options.Embedding.Model.Name);
-
-                    builder
-                        .AddOllamaEmbeddingGenerator(client)
-                        .AddVectorStoreSearches(x);
-                }
-
-                return builder
-                    .Build();
-            });
 
         return services;
     }

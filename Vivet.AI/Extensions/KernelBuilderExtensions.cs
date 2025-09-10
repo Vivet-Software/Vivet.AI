@@ -1,85 +1,125 @@
-﻿using System;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Data;
+using System;
+using System.Linq;
 using Vivet.AI.Config;
-using Vivet.AI.Data.Models;
-using Vivet.AI.Plugins.TextSearch.Mappers;
 
 namespace Vivet.AI.Extensions;
 
-// TODO: Plugins / Functions
-// - Some Plugins / functions should also be added to Metadata / (Summarization). E.g. a new Movie, book or song might not be known to the LLM when getting metadata
-// - Knowledge, Memory plugin / function (Do we need to implement ISemanticTextMemory for memory interface with plugins / functions, or can we use our own MemoryVectorStore
-// - Google, Bing, etc online search - https://learn.microsoft.com/en-us/semantic-kernel/concepts/text-search/out-of-the-box-textsearch/google-textsearch?pivots=programming-language-csharp
-
-// FOR USING ISemanticTextMemory
-//var services = new ServiceCollection();
-//var a = services.BuildServiceProvider().GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
-//var semanticTextMemory = new MemoryBuilder()
-//    .WithTextEmbeddingGeneration(services.BuildServiceProvider().GetRequiredService<ITextEmbeddingGenerationService>()) // .WithTextEmbeddingGeneration(services.BuildServiceProvider().GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>())
-//    .WithMemoryStore<IMemoryStore>(x => new MilvusMemoryStore(new MilvusClient(new Uri(""))))
-//    .Build();
-
-//string aa = await semanticTextMemory
-//    .SaveInformationAsync("collection", "text", "id");
-//semanticTextMemory.SearchAsync()
-
 internal static class KernelBuilderExtensions
 {
-    internal static string VectorStoreSearchPluginNameTemplate = "Search{0}Plugin";
-    internal static string VectorStoreSearchFunctionNameTemplate = "Search{0}";
-
-    internal static IKernelBuilder AddVectorStoreSearches(this IKernelBuilder builder, IServiceProvider serviceProvider)
+    internal static IKernelBuilder AddChatPluginsFromConfiguration(this IKernelBuilder builder, IServiceCollection services, ChatOptions chatOptions)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
 
-        if (serviceProvider == null)
-            throw new ArgumentNullException(nameof(serviceProvider));
+        if (services == null) 
+            throw new ArgumentNullException(nameof(services));
 
-        builder
-            .AddVectorStoreSearch<Knowledge>(serviceProvider)
-            .AddVectorStoreSearch<Memory>(serviceProvider);
+        if (chatOptions == null)
+            throw new ArgumentNullException(nameof(chatOptions));
+
+        var serviceProvider = services
+            .BuildServiceProvider();
+
+        var types = chatOptions.Plugins
+            .Select(x => Type.GetType(x, true)); 
+
+        foreach (var type in types)
+        {
+            builder
+                .AddFromType(type, serviceProvider);
+        }
+
+        return builder;
+    }
+    internal static IKernelBuilder AddMetadataPluginsFromConfiguration(this IKernelBuilder builder, IServiceCollection services, MetadataOptions metadataOptions)
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (metadataOptions == null)
+            throw new ArgumentNullException(nameof(metadataOptions));
+
+        var serviceProvider = services
+            .BuildServiceProvider();
+
+        var types = metadataOptions.Plugins
+            .Select(x => Type.GetType(x, true));
+
+        foreach (var type in types)
+        {
+            builder
+                .AddFromType(type, serviceProvider);
+        }
+
+        return builder;
+    }
+    internal static IKernelBuilder AddSummarizationPluginsFromConfiguration(this IKernelBuilder builder, IServiceCollection services, SummarizationOptions summarizationOptions)
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (summarizationOptions == null) 
+            throw new ArgumentNullException(nameof(summarizationOptions));
+
+        var serviceProvider = services
+            .BuildServiceProvider();
+
+        var types = summarizationOptions.Plugins
+            .Select(x => Type.GetType(x, true));
+
+        foreach (var type in types)
+        {
+            builder
+                .AddFromType(type, serviceProvider);
+        }
 
         return builder;
     }
 
 
-    private static IKernelBuilder AddVectorStoreSearch<TEmbedding>(this IKernelBuilder builder, IServiceProvider serviceProvider)
-        where TEmbedding : BaseEmbedding
+    private static void AddFromType(this IKernelBuilder kernelBuilder, Type type, IServiceProvider serviceProvider)
     {
-        if (builder == null) 
-            throw new ArgumentNullException(nameof(builder));
+        if (kernelBuilder == null) 
+            throw new ArgumentNullException(nameof(kernelBuilder));
+
+        if (type == null) 
+            throw new ArgumentNullException(nameof(type));
 
         if (serviceProvider == null) 
             throw new ArgumentNullException(nameof(serviceProvider));
 
-        var serviceId = typeof(TEmbedding).Name;
+        if (!typeof(object).IsAssignableFrom(type))
+        {
+            throw new InvalidOperationException($"Plugin type {type.FullName} is invalid.");
+        }
 
-        var textSearchStringMapper = new EmbeddingTextSearchStringMapper();
-        var textSearchResultMapper = new EmbeddingTextSearchResultMapper();
-        var textSearchOptions = new VectorStoreTextSearchOptions();
+        var constructorInfo = type
+            .GetConstructors()
+            .OrderByDescending(x => x.GetParameters().Length)
+            .FirstOrDefault();
 
-        builder
-            .AddVectorStoreTextSearch<TEmbedding>(textSearchStringMapper, textSearchResultMapper, textSearchOptions);
+        if (constructorInfo == null)
+        {
+            throw new InvalidOperationException($"Plugin type {type.FullName} has no public constructor.");
+        }
 
-        var textSearch = serviceProvider
-            .GetRequiredKeyedService<VectorStoreTextSearch<TEmbedding>>(serviceId);
+        var parameters = constructorInfo
+            .GetParameters()
+            .Select(x => serviceProvider.GetService(x.ParameterType) ?? throw new InvalidOperationException($"Cannot resolve constructor parameter {x.ParameterType.FullName} for plugin {type.FullName}"))
+            .ToArray();
 
-        var chatOptions = serviceProvider
-            .GetRequiredService<ChatOptions>();
+        var instance = constructorInfo
+            .Invoke(parameters);
 
-        var kernelFunction = textSearch
-            .CreateSearchFunction(chatOptions);
-
-        var pluginName = string.Format(KernelBuilderExtensions.VectorStoreSearchPluginNameTemplate, typeof(TEmbedding).Name);
-
-        var searchPlugin = KernelPluginFactory.CreateFromFunctions(pluginName, null, [kernelFunction]);
-
-        builder.Plugins
-            .Add(searchPlugin);
-
-        return builder;
+        kernelBuilder.Plugins
+            .AddFromObject(instance, type.Name);
     }
 }

@@ -135,12 +135,12 @@ OpenAI provides access to the GPT-family models.
 ##### Register using `appsettings.json`
 ```csharp
 services
-    .AddOpenAi();
+    .AddVivetOpenAi();
 ```
 ##### Register using inline configuration
 ```csharp
 services
-    .AddOpenAi(options =>
+    .AddVivetOpenAi(options =>
     {
         options.ApiKey = "<your-api-key>";
         options.Endpoint = "<your-endpoint>";
@@ -154,12 +154,12 @@ Azure OpenAI provides access to the GPT-family models through a secure, enterpri
 ##### Register using `appsettings.json`
 ```csharp
 services
-    .AddAzureOpenAi();
+    .AddVivetAzureOpenAi();
 ```
 ##### Register using inline configuration
 ```csharp
 services
-    .AddAzureOpenAi(options =>
+    .AddVivetAzureOpenAi(options =>
     {
         options.ApiKey = "<your-api-key>";
         options.Endpoint = "<your-endpoint>";
@@ -173,12 +173,12 @@ Azure AI Inference allows inference on various LLMs via Azure endpoints with ent
 ##### Register using `appsettings.json`
 ```csharp
 services
-    .AddAzureAIInference();
+    .AddVivetAzureAIInference();
 ```
 ##### Register using inline configuration
 ```csharp
 services
-    .AddAzureAIInference(options =>
+    .AddVivetAzureAIInference(options =>
     {
         options.ApiKey = "<your-api-key>";
         options.Endpoint = "<your-endpoint>";
@@ -192,12 +192,12 @@ HuggingFace models can be used directly via this library for custom inference wo
 ##### Register using `appsettings.json`
 ```csharp
 services
-    .AddHuggingFace();
+    .AddVivetHuggingFace();
 ```
 ##### Register using inline configuration
 ```csharp
 services
-    .AddHuggingFace(options =>
+    .AddVivetHuggingFace(options =>
     {
         options.ApiKey = "<your-api-key>";
         options.Endpoint = "<your-endpoint>";
@@ -211,12 +211,12 @@ Ollama provides local model inference and supports temperature-based sampling.
 ##### Register using `appsettings.json`
 ```csharp
 services
-    .AddHOllama();
+    .AddVivetHOllama();
 ```
 ##### Register using inline configuration
 ```csharp
 services
-    .AddHOllama(options =>
+    .AddVivetHOllama(options =>
     {
         options.Endpoint = "<your-host>";
         // Configure additional options for chat, embedding, etc
@@ -229,12 +229,12 @@ Google Gemini allows structured and generative responses via its LLM APIs.
 ##### Register using `appsettings.json`
 ```csharp
 services
-    .AddGoogleGemini();
+    .AddVivetGoogleGemini();
 ```
 ##### Register using inline configuration
 ```csharp
 services
-    .AddGoogleGemini(options =>
+    .AddVivetGoogleGemini(options =>
     {
         options.ApiKey = "<your-api-key>";
         // Configure additional options for chat, embedding, etc
@@ -247,12 +247,12 @@ Amazon Bedrock supports multiple models: Claude, Cohere Command, Cohere Command-
 ##### Register using `appsettings.json`
 ```csharp
 services
-    .AddAmazonBedrock();
+    .AddVivetAmazonBedrock();
 ```
 ##### Register using inline configuration
 ```csharp
 services
-    .AddAmazonBedrock(options =>
+    .AddVivetAmazonBedrock(options =>
     {
         options.Endpoint = "<your-aws-region>";
         options.ApiKey = "<your-access-key>";

@@ -25,6 +25,41 @@ using ChatOptions = Vivet.AI.Config.ChatOptions;
 
 namespace Vivet.AI.Extensions;
 
+// BUG: Functions / Plugins
+// - Plugins: https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp 
+// - Text Search Plugins: https://learn.microsoft.com/en-us/semantic-kernel/concepts/text-search/?pivots=programming-language-csharp
+// - Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
+// - Planning: https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-csharp
+
+// BUG: Integration Testing Plugins (config and requests)
+
+// BUG: Make Built-in Plugins: Google, Bing, etc online search (chat, metadata, summarization)
+// https://learn.microsoft.com/en-us/semantic-kernel/concepts/text-search/out-of-the-box-textsearch/google-textsearch?pivots=programming-language-csharp
+
+// TODO: Agent Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/?pivots=programming-language-csharp
+// TODO: Process Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/process/process-framework
+
+// TODO: Observability: https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/observability/?pivots=programming-language-csharp
+
+// TODO: Check in Azure AI Foundry which types of models that can be deployed (when deploying a model there is a list to filter model types)
+// https://learn.microsoft.com/en-us/azure/ai-foundry/foundry-models/how-to/use-image-embeddings?pivots=programming-language-csharp
+// - Check common services (Azure, HuggingFace) and consider whether we should integrate them into the library
+
+// TODO: Handle Blobs better. (after AI Services, e.g. Docuemnt Intelligence)
+// SemanticKernel Services: https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/integrations
+// - SK: Image to Text (Experimental) ???
+// - SK: Audio to Text (Experimental) ???
+// - SK: Text to Audio (Experimental) ???
+// - Azure.AI.DocumentIntelligence + There was a package also to store files available to the LLM on blob. Check it out.
+
+// TODO: All Azure AI services: 
+// - https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/overview (Azure Document Intelligence)
+//   https://learn.microsoft.com/en-us/azure/search/tutorial-document-extraction-image-verbalization
+// - Text Analytics: Azure Cognitive Services Text Analytics is a cloud service that provides advanced natural language processing over raw text,
+//   and features like Language Detection, Sentiment Analysis, Key Phrase Extraction, Named Entity Recognition, Personally Identifiable Information (PII) Recognition,
+//   Linked Entity Recognition, Text Analytics for Health, and more.
+
+
 internal static class ServiceCollectionExtensions
 {
     internal static IServiceCollection AddOptions(this IServiceCollection services, AiOptions options)
@@ -54,7 +89,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    
+
     internal static IServiceCollection AddChatServices<T>(this IServiceCollection services, AiOptions options)
         where T : PromptExecutionSettings, new()
     {
@@ -65,16 +100,31 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Chat);
 
         services
+            .AddSingleton(x =>
+            {
+                var chatOptions = x
+                    .GetRequiredService<ChatOptions>();
+
+                var builder = Kernel.CreateBuilder();
+
+                builder
+                    .AddChatPluginsFromConfiguration(services, chatOptions);
+
+                return builder;
+            });
+
+        services
             .AddPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
             .AddScoped<IChatService>(x =>
             {
-                var kernel = x.GetRequiredService<Kernel>(); // TODO: Kernel: add to all orchestrations
-
                 var chatOptions = x
                     .GetRequiredService<ChatOptions>();
 
                 var chatCompletionService = x
                     .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.CHAT_SERVICE_ID);
+
+                var kernelBuilder = x
+                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.CHAT_SERVICE_ID);
 
                 var promptExecutionSettings = x
                     .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.CHAT_SERVICE_ID);
@@ -85,7 +135,7 @@ internal static class ServiceCollectionExtensions
                 var embeddingKnowledgeService = x
                     .GetService<IEmbeddingKnowledgeService>();
 
-                return new ChatService(kernel, chatOptions, chatCompletionService, promptExecutionSettings, embeddingMemoryService, embeddingKnowledgeService);
+                return new ChatService(chatOptions, chatCompletionService, kernelBuilder, promptExecutionSettings, embeddingMemoryService, embeddingKnowledgeService);
             });
 
         services
@@ -183,6 +233,20 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Metadata);
 
         services
+            .AddSingleton(x =>
+            {
+                var metadataOptions = x
+                    .GetRequiredService<MetadataOptions>();
+
+                var builder = Kernel.CreateBuilder();
+
+                builder
+                    .AddMetadataPluginsFromConfiguration(services, metadataOptions);
+
+                return builder;
+            });
+
+        services
             .AddPromptExecutionSettings<T>(options.Metadata.Model.Parameters, ServiceIds.METADATA_SERVICE_ID)
             .AddScoped<IMetadataService>(x =>
             {
@@ -192,10 +256,13 @@ internal static class ServiceCollectionExtensions
                 var chatCompletionService = x
                     .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.METADATA_SERVICE_ID);
 
+                var kernelBuilder = x
+                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.METADATA_SERVICE_ID);
+
                 var promptExecutionSettings = x
                     .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.METADATA_SERVICE_ID);
 
-                return new MetadataService(metadataOptions, chatCompletionService, promptExecutionSettings);
+                return new MetadataService(metadataOptions, chatCompletionService, kernelBuilder, promptExecutionSettings);
             });
 
         services
@@ -218,6 +285,20 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Summarization);
 
         services
+            .AddSingleton(x =>
+            {
+                var summarizationOptions = x
+                    .GetRequiredService<SummarizationOptions>();
+
+                var builder = Kernel.CreateBuilder();
+
+                builder
+                    .AddSummarizationPluginsFromConfiguration(services,summarizationOptions);
+
+                return builder;
+            });
+
+        services
             .AddPromptExecutionSettings<T>(options.Summarization.Model.Parameters, ServiceIds.SUMMARIZATION_SERVICE_ID)
             .AddScoped<ISummarizationService>(x =>
             {
@@ -227,10 +308,13 @@ internal static class ServiceCollectionExtensions
                 var chatCompletionService = x
                     .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.SUMMARIZATION_SERVICE_ID);
 
+                var kernelBuilder = x
+                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.SUMMARIZATION_SERVICE_ID);
+
                 var promptExecutionSettings = x
                     .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.SUMMARIZATION_SERVICE_ID);
 
-                return new SummarizationService(summarizationOptions, chatCompletionService, promptExecutionSettings);
+                return new SummarizationService(summarizationOptions, chatCompletionService, kernelBuilder, promptExecutionSettings);
             });
 
         services

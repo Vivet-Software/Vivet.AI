@@ -21,7 +21,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services">The service collection to add services to.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
-    public static IServiceCollection AddAmazonBedrock(this IServiceCollection services)
+    public static IServiceCollection AddVivetAmazonBedrock(this IServiceCollection services)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
     /// <param name="services">The service collection to add services to.</param>
     /// <param name="configureOptions">An action to configure <see cref="AiOptions"/>.</param>
     /// <returns>The updated <see cref="IServiceCollection"/> instance.</returns>
-    public static IServiceCollection AddAmazonBedrock(this IServiceCollection services, Action<AiOptions> configureOptions)
+    public static IServiceCollection AddVivetAmazonBedrock(this IServiceCollection services, Action<AiOptions> configureOptions)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -79,30 +79,6 @@ public static class ServiceCollectionExtensions
             .AddAmazonBedrockAiEmbeddingServices(options, runtimeClient)
             .AddAmazonBedrockAiMetadataServices(options, runtimeClient)
             .AddAmazonBedrockAiSummarizationServices(options, runtimeClient);
-
-        // TODO: Kernel, Check this
-        services
-            .AddTransient(x =>
-            {
-                var builder = Kernel.CreateBuilder();
-
-                if (options.Chat != null)
-                {
-                    builder
-                        .AddBedrockChatClient(options.Chat.Model.Name, bedrockRuntime: runtimeClient)
-                        .AddBedrockChatCompletionService(options.Chat.Model.Name, bedrockRuntime: runtimeClient);
-                }
-
-                if (options.Embedding != null)
-                {
-                    builder
-                        .AddBedrockEmbeddingGenerator(options.Embedding.Model.Name, bedrockRuntime: runtimeClient)
-                        .AddVectorStoreSearches(x);
-                }
-
-                return builder
-                    .Build();
-            });
 
         return services;
     }
