@@ -5,4 +5,4 @@ namespace Vivet.AI.Services.Requests.Embedding.Knowledge.Models;
 /// <summary>
 /// Represents configuration overrides specific to knowledge operations.
 /// </summary>
-public class KnowledgeConfigOverrides : BaseConfigOverrides;
+public class KnowledgeConfigOverrides : EmbedingConfigOverrides;

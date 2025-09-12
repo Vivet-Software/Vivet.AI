@@ -25,40 +25,24 @@ using ChatOptions = Vivet.AI.Config.ChatOptions;
 
 namespace Vivet.AI.Extensions;
 
-// BUG: Functions / Plugins
-// - Plugins: https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp 
-// - Text Search Plugins: https://learn.microsoft.com/en-us/semantic-kernel/concepts/text-search/?pivots=programming-language-csharp
-// - Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
-// - Planning: https://learn.microsoft.com/en-us/semantic-kernel/concepts/planning?pivots=programming-language-csharp
-
-// BUG: Integration Testing Plugins (config and requests)
-
 // BUG: Make Built-in Plugins: Google, Bing, etc online search (chat, metadata, summarization)
-// https://learn.microsoft.com/en-us/semantic-kernel/concepts/text-search/out-of-the-box-textsearch/google-textsearch?pivots=programming-language-csharp
 
-// TODO: Agent Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/?pivots=programming-language-csharp
-// TODO: Process Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/process/process-framework
+// BUG: Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
+
+// TEST: Request Overriding Chat model/Embedding model
+// TEST: Integration Testing Plugins (config and requests)
+
+// ------------------------------------------------------------------------------------------------------------------------------------------------
 
 // TODO: Observability: https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/observability/?pivots=programming-language-csharp
+// - https://ai.azure.com/observability/applicationAnalytics?wsid=/subscriptions/b2b7a8a7-862e-478a-8761-58e41e726855/resourceGroups/AI/providers/Microsoft.CognitiveServices/accounts/vivet-software/projects/vivet-ai&tid=9071a89e-4c58-4163-9bb4-f87488ff1427
+// - https://ai.azure.com/tracing?wsid=/subscriptions/b2b7a8a7-862e-478a-8761-58e41e726855/resourceGroups/AI/providers/Microsoft.CognitiveServices/accounts/vivet-software/projects/vivet-ai&tid=9071a89e-4c58-4163-9bb4-f87488ff1427
 
-// TODO: Check in Azure AI Foundry which types of models that can be deployed (when deploying a model there is a list to filter model types)
-// https://learn.microsoft.com/en-us/azure/ai-foundry/foundry-models/how-to/use-image-embeddings?pivots=programming-language-csharp
-// - Check common services (Azure, HuggingFace) and consider whether we should integrate them into the library
+// ------------------------------------------------------------------------------------------------------------------------------------------------
 
-// TODO: Handle Blobs better. (after AI Services, e.g. Docuemnt Intelligence)
-// SemanticKernel Services: https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/integrations
-// - SK: Image to Text (Experimental) ???
-// - SK: Audio to Text (Experimental) ???
-// - SK: Text to Audio (Experimental) ???
-// - Azure.AI.DocumentIntelligence + There was a package also to store files available to the LLM on blob. Check it out.
-
-// TODO: All Azure AI services: 
-// - https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/overview (Azure Document Intelligence)
-//   https://learn.microsoft.com/en-us/azure/search/tutorial-document-extraction-image-verbalization
-// - Text Analytics: Azure Cognitive Services Text Analytics is a cloud service that provides advanced natural language processing over raw text,
-//   and features like Language Detection, Sentiment Analysis, Key Phrase Extraction, Named Entity Recognition, Personally Identifiable Information (PII) Recognition,
-//   Linked Entity Recognition, Text Analytics for Health, and more.
-
+// TODO: Agent Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/?pivots=programming-language-csharp
+// - https://mem0.ai memory service (https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-memory?pivots=programming-language-csharp)
+// TODO: Process Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/process/process-framework
 
 internal static class ServiceCollectionExtensions
 {
@@ -100,7 +84,7 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Chat);
 
         services
-            .AddSingleton(x =>
+            .AddKeyedSingleton(ServiceIds.CHAT_SERVICE_ID, (x, _) =>
             {
                 var chatOptions = x
                     .GetRequiredService<ChatOptions>();
@@ -108,7 +92,10 @@ internal static class ServiceCollectionExtensions
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddChatPluginsFromConfiguration(services, chatOptions);
+                    .AddVectorStoreSearches(x); // BUG: Kernel: fails with kernel
+
+                builder
+                    .AddChatPluginsFromConfiguration(x, chatOptions);
 
                 return builder;
             });
@@ -233,7 +220,7 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Metadata);
 
         services
-            .AddSingleton(x =>
+            .AddKeyedSingleton(ServiceIds.METADATA_SERVICE_ID, (x, _) =>
             {
                 var metadataOptions = x
                     .GetRequiredService<MetadataOptions>();
@@ -241,7 +228,7 @@ internal static class ServiceCollectionExtensions
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddMetadataPluginsFromConfiguration(services, metadataOptions);
+                    .AddMetadataPluginsFromConfiguration(x, metadataOptions);
 
                 return builder;
             });
@@ -285,7 +272,7 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Summarization);
 
         services
-            .AddSingleton(x =>
+            .AddKeyedSingleton(ServiceIds.SUMMARIZATION_SERVICE_ID, (x, _) =>
             {
                 var summarizationOptions = x
                     .GetRequiredService<SummarizationOptions>();
@@ -293,7 +280,7 @@ internal static class ServiceCollectionExtensions
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddSummarizationPluginsFromConfiguration(services,summarizationOptions);
+                    .AddSummarizationPluginsFromConfiguration(x, summarizationOptions);
 
                 return builder;
             });

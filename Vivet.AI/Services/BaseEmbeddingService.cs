@@ -5,6 +5,7 @@ using System.Threading;
 using Microsoft.Extensions.AI;
 using Vivet.AI.Config;
 using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services;
 
@@ -29,9 +30,10 @@ public abstract class BaseEmbeddingService(EmbeddingOptions options, IEmbeddingG
     /// Generates embeddings for a collection of text chunks asynchronously.
     /// </summary>
     /// <param name="textChunks">The array of text chunks to generate embeddings for.</param>
+    /// <param name="embedingConfigOverrides">Embedding Cconfig overrides.</param>
     /// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation, containing the generated embeddings./// </returns>
-    protected virtual async Task<GeneratedEmbeddings<Embedding<float>>> GenerateEmbeddings(string[] textChunks, CancellationToken cancellationToken = default)
+    protected virtual async Task<GeneratedEmbeddings<Embedding<float>>> GenerateEmbeddings(string[] textChunks, EmbedingConfigOverrides embedingConfigOverrides, CancellationToken cancellationToken = default)
     {
         if (textChunks == null)
             throw new ArgumentNullException(nameof(textChunks));
@@ -41,7 +43,10 @@ public abstract class BaseEmbeddingService(EmbeddingOptions options, IEmbeddingG
             return [];
         }
 
-        var generationOptions = new EmbeddingGenerationOptions();
+        var generationOptions = new EmbeddingGenerationOptions
+        {
+            ModelId = embedingConfigOverrides.ModelName
+        };
 
         return await this.embeddingGenerator
             .GenerateAsync(textChunks, generationOptions, cancellationToken)

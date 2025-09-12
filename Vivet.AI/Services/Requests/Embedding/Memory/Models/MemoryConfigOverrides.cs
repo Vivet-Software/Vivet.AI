@@ -6,7 +6,7 @@ namespace Vivet.AI.Services.Requests.Embedding.Memory.Models;
 /// <summary>
 /// Represents configuration overrides specific to memory operations.
 /// </summary>
-public class MemoryConfigOverrides : BaseConfigOverrides
+public class MemoryConfigOverrides : EmbedingConfigOverrides
 {
     /// <summary>
     /// Metadata retrieval overrides.

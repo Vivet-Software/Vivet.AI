@@ -47,4 +47,10 @@ public class ChatResponse<T> : BaseResponse
     /// The language detected of the input prompt.
     /// </summary>
     public virtual string Language { get; set; }
+
+    /// <summary>
+    /// This ID may be exposed by the underlying language model through its metadata. 
+    /// Its presence is model-dependent and may not always be available.
+    /// </summary>
+    public virtual string ExternalId { get; set; }
 }

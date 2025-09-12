@@ -7,6 +7,30 @@ namespace Vivet.AI.Services.Extensions;
 
 internal static class ChatMessageContentExtensions
 {
+    internal static string GetExternalId(this ChatMessageContent chatMessageContent)
+    {
+        if (chatMessageContent == null)
+            throw new ArgumentNullException(nameof(chatMessageContent));
+
+        if (chatMessageContent.Metadata == null)
+        {
+            return null;
+        }
+
+        if (!chatMessageContent.Metadata.TryGetValue("Id", out var idObj) || idObj == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return idObj as string;
+        }
+        catch (RuntimeBinderException)
+        {
+            return null;
+        }
+    }
     internal static TokenUsage GetTokenUsage(this ChatMessageContent chatMessageContent)
     {
         if (chatMessageContent == null)

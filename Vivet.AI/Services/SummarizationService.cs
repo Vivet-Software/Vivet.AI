@@ -52,6 +52,8 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
             var executionSettings = this.promptExecutionSettings
                 .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
 
+            executionSettings.ModelId = request.ConfigOverrides.ModelName;
+
             var kernel = kernelBuilder
                 .Build();
 

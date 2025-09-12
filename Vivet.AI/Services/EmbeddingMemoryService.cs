@@ -58,8 +58,8 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         var questionTextChunks = TextChunking.GetTextChunks(question, this.memoryOptions.TextChunking.MinTokens, this.memoryOptions.TextChunking.MaxTokens);
         var answerTextChunks = TextChunking.GetTextChunks(answer, this.memoryOptions.TextChunking.MinTokens, this.memoryOptions.TextChunking.MaxTokens);
 
-        var questionEmbeddingsTask = this.GenerateEmbeddings(questionTextChunks.Select(x => x.Text).ToArray(), cancellationToken);
-        var answerEmbeddingsTask = this.GenerateEmbeddings(answerTextChunks.Select(x => x.Text).ToArray(), cancellationToken);
+        var questionEmbeddingsTask = this.GenerateEmbeddings(questionTextChunks.Select(x => x.Text).ToArray(), request.ConfigOverrides, cancellationToken);
+        var answerEmbeddingsTask = this.GenerateEmbeddings(answerTextChunks.Select(x => x.Text).ToArray(), request.ConfigOverrides, cancellationToken);
 
         var questionEmbeddings = await questionEmbeddingsTask.ConfigureAwait(false);
         var answerEmbeddings = await answerEmbeddingsTask.ConfigureAwait(false);
@@ -382,7 +382,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     .GetBlobData()
                     .ConfigureAwait(false);
 
-                var embeddings = await this.GenerateEmbeddings([metadataResponse.Metadata.Summary], cancellationToken)
+                var embeddings = await this.GenerateEmbeddings([metadataResponse.Metadata.Summary], request.ConfigOverrides, cancellationToken)
                     .ConfigureAwait(false);
 
                 var embedding = embeddings

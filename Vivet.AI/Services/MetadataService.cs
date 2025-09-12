@@ -71,6 +71,8 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         var executionSettings = this.promptExecutionSettings
             .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
 
+        executionSettings.ModelId = request.ConfigOverrides.ModelName;
+
         var kernel = kernelBuilder
             .Build();
 

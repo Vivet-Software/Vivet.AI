@@ -10,6 +10,12 @@ namespace Vivet.AI.Services.Requests.Chat.Models;
 public class ChatConfigOverrides : BaseConfigOverrides
 {
     /// <summary>
+    /// Gets or sets the name of the model to use for this request, overriding the default configured model.
+    /// The specified model must be supported by the registered orchestration; otherwise, the request may fail.
+    /// </summary>
+    public virtual string ModelName { get; set; }
+
+    /// <summary>
     /// Optional parameters for configuring the behavior of the chat model.
     /// </summary>
     public virtual ChatModelParameters ModelParameters { get; set; }

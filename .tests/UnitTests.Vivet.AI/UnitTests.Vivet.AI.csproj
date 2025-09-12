@@ -5,6 +5,7 @@
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
 		<nowarn>SKEXP0001</nowarn>
+		<UserSecretsId>87b71c68-116c-4273-9a75-6b6553b8a978</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -243,7 +243,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             }
         }
         
-        var embeddings = await this.GenerateEmbeddings(embedTextChunks.Select(x => x.Text).ToArray(), cancellationToken)
+        var embeddings = await this.GenerateEmbeddings(embedTextChunks.Select(x => x.Text).ToArray(), request.ConfigOverrides, cancellationToken)
             .ConfigureAwait(false);
 
         var knowledges = embedTextChunks
@@ -302,7 +302,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             .ConfigureAwait(false);
 
         var metadataResponse = await this.GetBlobMetadata(request, cancellationToken).ConfigureAwait(false);
-        var embeddings = await this.GenerateEmbeddings([metadataResponse.Metadata.Summary], cancellationToken).ConfigureAwait(false);
+        var embeddings = await this.GenerateEmbeddings([metadataResponse.Metadata.Summary], request.ConfigOverrides, cancellationToken).ConfigureAwait(false);
 
         var embedding = embeddings
             .FirstOrDefault();

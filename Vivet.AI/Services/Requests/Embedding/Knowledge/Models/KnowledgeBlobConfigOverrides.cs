@@ -9,7 +9,7 @@ namespace Vivet.AI.Services.Requests.Embedding.Knowledge.Models;
 public class KnowledgeBlobConfigOverrides : KnowledgeConfigOverrides
 {
     /// <summary>
-    /// Summarization overrides.
+    /// Metadata overrides.
     /// </summary>
     [Required]
     public virtual EmbeddingMetadataConfigOverrides Metadata { get; set; } = new();

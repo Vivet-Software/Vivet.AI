@@ -13,10 +13,11 @@ internal static class PromptExecutionSettingsExtensions
 
         if (chatModelParameters == null)
         {
-            return promptExecutionSettings;
+            return promptExecutionSettings.Clone();
         }
 
         return chatModelParameters
-            .GetPromptExecutionSettings(promptExecutionSettings.GetType());
+            .GetPromptExecutionSettings(promptExecutionSettings.GetType())
+            .Clone();
     }
 }

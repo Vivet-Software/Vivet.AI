@@ -51,7 +51,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             ElapsedTime = response.ElapsedTime,
             RawResponse = response.RawResponse,
             Language = response.Language,
-            TokenUsage = response.TokenUsage
+            TokenUsage = response.TokenUsage,
+            ExternalId = response.ExternalId
         };
     }
 
@@ -104,6 +105,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         response.InputPrompt = prompt;
         response.TokenUsage = chatMessageContent
             .GetTokenUsage();
+        response.ExternalId = chatMessageContent
+            .GetExternalId();
 
         stopwatch
             .Stop();
@@ -158,9 +161,12 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         response.Thinking = thinking;
         response.RawResponse = rawContent;
-        response.TokenUsage = null; // TODO: Chat Streaming Token Usage (not possible through SK yet)
         response.ElapsedTime = stopwatch.Elapsed;
 
+        // TODO: Chat Streaming Token Usage / External Id (not possible through SK yet)
+        response.TokenUsage = null; 
+        response.ExternalId = null;
+        
         stopwatch
             .Stop();
 
@@ -215,6 +221,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         var executionSettings = this.promptExecutionSettings
             .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
+
+        executionSettings.ModelId = request.ConfigOverrides.ModelName;
 
         return executionSettings;
     }

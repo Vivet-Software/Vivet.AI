@@ -4,6 +4,8 @@ using Vivet.AI.Data.Models;
 
 namespace Vivet.AI.Plugins.TextSearch.Mappers;
 
+// BUG: Memory / Knowledge
+
 /// <summary>
 /// Result mapper which converts a <see cref="BaseEmbedding"/> to a <see cref="TextSearchResult"/>.
 /// </summary>
