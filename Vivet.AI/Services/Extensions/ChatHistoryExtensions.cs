@@ -52,7 +52,6 @@ describing why the request could not be completed.";
 
         return chatHistory;
     }
-
     internal static ChatHistory AddChatMemoryPrompt(this ChatHistory chatHistory, MemoryResult[] memoryResults, int counterpartContextQueryLimit)
     {
         if (chatHistory == null)
@@ -125,7 +124,6 @@ describing why the request could not be completed.";
 
         return chatHistory;
     }
-
     internal static ChatHistory AddChatKnowledgePrompt(this ChatHistory chatHistory, KnowledgeResult[] knowledgeResults)
     {
         if (chatHistory == null) 
@@ -189,7 +187,6 @@ describing why the request could not be completed.";
 
         return chatHistory;
     }
-
     internal static ChatHistory AddChatUserPrompt(this ChatHistory chatHistory, string question, IEnumerable<string> dataUris)
     {
         if (chatHistory == null)
@@ -223,7 +220,6 @@ describing why the request could not be completed.";
 
         return chatHistory;
     }
-
     internal static ChatHistory AddMetadataPrompt<T>(this ChatHistory chatHistory, string dataUri, int summaryMaxWords, int descriptionMaxWords)
         where T : class, new()
     {
@@ -285,7 +281,6 @@ describing why the request could not be completed.";
 
         return chatHistory;
     }
-
     internal static ChatHistory AddSuummarizationMemoryPrompt(this ChatHistory chatHistory, string question, string answer, int summarizationDegree)
     {
         if (chatHistory == null)
@@ -338,7 +333,6 @@ A: {answer}
 
         return chatHistory;
     }
-
     internal static string GetPromptAsText(this ChatHistory chatHistory)
     {
         if (chatHistory == null)

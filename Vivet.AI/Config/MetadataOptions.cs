@@ -42,31 +42,33 @@ public class MetadataOptions
     /// A collection of plugin type names to be added to the kernel from configuration.
     /// <para>
     /// Each string in this collection must represent a valid Semantic Kernel plugin type. 
-    /// A valid plugin type is a class that contains at least one method annotated with 
+    /// A valid plugin type is a class containing at least one method annotated with 
     /// <see cref="KernelFunctionAttribute"/>. Methods can optionally include a 
-    /// <see cref="DescriptionAttribute"/>, which provides the LLM with detailed guidance 
-    /// about the function’s purpose, expected parameters, and usage.
+    /// <see cref="DescriptionAttribute"/>, providing the LLM with detailed guidance about the 
+    /// function’s purpose, expected parameters, and usage.
     /// </para>
     /// <para>
     /// <b>Requirements and best practices:</b>
     /// <list type="bullet">
     /// <item>
-    /// Any dependencies required by the plugin's constructor must be registered in 
-    /// <see cref="IServiceCollection"/> <b>before</b> the plugin is instantiated, otherwise 
-    /// registration will fail.
+    /// Register any dependencies required by a plugin in <see cref="IServiceCollection"/> 
+    /// <b>before</b> registering this library. Plugin types must also be registered beforehand. 
+    /// At runtime, plugin types are resolved to <see cref="Type"/> instances, and constructors 
+    /// are invoked with dependencies from the kernel's service provider. If a type cannot be found 
+    /// or dependencies cannot be resolved, an exception will be thrown.
     /// </item>
     /// <item>
-    /// If the plugin has multiple constructors, the constructor with the fewest parameters 
-    /// (simplest) will be selected. Best practice is to define a single constructor.
+    /// Define a single constructor per plugin or rely on the constructor with the fewest parameters 
+    /// if multiple exist.
     /// </item>
     /// <item>
-    /// Provide detailed descriptions for plugin methods (using <see cref="DescriptionAttribute"/>) 
-    /// to help the LLM understand their purpose and usage. Few-shot examples, parameter guidance, 
-    /// and recommendations on when to use the function can improve AI behavior.
+    /// Provide detailed method descriptions using <see cref="DescriptionAttribute"/>. Few-shot 
+    /// examples, parameter guidance, and usage recommendations help the LLM understand and 
+    /// call functions effectively.
     /// </item>
     /// <item>
-    /// Since most LLMs have been trained with Python for function calling, it is recommended 
-    /// to use <c>snake_case</c> for function names and property names.
+    /// Use <c>snake_case</c> for function and property names, as most LLMs have been trained 
+    /// with Python conventions for function calling.
     /// </item>
     /// </list>
     /// </para>
@@ -81,11 +83,6 @@ public class MetadataOptions
     ///   }
     /// }
     /// </code>
-    /// </para>
-    /// <para>
-    /// At runtime, these type names will be resolved to <see cref="Type"/> instances. Their constructors 
-    /// will be invoked with dependencies resolved from the kernel's service provider. 
-    /// If a type cannot be found or dependencies cannot be resolved, an exception will be thrown.
     /// </para>
     /// </summary>
     public virtual IEnumerable<string> Plugins { get; set; } = [];

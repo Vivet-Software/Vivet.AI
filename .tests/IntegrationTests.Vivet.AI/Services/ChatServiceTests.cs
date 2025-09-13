@@ -74,6 +74,26 @@ public class ChatServiceTests : BaseTests
         await onMemoryIndexedTask.Task;
     }
 
+
+
+    [TestMethod]
+    public async Task ChatTest222222()
+    {
+        const string QUESTION = "Turn on the table lamp.";
+
+        var response = await this.ChatService
+            .ChatAsync(new ChatRequest
+            {
+                Question = QUESTION,
+                UserId = this.userId,
+                CurrentThreadId = Guid.NewGuid().ToString()
+            });
+
+        Assert.IsNotNull(response);
+    }
+
+
+
     [TestMethod]
     public async Task ChatWhenJsonResponseTest()
     {
@@ -112,7 +132,7 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task ChatWheInlineJsonTest()
+    public async Task ChatWhenInlineJsonTest()
     {
         const string SYSTEM_MESSAGE = "You are an expert in meteorology.";
         const string QUESTION = "Is it always summer in Denmark? Please respond both with natural language text and also include the following json format: { \"SummerAlways\": \"true/false\" } in the response";
@@ -140,7 +160,7 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task ChatStreamingResponseTest()
+    public async Task ChatWhenStreamingResponseTest()
     {
         const string SYSTEM_MESSAGE = "You are an expert in meteorology.";
         const string QUESTION = "Is it always summer in Denmark?";
@@ -185,6 +205,13 @@ public class ChatServiceTests : BaseTests
         }
 
         await onChatCompletedTask.Task;
+    }
+
+    [TestMethod]
+    public async Task ChatWhenOverrideModelTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
     }
 
     [TestMethod]

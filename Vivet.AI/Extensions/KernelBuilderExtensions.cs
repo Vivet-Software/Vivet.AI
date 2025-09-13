@@ -1,16 +1,127 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Google.Apis.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using System;
-using System.Linq;
 using Microsoft.SemanticKernel.Data;
+using Microsoft.SemanticKernel.Plugins.Web.Google;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using Vivet.AI.Config;
 using Vivet.AI.Data.Models;
-using Vivet.AI.Plugins.TextSearch.Mappers;
 
 namespace Vivet.AI.Extensions;
 
+// BUG: Vector Plugin
+// REQUEST:
+//        Query = request.Question,
+//        Criteria =
+//        {
+//            UserId = request.UserId,
+//            ScopeId = request.ScopeId,
+//            AgentId = request.AgentId,
+//            DateRange = new DateRange
+//            {
+//                FromAt = fromAt
+//            }
+//        },
+//        CurrentThreadId = request.CurrentThreadId,
+//        Limit = limit
+//var limit = this.options.Memory.UseQueryDeduplication
+//    ? this.options.Memory.ContextQueryLimit * 2
+//    : this.options.Memory.ContextQueryLimit;
+
+// RESPONSE:
+// - FullContext
+// - CounterpartContext
+// - CreatedAt
+// - Blob (GetDataUri)
+
+// REQUEST:
+//Query = request.Question,
+//Criteria =
+//{
+//    TenantId = request.TenantId,
+//    SubTenantId = request.SubTenantId,
+//    ScopeId = request.ScopeId,
+//    UserId = request.UserId
+//},
+//Limit = limit
+//var limit = this.options.Knowledge.UseQueryDeduplication
+//    ? this.options.Knowledge.ContextQueryLimit * 2
+//    : this.options.Knowledge.ContextQueryLimit;
+
+// RESPONSE:
+// - Source
+// - FullContext
+// - BlobMetadata
+// - CreatedAt
+
+//internal static class VectorStoreTextSearchExtensions
+//{
+//    private const string BASEVECTOR_STORE_SEARCH_FUNCTION_NAME = "Search{0}";
+
+//    internal static KernelFunction CreateSearchFunction<T>(this VectorStoreTextSearch<T> textSearch, ChatOptions chatOptions)
+//        where T : BaseEmbedding
+//    {
+//        var functionName = string.Format(VectorStoreTextSearchExtensions.BASEVECTOR_STORE_SEARCH_FUNCTION_NAME, typeof(T).Name);
+
+//        var parameters = typeof(T)
+//            .GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public)
+//            .Select(x =>
+//            {
+//                var parameterAttribute = x
+//                    .GetCustomAttribute<TextSearchParameterAttribute>();
+
+//                if (parameterAttribute == null)
+//                {
+//                    return null;
+//                }
+
+//                return new KernelParameterMetadata(x.Name)
+//                {
+//                    Description = parameterAttribute.Description,
+//                    DefaultValue = parameterAttribute.DefaultValue,
+//                    IsRequired = parameterAttribute.IsRequired
+//                };
+//            })
+//            .Where(x => x != null)
+//            .ToList();
+
+//        var limit = typeof(T) switch
+//        {
+//            var x when x == typeof(Memory) => chatOptions.Memory.ContextQueryLimit,
+//            var x when x == typeof(Knowledge) => chatOptions.Knowledge.ContextQueryLimit,
+//            _ => 5
+//        };
+
+//        parameters
+//            .AddRange(
+//            [
+//                new KernelParameterMetadata("skip") { IsRequired = true, DefaultValue = 0 },
+//                new KernelParameterMetadata("limit") { IsRequired = true, DefaultValue = limit }
+//            ]);
+
+//        var options = new KernelFunctionFromMethodOptions
+//        {
+//            FunctionName = functionName,
+//            Description = null,
+//            Parameters = parameters,
+//            ReturnParameter = new KernelReturnParameterMetadata
+//            {
+//                ParameterType = typeof(KernelSearchResults<string>)
+//            }
+//        };
+
+//        //return textSearch
+//        //    .CreateGetTextSearchResults(options); 
+//    }
+//}
+
 internal static class KernelBuilderExtensions
 {
+    private const string VECTOR_STORE_SEARCH_PLUGIN_NAME = "Search{0}Plugin";
+
     internal static IKernelBuilder AddChatPluginsFromConfiguration(this IKernelBuilder builder, IServiceProvider serviceProvider, ChatOptions chatOptions)
     {
         if (builder == null)
@@ -21,6 +132,14 @@ internal static class KernelBuilderExtensions
 
         if (chatOptions == null)
             throw new ArgumentNullException(nameof(chatOptions));
+
+        builder
+            .AddBingSearchPlugin(chatOptions.BuiltInPlugins.BingSearch)
+            .AddGoogleSearchPlugin(chatOptions.BuiltInPlugins.GoogleSearch);
+
+        builder
+            .AddVectorStorePlugin<Knowledge>(serviceProvider)
+            .AddVectorStorePlugin<Memory>(serviceProvider);
 
         var types = chatOptions.Plugins
             .Select(x => Type.GetType(x, true)); 
@@ -79,6 +198,117 @@ internal static class KernelBuilderExtensions
     }
 
 
+    private static IKernelBuilder AddBingSearchPlugin(this IKernelBuilder builder, BingSearchOptions options = null)
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        if (options == null)
+        {
+            return builder;
+        }
+
+        var bingTextSearch = new BingTextSearch(options.ApiKey);
+
+        var textSearchOptions = new TextSearchOptions(); // BUG: Options
+
+        var searchFunc = bingTextSearch
+            .CreateSearch(searchOptions: textSearchOptions);
+
+        var getResultsFunc = bingTextSearch
+            .CreateGetSearchResults(searchOptions: textSearchOptions);
+
+        var getTextResultsFunc = bingTextSearch
+            .CreateGetTextSearchResults(searchOptions: textSearchOptions);
+
+        var plugin = new Dictionary<string, KernelFunction>
+        {
+            { "Search", searchFunc },
+            { "GetSearchResults", getResultsFunc },
+            { "GetTextSearchResults", getTextResultsFunc }
+        };
+
+        builder.Plugins
+            .AddFromObject(plugin, "BingSearch");
+
+        return builder;
+    }
+    private static IKernelBuilder AddGoogleSearchPlugin(this IKernelBuilder builder, GoogleSearchOptions options = null)
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        if (options == null)
+        {
+            return builder;
+        }
+
+        var initializer = new BaseClientService.Initializer
+        {
+            ApiKey = options.ApiKey
+        };
+        var googleTextSearch = new GoogleTextSearch(initializer, options.SearchEngineId);
+
+        var textSearchOptions = new TextSearchOptions(); // BUG: Options
+
+        var searchFunc = googleTextSearch
+            .CreateSearch(searchOptions: textSearchOptions);
+
+        var getResultsFunc = googleTextSearch
+            .CreateGetSearchResults(searchOptions: textSearchOptions);
+
+        var getTextResultsFunc = googleTextSearch
+            .CreateGetTextSearchResults(searchOptions: textSearchOptions);
+
+        var plugin = new Dictionary<string, KernelFunction>
+        {
+            { "Search", searchFunc },
+            { "GetSearchResults", getResultsFunc },
+            { "GetTextSearchResults", getTextResultsFunc }
+        };
+
+        builder.Plugins
+            .AddFromObject(plugin, "GoogleSearch");
+
+        return builder;
+    }
+    private static IKernelBuilder AddVectorStorePlugin<TEmbedding>(this IKernelBuilder builder, IServiceProvider serviceProvider)
+        where TEmbedding : BaseEmbedding
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        if (serviceProvider == null)
+            throw new ArgumentNullException(nameof(serviceProvider));
+
+        var serviceId = typeof(TEmbedding).Name;
+
+        //var textSearchStringMapper = new EmbeddingTextSearchStringMapper();
+        //var textSearchResultMapper = new EmbeddingTextSearchResultMapper();
+        //var textSearchOptions = new VectorStoreTextSearchOptions();
+
+        //builder
+        //    .AddVectorStoreTextSearch<TEmbedding>(textSearchStringMapper, textSearchResultMapper, textSearchOptions);
+
+        var textSearch = serviceProvider
+            .GetRequiredKeyedService<VectorStoreTextSearch<TEmbedding>>(serviceId);
+
+        var chatOptions = serviceProvider
+            .GetRequiredService<ChatOptions>();
+
+        //var kernelFunction = textSearch
+        //    .CreateSearchFunction(chatOptions);
+
+        var pluginName = string.Format(KernelBuilderExtensions.VECTOR_STORE_SEARCH_PLUGIN_NAME, typeof(TEmbedding).Name);
+        var description = "DESCRIPTION";
+
+        var searchPlugin = KernelPluginFactory.CreateFromFunctions(pluginName, description, [/*kernelFunction*/]);
+
+        builder.Plugins
+            .Add(searchPlugin);
+
+        return builder;
+    }
     private static void AddFromType(this IKernelBuilder kernelBuilder, Type type, IServiceProvider serviceProvider)
     {
         if (kernelBuilder == null) 
@@ -115,66 +345,5 @@ internal static class KernelBuilderExtensions
 
         kernelBuilder.Plugins
             .AddFromObject(instance, type.Name);
-    }
-
-
-
-    // BUG: Memory / Knowledge
-
-    internal static string VectorStoreSearchPluginNameTemplate = "Search{0}Plugin";
-    internal static string VectorStoreSearchFunctionNameTemplate = "Search{0}";
-
-
-    internal static IKernelBuilder AddVectorStoreSearches(this IKernelBuilder builder, IServiceProvider serviceProvider)
-    {
-        if (builder == null)
-            throw new ArgumentNullException(nameof(builder));
-
-        if (serviceProvider == null)
-            throw new ArgumentNullException(nameof(serviceProvider));
-
-        builder
-            .AddVectorStoreSearch<Knowledge>(serviceProvider)
-            .AddVectorStoreSearch<Memory>(serviceProvider);
-
-        return builder;
-    }
-
-
-    private static IKernelBuilder AddVectorStoreSearch<TEmbedding>(this IKernelBuilder builder, IServiceProvider serviceProvider)
-        where TEmbedding : BaseEmbedding
-    {
-        if (builder == null)
-            throw new ArgumentNullException(nameof(builder));
-
-        if (serviceProvider == null)
-            throw new ArgumentNullException(nameof(serviceProvider));
-
-        var serviceId = typeof(TEmbedding).Name;
-
-        var textSearchStringMapper = new EmbeddingTextSearchStringMapper();
-        var textSearchResultMapper = new EmbeddingTextSearchResultMapper();
-        var textSearchOptions = new VectorStoreTextSearchOptions();
-
-        builder
-            .AddVectorStoreTextSearch<TEmbedding>(textSearchStringMapper, textSearchResultMapper, textSearchOptions);
-
-        var textSearch = serviceProvider
-            .GetRequiredKeyedService<VectorStoreTextSearch<TEmbedding>>(serviceId);
-
-        var chatOptions = serviceProvider
-            .GetRequiredService<ChatOptions>();
-
-        var kernelFunction = textSearch
-            .CreateSearchFunction(chatOptions);
-
-        var pluginName = string.Format(KernelBuilderExtensions.VectorStoreSearchPluginNameTemplate, typeof(TEmbedding).Name);
-
-        var searchPlugin = KernelPluginFactory.CreateFromFunctions(pluginName, null, [kernelFunction]);
-
-        builder.Plugins
-            .Add(searchPlugin);
-
-        return builder;
     }
 }

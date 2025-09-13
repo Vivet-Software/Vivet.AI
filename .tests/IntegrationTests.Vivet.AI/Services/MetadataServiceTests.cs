@@ -161,6 +161,13 @@ public class MetadataServiceTests : BaseTests
     }
 
     [TestMethod]
+    public async Task GetWhenOverrideModelTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
     public async Task GetWhenInvalidFileTest()
     {
         const string BASE64 = "TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"; // invalid

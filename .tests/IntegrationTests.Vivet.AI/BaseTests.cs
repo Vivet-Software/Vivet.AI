@@ -38,7 +38,7 @@ public class BaseTests
             .AddLogging(x => x.AddConsole());
 
         this.services
-            .AddVivetAzureOpenAi();
-            //.AddVivetAzureAiInference();
+            //.AddVivetAzureOpenAi();
+            .AddVivetAzureAiInference();
     }
 }

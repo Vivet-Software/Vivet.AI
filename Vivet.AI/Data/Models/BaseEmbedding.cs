@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.VectorData;
-using Microsoft.SemanticKernel.Data;
 using Vivet.AI.Services.Extensions;
 
 namespace Vivet.AI.Data.Models;
@@ -20,7 +19,6 @@ public abstract class BaseEmbedding
     /// </summary>
     [Required]
     [VectorStoreKey]
-    [TextSearchResultName]
     public virtual Guid Id { get; set; } = Guid.NewGuid();
 
     /// <summary>
@@ -43,7 +41,6 @@ public abstract class BaseEmbedding
     /// </summary>
     [Required]
     [VectorStoreData]
-    [TextSearchResultValue]
     public virtual string Content
     {
         get => this.content;

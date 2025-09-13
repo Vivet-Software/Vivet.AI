@@ -170,6 +170,13 @@ public class SummarizationServiceTests : BaseTests
     }
 
     [TestMethod]
+    public async Task SummarizeMemoryWhenOverrideModelTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
     public async Task SummarizeMemoryWhenErrorMessageTest()
     {
         const string QUESTION = $"This is a test request, where I want you to respond with an {nameof(BaseResponse.ErrorMessage)}.";

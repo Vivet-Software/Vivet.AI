@@ -14,8 +14,6 @@ using Vivet.AI.Models.Enums;
 
 namespace Vivet.AI.Models;
 
-// BUG: what about ToolCallBehavior vs FunctionCallBehavior (https://chatgpt.com/c/68c4059d-4520-8333-b659-d7834d88db5d)
-
 /// <summary>
 /// The parameters for the chat model.
 /// Not all parameters are supported by all orchestrations, and even if an orchestration supports a parameters it's not garanteed that all available models supports specific parameters.
@@ -364,7 +362,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = null,
             Temperature = this.Temperature,
             TopP = this.TopP,
             PresencePenalty = this.PresencePenalty,
@@ -374,7 +372,7 @@ public class ChatModelParameters
             Seed = this.Seed,
             ResponseFormat = "text",
             TokenSelectionBiases = null,
-            // BUG: ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+            ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
             User = null,
             ChatSystemPrompt = null,
             ChatDeveloperPrompt = null,
@@ -394,7 +392,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = null,
             Temperature = this.Temperature,
             TopP = this.TopP,
             PresencePenalty = this.PresencePenalty,
@@ -404,7 +402,7 @@ public class ChatModelParameters
             Seed = this.Seed,
             ResponseFormat = "text",
             TokenSelectionBiases = null,
-            // BUG: ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+            ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
             User = null,
             ChatSystemPrompt = null,
             ChatDeveloperPrompt = null,
@@ -484,7 +482,7 @@ public class ChatModelParameters
         {
             ModelId = null,
             ExtensionData = null,
-            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            FunctionChoiceBehavior = null,
             Temperature = this.Temperature,
             TopP = this.TopP,
             TopK = this.TopK,
@@ -492,7 +490,7 @@ public class ChatModelParameters
             CandidateCount = 1,
             StopSequences = this.StopSequences,
             SafetySettings = null,
-            // BUG: ToolCallBehavior = GeminiToolCallBehavior.AutoInvokeKernelFunctions,
+            ToolCallBehavior = GeminiToolCallBehavior.AutoInvokeKernelFunctions,
             AudioTimestamp = null,
             ResponseMimeType = "text/plain",
             ResponseSchema = null,

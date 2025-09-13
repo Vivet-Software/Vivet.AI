@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.VectorData;
-using Vivet.AI.Data.Annotations;
 
 namespace Vivet.AI.Data.Models;
 
@@ -21,7 +20,6 @@ public class Memory : BaseEmbedding
     /// This property is required and indexed for text search.
     /// </summary>
     [Required]
-    [TextSearchParameter]
     [VectorStoreData(IsIndexed = true)]
     public virtual string UserId { get; set; }
 

@@ -25,12 +25,7 @@ using ChatOptions = Vivet.AI.Config.ChatOptions;
 
 namespace Vivet.AI.Extensions;
 
-// BUG: Make Built-in Plugins: Google, Bing, etc online search (chat, metadata, summarization)
-
 // BUG: Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
-
-// TEST: Request Overriding Chat model/Embedding model
-// TEST: Integration Testing Plugins (config and requests)
 
 // ------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -90,9 +85,6 @@ internal static class ServiceCollectionExtensions
                     .GetRequiredService<ChatOptions>();
 
                 var builder = Kernel.CreateBuilder();
-
-                builder
-                    .AddVectorStoreSearches(x); // BUG: Kernel: fails with kernel
 
                 builder
                     .AddChatPluginsFromConfiguration(x, chatOptions);
@@ -350,13 +342,10 @@ internal static class ServiceCollectionExtensions
             throw new ArgumentNullException(nameof(serviceId));
         
         services
-            .AddKeyedSingleton(serviceId, (_, _) =>
+            .AddKeyedTransient(serviceId, (_, _) =>
             {
                 var promptExecutionSettings = chatModelParameters
                     .GetPromptExecutionSettings<T>();
-
-                promptExecutionSettings
-                    .Freeze();
 
                 return promptExecutionSettings;
             });
@@ -407,13 +396,10 @@ internal static class ServiceCollectionExtensions
                 var vectorStore = x
                     .GetRequiredKeyedService<VectorStore>(SERVICE_ID);
 
-                var vectorStoreTextSearch = x
-                    .GetRequiredKeyedService<VectorStoreTextSearch<Memory>>(SERVICE_ID);
-
                 var vectorStoreCollectionDefinition = x
                     .GetRequiredService<VectorStoreCollectionDefinition>();
 
-                return new MemoryVectorStore(vectorStore, vectorStoreTextSearch, vectorStoreCollectionDefinition);
+                return new MemoryVectorStore(vectorStore, vectorStoreCollectionDefinition);
             });
 
         services
@@ -444,13 +430,10 @@ internal static class ServiceCollectionExtensions
                 var vectorStore = x
                     .GetRequiredKeyedService<VectorStore>(SERVICE_ID);
 
-                var vectorStoreTextSearch = x
-                    .GetRequiredKeyedService<VectorStoreTextSearch<Knowledge>>(SERVICE_ID);
-
                 var vectorStoreCollectionDefinition = x
                     .GetRequiredService<VectorStoreCollectionDefinition>();
 
-                return new KnowledgeVectorStore(vectorStore, vectorStoreTextSearch, vectorStoreCollectionDefinition);
+                return new KnowledgeVectorStore(vectorStore, vectorStoreCollectionDefinition);
             });
 
         services

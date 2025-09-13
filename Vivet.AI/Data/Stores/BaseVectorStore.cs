@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.Extensions.VectorData;
-using Microsoft.SemanticKernel.Data;
 using Vivet.AI.Data.Models;
 
 namespace Vivet.AI.Data.Stores;
@@ -23,23 +22,13 @@ public abstract class BaseVectorStore<TCollection>
     public VectorStoreCollection<Guid, TCollection> Collection { get; }
 
     /// <summary>
-    /// Gets the text search interface for the vector store.
-    /// </summary>
-    public VectorStoreTextSearch<TCollection> TextSearch { get; }
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="BaseVectorStore{TCollection}"/> class.
     /// </summary>
     /// <param name="vectorStore">The vector store instance to use.</param>
-    /// <param name="vectorStoreTextSearch">The text search component associated with the vector store.</param>
     /// <param name="vectorStoreCollectionDefinition">The collection definition used to configure the vector store collection.</param>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown if <paramref name="vectorStore"/> or <paramref name="vectorStoreTextSearch"/> is <c>null</c>.
-    /// </exception>
-    protected BaseVectorStore(VectorStore vectorStore, VectorStoreTextSearch<TCollection> vectorStoreTextSearch, VectorStoreCollectionDefinition vectorStoreCollectionDefinition)
+    protected BaseVectorStore(VectorStore vectorStore, VectorStoreCollectionDefinition vectorStoreCollectionDefinition)
     {
         this.Store = vectorStore ?? throw new ArgumentNullException(nameof(vectorStore));
-        this.TextSearch = vectorStoreTextSearch ?? throw new ArgumentNullException(nameof(vectorStoreTextSearch));
 
         this.Collection = this.Store
             .GetCollection<Guid, TCollection>(typeof(TCollection).Name, vectorStoreCollectionDefinition);

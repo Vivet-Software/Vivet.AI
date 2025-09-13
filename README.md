@@ -49,6 +49,7 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;💚 [Health Checks](#-health-checks)  
 
 ### 💡 [Other Highlighted Features](#-other-highlighted-features-1)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔧 [Plugins / Tools](#-plugins--tools)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔀 [Advanced Text Chunking](#-advanced-text-chunking)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧹 [Context Deduplication](#-context-deduplication)  
 
@@ -104,9 +105,9 @@ Use this as a reference when setting up your `Ai` section in `appsettings.json`.
 
 | Setting      | OpenAI   | Azure OpenAI | Azure InferenceAI | HuggingFace | Ollama | Google Gemini | Amazon Bedrock   |
 | ------------ | -------- | ------------ | ---------------- | ------------ | ------ | -------------- | --------------- |
-| **Endpoint** | ✅      | ✅           | ✅               | ✅          | ✅     | ❌            | ℹ️              |
-| **ApiKey**   | ✅      | ✅           | ✅               | ✅          | ❌     | ✅            | ✅              |
-| **ApiKeyId** | ❌      | ❌           | ❌               | ❌          | ❌     | ❌            | ✅              |
+| `Endpoint`   | ✅      | ✅           | ✅               | ✅          | ✅     | ❌            | ℹ️              |
+| `ApiKey`     | ✅      | ✅           | ✅               | ✅          | ❌     | ✅            | ✅              |
+| `ApiKeyId`   | ❌      | ❌           | ❌               | ❌          | ❌     | ❌            | ✅              |
 
 > ℹ️ Consult the individual provider sections below for details on support and usage of the configuration values.
 
@@ -416,40 +417,43 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
       "ContextQueryLimit": 3,
       "UseQueryDeduplication": true,
       "DeduplicationMatchScoreThreshold": 0.90
-    }
+    },
+    "Plugins": [
+    ]
   }
 }
 ```
 
 ### 📑 Chat Configuration Details
-| Setting                                         | Type             | Default   | Description                                                                                                   |
-| ----------------------------------------------- | ---------------- | --------- | ------------------------------------------------------------------------------------------------------------- |
-| Chat                                            |                  |           | Chat configuration.                                                                                           |
-| Chat.Model                                      |                  |           | The chat model configuration.                                                                                 |
-| Chat.Model.Name                                 | string           | null      | Specifies the chat model to use (e.g., GPT-4.1). Must be configured in the chosen AI provider.                |
-| Chat.Model.UseHealthCheck                       | bool             | true      | Whether to perform a health check on the model before use.                                                    |
-| Chat.Model.Parameters                           |                  |           | The chat model parameters.                                                                                    |
-| Chat.Model.Parameters.MaxOutputTokens           | int              | 2048      | Maximum number of output tokens to generate.                                                                  |
-| Chat.Model.Parameters.Temperature               | float?           | null      | Sampling temperature (0–1), controlling randomness.                                                           |
-| Chat.Model.Parameters.StopSequences             | string[]         | []        | Text sequences that will stop generation.                                                                     |
-| Chat.Model.Parameters.Seed                      | long?            | null      | Optional seed for deterministic output.                                                                       |
-| Chat.Model.Parameters.PresencePenalty           | float?           | null      | Penalty for generating tokens already present in the text.                                                    |
-| Chat.Model.Parameters.FrequencyPenalty          | float?           | null      | Penalty for generating tokens repeatedly.                                                                     |
-| Chat.Model.Parameters.RepetitionPenalty         | float?           | null      | Penalizes repeated token usage within the generation.                                                         |
-| Chat.Model.Parameters.TopP                      | float?           | null      | Nucleus sampling probability mass.                                                                            |
-| Chat.Model.Parameters.TopK                      | int?             | null      | Limits candidate tokens considered per generation step.                                                       |
-| Chat.Model.Parameters.ReasoningEffort           | ReasoningEffort? | null      | Effort level to reduce reasoning complexity or token usage.                                                   |
-| Chat.Timeout                                    | TimeSpan         | 00:01:00  | Maximum time allowed for a chat request.                                                                      |
-| Chat.Memory                                     |                  |           | Chat memory configuration. *Requires [Embedding Memory](#-embedding-memory-service) to be configured.*        |
-| Chat.Memory.RetentionInDays                     | int              | 180       | How far back memories will be included in queries.                                                            |
-| Chat.Memory.ContextQueryLimit                   | int              | 3         | Maximum number of memory entries retrieved per query.                                                         |
-| Chat.Memory.CounterpartContextQueryLimit        | int              | 2         | Maximum number of counterpart (Q/A pair) entries retrieved.                                                   |
-| Chat.Memory.UseQueryDeduplication               | bool             | true      | Deduplicate similar memory entries before building context.                                                   |
-| Chat.Memory.DeduplicationMatchScoreThreshold    | double           | 0.90      | Fuzzy similarity threshold for deduplication.                                                                 |
-| Chat.Knowledge                                  |                  |           | Chat knowledge configuration. *Requires [Embedding Knowledge](#-embedding-memory-service) to be configured.*  |
-| Chat.Knowledge.ContextQueryLimit                | int              | 3         | Maximum number of knowledge entries retrieved per query.                                                      |
-| Chat.Knowledge.UseQueryDeduplication            | bool             | true      | Deduplicate similar knowledge entries before building context.                                                |
-| Chat.Knowledge.DeduplicationMatchScoreThreshold | double           | 0.90      | Fuzzy similarity threshold for knowledge deduplication.                                                       |
+| Setting                                         | Type             | Default   | Description                                                                                                                                                                                                                                                                     |
+| ----------------------------------------------- | ---------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chat                                            |                  |           | Chat configuration.                                                                                                                                                                                                                                                             |
+| Chat.Model                                      |                  |           | The chat model configuration.                                                                                                                                                                                                                                                   |
+| Chat.Model.Name                                 | string           | null      | Specifies the chat model to use (e.g., GPT-4.1). Must be configured in the chosen AI provider. _The configured model may be overridden for individual requests._                                                                                                                |
+| Chat.Model.UseHealthCheck                       | bool             | true      | Whether to perform a health check on the model before use.                                                                                                                                                                                                                      |
+| Chat.Model.Parameters                           |                  |           | The chat model parameters.                                                                                                                                                                                                                                                      |
+| Chat.Model.Parameters.MaxOutputTokens           | int              | 2048      | Maximum number of output tokens to generate.                                                                                                                                                                                                                                    |
+| Chat.Model.Parameters.Temperature               | float?           | null      | Sampling temperature (0–1), controlling randomness.                                                                                                                                                                                                                             |
+| Chat.Model.Parameters.StopSequences             | string[]         | []        | Text sequences that will stop generation.                                                                                                                                                                                                                                       |
+| Chat.Model.Parameters.Seed                      | long?            | null      | Optional seed for deterministic output.                                                                                                                                                                                                                                         |
+| Chat.Model.Parameters.PresencePenalty           | float?           | null      | Penalty for generating tokens already present in the text.                                                                                                                                                                                                                      |
+| Chat.Model.Parameters.FrequencyPenalty          | float?           | null      | Penalty for generating tokens repeatedly.                                                                                                                                                                                                                                       |
+| Chat.Model.Parameters.RepetitionPenalty         | float?           | null      | Penalizes repeated token usage within the generation.                                                                                                                                                                                                                           |
+| Chat.Model.Parameters.TopP                      | float?           | null      | Nucleus sampling probability mass.                                                                                                                                                                                                                                              |
+| Chat.Model.Parameters.TopK                      | int?             | null      | Limits candidate tokens considered per generation step.                                                                                                                                                                                                                         |
+| Chat.Model.Parameters.ReasoningEffort           | ReasoningEffort? | null      | Effort level to reduce reasoning complexity or token usage.                                                                                                                                                                                                                     |
+| Chat.Timeout                                    | TimeSpan         | 00:01:00  | Maximum time allowed for a chat request.                                                                                                                                                                                                                                        |
+| Chat.Memory                                     |                  |           | Chat memory configuration. *Requires [Embedding Memory](#-embedding-memory-service) to be configured.*                                                                                                                                                                          |
+| Chat.Memory.RetentionInDays                     | int              | 180       | How far back memories will be included in queries.                                                                                                                                                                                                                              |
+| Chat.Memory.ContextQueryLimit                   | int              | 3         | Maximum number of memory entries retrieved per query.                                                                                                                                                                                                                           |
+| Chat.Memory.CounterpartContextQueryLimit        | int              | 2         | Maximum number of counterpart (Q/A pair) entries retrieved.                                                                                                                                                                                                                     |
+| Chat.Memory.UseQueryDeduplication               | bool             | true      | Deduplicate similar memory entries before building context.                                                                                                                                                                                                                     |
+| Chat.Memory.DeduplicationMatchScoreThreshold    | double           | 0.90      | Fuzzy similarity threshold for deduplication.                                                                                                                                                                                                                                   |
+| Chat.Knowledge                                  |                  |           | Chat knowledge configuration. *Requires [Embedding Knowledge](#-embedding-memory-service) to be configured.*                                                                                                                                                                    |
+| Chat.Knowledge.ContextQueryLimit                | int              | 3         | Maximum number of knowledge entries retrieved per query.                                                                                                                                                                                                                        |
+| Chat.Knowledge.UseQueryDeduplication            | bool             | true      | Deduplicate similar knowledge entries before building context.                                                                                                                                                                                                                  |
+| Chat.Knowledge.DeduplicationMatchScoreThreshold | double           | 0.90      | Fuzzy similarity threshold for knowledge deduplication.                                                                                                                                                                                                                         |
+| Plugins                                         | string[]         | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. Ensure their dependencies are registered before this library is registered. See [Plugins / Tools](#-plugins--tools) |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -469,7 +473,7 @@ var request = new ChatRequest
         {
             Data = new BlobDataBase64 { Base64 = "base64" }, // or File, Uri, Stream, etc. 
             MimeType = ImageMimeType.Png,
-            Metadata = new Metadata  // If Metadata is null, it will be automatically retrieved from the blob if Metadata is configured in appsettings.
+            Metadata = new Metadata  // If Metadata is null, it will be fetched from the blob when configured in appsettings
             {
                 Title = "Quarterly Report Graph",
                 Description = "Q2 financial summary graph"
@@ -549,14 +553,14 @@ The **Embedding** configuration contains settings shared by both **Memory** and 
 ```
 
 ### 📑 Common Embedding Configuration Details
-| Setting                | Type     | Default    | Description                                                                          |
-| ---------------------- | -------- | ---------- | ------------------------------------------------------------------------------------ |
-| `Model`                |          |            | Embedding model configuration.                                                       |
-| `Model.Name`           | string   | `null`     | Name of the embedding model (must be supported by the chosen AI provider).           |
-| `Model.UseHealthCheck` | bool     | `true`     | Whether to validate the embedding model on startup.                                  |
-| `VectorSize`           | int      | `1536`     | Embedding dimension size. Depends entirely on the model used.                        |
-| `MatchScoreThreashold` | float    | `0.86`     | Cosine similarity threshold for semantic matches (see below for recommended ranges). |
-| `Timeout`              | TimeSpan | `00:01:00` | Timeout for embedding operations.                                                    |
+| Setting                | Type     | Default    | Description                                                                                                                                                                                                                                                                  |
+| ---------------------- | -------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Model`                |          |            | Embedding model configuration.                                                                                                                                                                                                                                               |
+| `Model.Name`           | string   | `null`     | Name of the embedding model (must be supported by the chosen AI provider). _The configured model may be overridden for individual requests, Use with caution, as different models generate embeddings differently, which may lead to misalignment with existing embeddings._ |
+| `Model.UseHealthCheck` | bool     | `true`     | Whether to validate the embedding model on startup.                                                                                                                                                                                                                          |
+| `VectorSize`           | int      | `1536`     | Embedding dimension size. Depends entirely on the model used.                                                                                                                                                                                                                |
+| `MatchScoreThreashold` | float    | `0.86`     | Cosine similarity threshold for semantic matches (see below for recommended ranges).                                                                                                                                                                                         |
+| `Timeout`              | TimeSpan | `00:01:00` | Timeout for embedding operations.                                                                                                                                                                                                                                            |
 
 ##### Recommended Match Score Thresholds
 * 0.00 - 0.70: Often noise, unless domain is very narrow.
@@ -832,7 +836,6 @@ The unique knowledge-specific setting is:
 | `Scoring`                        |        |         | Knowledge scoring configuration. [Match Scoring Configuration](#-match-scoring)                                             |
 | `VectorStore`                    |        |         | Knowledge vector store configuration. [Vector Store Configuration](#%EF%B8%8F-vector-store)                                 |
 
-
 ### 🚀 Example Usage
 #### Resolve the service from DI
 ```csharp
@@ -984,19 +987,22 @@ Example `appsettings.json` snippet showing how to configure `IMetadataService` u
     }
     "SummaryMaxWords": 30,
     "DescriptionMaxWords": 90,
-    "Timeout": "00:01:00"
+    "Timeout": "00:01:00",
+    "Plugins": [
+    ]
   }
 }
 ```
 
 ### 📑 Metadata Configuration Details
-| Setting                      | Type     | Default   | Description                                                                                                                                        |
-| ---------------------------- | -------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Metadata                     |          |           | Metadata service configuration.                                                                                                                    |
-| Metadata.Model               |          |           | Chat model configuration for metadata extraction. The model configuration is identical to [Chat Model Configuration](#-chat-configuration-details) |
-| Metadata.SummaryMaxWords     | int      | 30        | The max words to include for metadata summary.                                                                                                     |
-| Metadata.DescriptionMaxWords | int      | 90        | The max words to include for metadata description.                                                                                                 |
-| Metadata.Timeout             | TimeSpan | 00:01:00  | Maximum time allowed for a metadata request.                                                                                                       |
+| Setting                      | Type     | Default   | Description                                                                                                                                                                                                           |
+| ---------------------------- | -------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Metadata                     |          |           | Metadata service configuration.                                                                                                                                                                                       |
+| Metadata.Model               |          |           | Chat model configuration for metadata extraction. The model configuration is identical to [Chat Model Configuration](#-chat-configuration-details). _The configured model may be overridden for individual requests._ |
+| Metadata.SummaryMaxWords     | int      | 30        | The max words to include for metadata summary.                                                                                                                                                                        |
+| Metadata.DescriptionMaxWords | int      | 90        | The max words to include for metadata description.                                                                                                                                                                    |
+| Metadata.Timeout             | TimeSpan | 00:01:00  | Maximum time allowed for a metadata request.                                                                                                                                                                          |
+| Plugins                      | string[] | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. Ensure their dependencies are registered before this library is registered. See [Plugins / Tools](#-plugins--tools) |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -1076,18 +1082,21 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
       "Name": "<your-summarization-chat-model>",
     }
     "SummarizationDegree": 25,
-    "Timeout": "00:01:00"
+    "Timeout": "00:01:00",
+    "Plugins": [
+    ]
   }
 }
 ```
 
 ### 📑 Summarization Configuration Details
-| Setting                           | Type     | Default   | Description                                                                                                                                   |
-| --------------------------------- | -------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Summarization                     |          |           | Summarization service configuration.                                                                                                          |
-| Summarization.Model               |          |           | Chat model configuration for summarization. The model configuration is identical to [Chat Model Configuration](#-chat-configuration-details)  |
-| Summarization.SummarizationDegree | int      | 25        | Controls how aggressively content is summarized (0 - 100).                                                                                    |
-| Summarization.Timeout             | TimeSpan | 00:01:00  | Maximum time allowed for a summarization request.                                                                                             |
+| Setting                           | Type     | Default   | Description                                                                                                                                                                                                     |
+| --------------------------------- | -------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Summarization                     |          |           | Summarization service configuration.                                                                                                                                                                            |
+| Summarization.Model               |          |           | Chat model configuration for summarization. The model configuration is identical to [Chat Model Configuration](#-chat-configuration-details). _The configured model may be overridden for individual requests._ |
+| Summarization.SummarizationDegree | int      | 25        | Controls how aggressively content is summarized (0 - 100).                                                                                                                                                      |
+| Summarization.Timeout             | TimeSpan | 00:01:00  | Maximum time allowed for a summarization request.                                                                                                                                                               |
+| Plugins                           | string[] | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. Ensure their dependencies are registered before this library is registered. See [Plugins / Tools](#-plugins--tools) |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -1148,6 +1157,9 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 <br />
 
 ## 💡 Other Highlighted Features
+### 🔧 Plugins / Tools
+Coming...  
+
 ### 🔀 Advanced Text Chunking  
 When storing embeddings in a vector store, the quality of retrieval depends heavily on how the original text is chunked.  
 This library includes an **advanced text-chunking engine** that goes far beyond simple paragraph or sentence splitting.  

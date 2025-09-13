@@ -1,5 +1,7 @@
-﻿using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel;
+﻿using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,22 +10,20 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Vivet.AI.Config;
+using Vivet.AI.Extensions;
+using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
+using Vivet.AI.Services.Helpers;
 using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Requests.Chat;
-using Vivet.AI.Services.Responses.Chat;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
 using Vivet.AI.Services.Requests.Embedding.Memory;
-using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
-using Vivet.AI.Config;
+using Vivet.AI.Services.Responses.Chat;
 using Vivet.AI.Services.Responses.Embeddings.Knowledge.Models;
 using Vivet.AI.Services.Responses.Embeddings.Memory;
-using Vivet.AI.Extensions;
-using Vivet.AI.Services.Helpers;
-using Vivet.AI.Services.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Vivet.AI.Services.Exceptions;
+using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
 using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
@@ -75,7 +75,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var kernel = this.GetKernel(request);
 
         var chatMessageContent = await this.chatCompletionService
-            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken) 
+            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
             .ConfigureAwait(false);
 
         if (chatMessageContent.Content == null)
@@ -284,7 +284,6 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
                 Limit = limit
             }, cancellationToken)
             .ConfigureAwait(false);
-
 
         var results = response.Results
             .Select(x => x.Result)

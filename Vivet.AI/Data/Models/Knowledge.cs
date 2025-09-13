@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.VectorData;
 using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Data.Annotations;
 
 namespace Vivet.AI.Data.Models;
 
@@ -15,7 +14,6 @@ public class Knowledge : BaseEmbedding
     /// Gets or sets the tenant identifier associated with this knowledge entry.
     /// Indexed for text search.
     /// </summary>
-    [TextSearchParameter]
     [VectorStoreData(IsIndexed = true)]
     public virtual string TenantId { get; set; }
 
@@ -23,7 +21,6 @@ public class Knowledge : BaseEmbedding
     /// Gets or sets the sub-tenant identifier associated with this knowledge entry.
     /// Indexed for text search.
     /// </summary>
-    [TextSearchParameter]
     [VectorStoreData(IsIndexed = true)]
     public virtual string SubTenantId { get; set; }
 
@@ -31,7 +28,6 @@ public class Knowledge : BaseEmbedding
     /// Gets or sets the user identifier associated with this knowledge entry.
     /// Indexed for text search.
     /// </summary>
-    [TextSearchParameter]
     [VectorStoreData(IsIndexed = true)]
     public virtual string UserId { get; set; }
 
