@@ -2,18 +2,21 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Data;
+using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using Microsoft.SemanticKernel.Plugins.Web.Google;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Models;
+using Vivet.AI.Extensions.Consts;
 
 namespace Vivet.AI.Extensions;
 
-// BUG: Test Plugins (Web Search)
+// TODO: Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
+
+// BUG: Check links in plugin config
 
 // BUG: Vector Plugin
 // REQUEST:
@@ -123,8 +126,6 @@ namespace Vivet.AI.Extensions;
 
 internal static class KernelBuilderExtensions
 {
-    private const string VECTOR_STORE_SEARCH_PLUGIN_NAME = "Search{0}Plugin";
-
     internal static IKernelBuilder AddChatPluginsFromConfiguration(this IKernelBuilder builder, IServiceProvider serviceProvider, ChatOptions chatOptions)
     {
         if (builder == null)
@@ -135,8 +136,6 @@ internal static class KernelBuilderExtensions
 
         if (chatOptions == null)
             throw new ArgumentNullException(nameof(chatOptions));
-
-        // TODO: Additional Built-In Plugins (GitHub, Website-Scraper, etc.)
 
         builder
             .AddWebSearchPlugin(chatOptions.Plugins.BuiltInPlugins.WebSearch)
@@ -215,7 +214,8 @@ internal static class KernelBuilderExtensions
             Top = options.Limit
         };
 
-        var plugin = new Dictionary<string, KernelFunction>();
+        List<KernelFunction> webSearchFunctions;
+
         switch (options.Provider)
         {
             case WebSearchProvider.Bing:
@@ -230,12 +230,12 @@ internal static class KernelBuilderExtensions
                 var bingGetTextResultsFunc = bingTextSearch
                     .CreateGetTextSearchResults(searchOptions: textSearchOptions);
 
-                plugin = new Dictionary<string, KernelFunction>
-                {
-                    { "Search", bingSearchFunc },
-                    { "GetSearchResults", bingGetResultsFunc },
-                    { "GetTextSearchResults", bingGetTextResultsFunc }
-                };
+                webSearchFunctions =
+                [
+                    bingSearchFunc,
+                    bingGetResultsFunc,
+                    bingGetTextResultsFunc
+                ];
 
                 break;
 
@@ -255,18 +255,21 @@ internal static class KernelBuilderExtensions
                 var googleGetTextResultsFunc = googleTextSearch
                     .CreateGetTextSearchResults(searchOptions: textSearchOptions);
 
-                plugin = new Dictionary<string, KernelFunction>
-                {
-                    { "Search", googleSearchFunc },
-                    { "GetSearchResults", googleGetResultsFunc },
-                    { "GetTextSearchResults", googleGetTextResultsFunc }
-                };
+                webSearchFunctions =
+                [
+                    googleSearchFunc,
+                    googleGetResultsFunc,
+                    googleGetTextResultsFunc
+                ];
 
                 break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(options.Provider));
         }
 
         builder.Plugins
-            .AddFromObject(plugin, "VivetWebSearch"); // BUG: 222: name?
+            .AddFromFunctions(BuiltInPluginNames.WEB_SEARCH_PLUGIN, webSearchFunctions);
 
         return builder;
     }
@@ -297,7 +300,7 @@ internal static class KernelBuilderExtensions
         //var kernelFunction = textSearch
         //    .CreateSearchFunction(chatOptions);
 
-        var pluginName = string.Format(KernelBuilderExtensions.VECTOR_STORE_SEARCH_PLUGIN_NAME, typeof(TEmbedding).Name);
+        var pluginName = string.Format(BuiltInPluginNames.VECTOR_STORE_SEARCH_PLUGIN, typeof(TEmbedding).Name);
         var description = "DESCRIPTION";
 
         var searchPlugin = KernelPluginFactory.CreateFromFunctions(pluginName, description, [/*kernelFunction*/]);

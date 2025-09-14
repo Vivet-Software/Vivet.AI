@@ -295,8 +295,6 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
-        // TODO: Support Image Embeddings
-
         var blobData = await request.Blob
             .GetBlobData()
             .ConfigureAwait(false);

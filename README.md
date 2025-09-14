@@ -421,14 +421,7 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
     "Plugins": { 
       "CustomPlugins": [
       ],
-      "BuiltInPlugins"; {
-        "WebSearch": {
-          "Provider": "Google",
-          "Id": null,
-          "ApiKey": null,
-          "Limit": 5
-        }
-      }
+      "BuiltInPlugins": { }
     }
   }
 }
@@ -463,24 +456,43 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 | Chat.Knowledge.ContextQueryLimit                | int               | 3         | Maximum number of knowledge entries retrieved per query.                                                                                                         |
 | Chat.Knowledge.UseQueryDeduplication            | bool              | true      | Deduplicate similar knowledge entries before building context.                                                                                                   |
 | Chat.Knowledge.DeduplicationMatchScoreThreshold | double            | 0.90      | Fuzzy similarity threshold for knowledge deduplication.                                                                                                          |
-| Chat.Plugins                                    | string[]          | []        | Options for configuring chat plugins. See [Plugins / Tools](#-plugins--tools)                                                                                    |
+| Chat.Plugins                                    |                   |           | Options for configuring chat plugins. See [Plugins / Tools](#-plugins--tools)                                                                                    |
 | Chat.Plugins.CustomPlugins                      | string[]          | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. Ensure any plugin dependencies are registered before this library. |
-| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in plugins that can be enabled for the chat model.                                                                                                         |
-| Chat.Plugins.BuiltInPlugins.WebSearch           |                   |           | Web search plugin. Dafault null, not enabled. See [Web Search](#-web-search) for supported providers and configuration details.                                  |
-| Chat.Plugins.BuiltInPlugins.WebSearch.Provider  | WebSearchProvider |           | The provider for the plugin to use when searching the web. See supported providers:                                                                              |
-| Chat.Plugins.BuiltInPlugins.WebSearch.Id        | string            |           | The identifier used for web search. _Only used by some providers_.                                                                                               |
-| Chat.Plugins.BuiltInPlugins.WebSearch.ApiKey    | string            |           | The api-key of the web search provider.                                                                                                                          |
-| Chat.Plugins.BuiltInPlugins.WebSearch.Limit     | int               |           | Number of search results to return for the web search.                                                                                                           |
+| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in plugins that can be enabled for the chat model. See [Built-in Plugins Configuration](#-built-in-plugins-configuration)                                  |
 
-#### 🔌 Built-in Plugins Configuration
+### 🔌 Built-in Plugins Configuration
 Built-in plugins provide additional functionality that can be enabled for the chat model through configuration.  
 
-##### 🌐 Web Search  
+#### 🌐 Web Search
+Web Search enables the chat model to search the internet using a configured provider.  
+
+##### Configuration
+Example `appsettings.json` snippet showing how to configure the built-in plugin for `WebSearch` under the `"BuiltInPlugins"` section:
+```json
+"BuiltInPlugins": {
+  "WebSearch": {
+    "Provider": "Google",
+    "Id": null,
+    "ApiKey": null,
+    "Limit": 5
+  }
+}
+```
+
+##### Web Search Configuration Details
+| Setting                                         | Type              | Default   | Description                                                         |
+| ----------------------------------------------- | ----------------- | --------- | ------------------------------------------------------------------- |
+| Chat.Plugins.BuiltInPlugins.WebSearch           |                   | null      | Web search plugin. Dafault null, not enabled.                       |
+| Chat.Plugins.BuiltInPlugins.WebSearch.Provider  | WebSearchProvider | `Google`  | The provider for the plugin to use when searching the web.          |
+| Chat.Plugins.BuiltInPlugins.WebSearch.Id        | string            | null      | The identifier used for web search. _Only used by some providers_.  |
+| Chat.Plugins.BuiltInPlugins.WebSearch.ApiKey    | string            | null      | The api-key of the web search provider.                             |
+| Chat.Plugins.BuiltInPlugins.WebSearch.Limit     | int               | null      | Number of search results to return for the web search.              |
+
 The table below shows the supported providers and their required configuration values (`Id`, `ApiKey`):  
-| Setting   | Google                   | Bing |
-| --------- | ------------------------ | ---- |
-| `Id`      | ✅ (`Search Engine ID`)  | ❌   |
-| `ApiKey`  | ✅                       | ✅   |
+| Setting   | Google                   | Bing |  
+| --------- | ------------------------ | ---- |  
+| `Id`      | ✅ (`Search Engine ID`)  | ❌   |  
+| `ApiKey`  | ✅                       | ✅   |  
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -1191,7 +1203,64 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 
 ## 💡 Other Highlighted Features
 ### 🔌 Plugins / Tools
-Coming...  
+Plugins (also called *tools*) are sets of related functions that can be exposed to a chat model. They allow the model to integrate with external services and execute custom functionality.  
+
+Plugins can be added in two ways:  
+- **Configuration**: Registered globally in `appsettings.json`. These plugins are always available to the chat model.  
+- **Per request**: Passed along with a specific request. This gives fine-grained control over when a plugin is available.  
+
+Both approaches can be combined — for example, you might configure global plugins for core functionality and add request-specific plugins for special scenarios.  
+
+When adding a plugin via configuration:  
+- Use the fully qualified type name (see the configuration details for supported services).  
+- Ensure all plugin dependencies are registered in the service collection *before* this library, so they can be resolved.  
+
+When adding a plugin per request:  
+- Create and pass an instance of the plugin yourself.  
+- The caller is responsible for instantiating and wiring up dependencies.  
+
+#### How plugins are invoked  
+When plugins are available, the chat model automatically decides whether to invoke them based on the user’s query. This is by design — the model plans when and how to use plugins.  
+- If you require a plugin to **always** be invoked, call it manually in your application and include its result in the system message of the request.  
+
+📖 Read more: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)  
+
+#### Example Plugin  
+A simple plugin that turns lights on and off:  
+
+```csharp
+public interface ILightsService
+{
+    LightModel TurnOn(int id);
+    LightModel TurnOff(int id);
+}
+
+public class LightModel
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
+
+    [JsonPropertyName("is_on")]
+    public bool? IsOn { get; set; }
+}
+
+public class LightsPlugin(ILightsService lightsService)
+{
+    private readonly ILightsService lightsService = lightsService ?? throw new ArgumentNullException(nameof(lightsService));
+
+    [KernelFunction("turn_on")]
+    [Description("Turn on the light")]
+    public LightModel TurnOn(int id) => this.lightsService.TurnOn(id);
+
+    [KernelFunction("turn_off")]
+    [Description("Turn off the light")]
+    public LightModel TurnOff(int id) => this.lightsService.TurnOff(id);
+}
+```
+<br />
 
 ### 🔀 Advanced Text Chunking  
 When storing embeddings in a vector store, the quality of retrieval depends heavily on how the original text is chunked.  

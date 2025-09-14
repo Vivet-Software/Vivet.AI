@@ -74,26 +74,6 @@ public class ChatServiceTests : BaseTests
         await onMemoryIndexedTask.Task;
     }
 
-
-
-    [TestMethod]
-    public async Task ChatTest222222()
-    {
-        const string QUESTION = "Turn on the table lamp.";
-
-        var response = await this.ChatService
-            .ChatAsync(new ChatRequest
-            {
-                Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
-            });
-
-        Assert.IsNotNull(response);
-    }
-
-
-
     [TestMethod]
     public async Task ChatWhenJsonResponseTest()
     {
@@ -209,6 +189,20 @@ public class ChatServiceTests : BaseTests
 
     [TestMethod]
     public async Task ChatWhenOverrideModelTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public async Task ChatWhenCustomPluginTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public async Task ChatWhenWebSearchPluginTest()
     {
         await Task.CompletedTask;
         Assert.Inconclusive();
