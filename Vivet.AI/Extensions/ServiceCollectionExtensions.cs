@@ -25,7 +25,7 @@ using ChatOptions = Vivet.AI.Config.ChatOptions;
 
 namespace Vivet.AI.Extensions;
 
-// BUG: Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
+// TODO: Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
 
 // ------------------------------------------------------------------------------------------------------------------------------------------------
 

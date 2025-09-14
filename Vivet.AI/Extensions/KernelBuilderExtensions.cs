@@ -8,9 +8,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
 using Vivet.AI.Config;
+using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Models;
 
 namespace Vivet.AI.Extensions;
+
+// BUG: Test Plugins (Web Search)
 
 // BUG: Vector Plugin
 // REQUEST:
@@ -133,15 +136,14 @@ internal static class KernelBuilderExtensions
         if (chatOptions == null)
             throw new ArgumentNullException(nameof(chatOptions));
 
-        builder
-            .AddBingSearchPlugin(chatOptions.BuiltInPlugins.BingSearch)
-            .AddGoogleSearchPlugin(chatOptions.BuiltInPlugins.GoogleSearch);
+        // TODO: Additional Built-In Plugins (GitHub, Website-Scraper, etc.)
 
         builder
+            .AddWebSearchPlugin(chatOptions.Plugins.BuiltInPlugins.WebSearch)
             .AddVectorStorePlugin<Knowledge>(serviceProvider)
             .AddVectorStorePlugin<Memory>(serviceProvider);
 
-        var types = chatOptions.Plugins
+        var types = chatOptions.Plugins.CustomPlugins
             .Select(x => Type.GetType(x, true)); 
 
         foreach (var type in types)
@@ -163,7 +165,7 @@ internal static class KernelBuilderExtensions
         if (metadataOptions == null)
             throw new ArgumentNullException(nameof(metadataOptions));
 
-        var types = metadataOptions.Plugins
+        var types = metadataOptions.Plugins.CustomPlugins
             .Select(x => Type.GetType(x, true));
 
         foreach (var type in types)
@@ -185,7 +187,7 @@ internal static class KernelBuilderExtensions
         if (summarizationOptions == null) 
             throw new ArgumentNullException(nameof(summarizationOptions));
 
-        var types = summarizationOptions.Plugins
+        var types = summarizationOptions.Plugins.CustomPlugins
             .Select(x => Type.GetType(x, true));
 
         foreach (var type in types)
@@ -198,77 +200,73 @@ internal static class KernelBuilderExtensions
     }
 
 
-    private static IKernelBuilder AddBingSearchPlugin(this IKernelBuilder builder, BingSearchOptions options = null)
+    private static IKernelBuilder AddWebSearchPlugin(this IKernelBuilder builder, WebSearchPluginOptions options = null)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
 
         if (options == null)
         {
-            return builder;
+            return null;
         }
 
-        var bingTextSearch = new BingTextSearch(options.ApiKey);
-
-        var textSearchOptions = new TextSearchOptions(); // BUG: Options
-
-        var searchFunc = bingTextSearch
-            .CreateSearch(searchOptions: textSearchOptions);
-
-        var getResultsFunc = bingTextSearch
-            .CreateGetSearchResults(searchOptions: textSearchOptions);
-
-        var getTextResultsFunc = bingTextSearch
-            .CreateGetTextSearchResults(searchOptions: textSearchOptions);
-
-        var plugin = new Dictionary<string, KernelFunction>
+        var textSearchOptions = new TextSearchOptions
         {
-            { "Search", searchFunc },
-            { "GetSearchResults", getResultsFunc },
-            { "GetTextSearchResults", getTextResultsFunc }
+            Top = options.Limit
         };
 
-        builder.Plugins
-            .AddFromObject(plugin, "BingSearch");
-
-        return builder;
-    }
-    private static IKernelBuilder AddGoogleSearchPlugin(this IKernelBuilder builder, GoogleSearchOptions options = null)
-    {
-        if (builder == null)
-            throw new ArgumentNullException(nameof(builder));
-
-        if (options == null)
+        var plugin = new Dictionary<string, KernelFunction>();
+        switch (options.Provider)
         {
-            return builder;
+            case WebSearchProvider.Bing:
+                var bingTextSearch = new BingTextSearch(options.ApiKey);
+
+                var bingSearchFunc = bingTextSearch
+                    .CreateSearch(searchOptions: textSearchOptions);
+
+                var bingGetResultsFunc = bingTextSearch
+                    .CreateGetSearchResults(searchOptions: textSearchOptions);
+
+                var bingGetTextResultsFunc = bingTextSearch
+                    .CreateGetTextSearchResults(searchOptions: textSearchOptions);
+
+                plugin = new Dictionary<string, KernelFunction>
+                {
+                    { "Search", bingSearchFunc },
+                    { "GetSearchResults", bingGetResultsFunc },
+                    { "GetTextSearchResults", bingGetTextResultsFunc }
+                };
+
+                break;
+
+            case WebSearchProvider.Google:
+                var initializer = new BaseClientService.Initializer
+                {
+                    ApiKey = options.ApiKey
+                };
+                var googleTextSearch = new GoogleTextSearch(initializer, options.Id);
+
+                var googleSearchFunc = googleTextSearch
+                    .CreateSearch(searchOptions: textSearchOptions);
+
+                var googleGetResultsFunc = googleTextSearch
+                    .CreateGetSearchResults(searchOptions: textSearchOptions);
+
+                var googleGetTextResultsFunc = googleTextSearch
+                    .CreateGetTextSearchResults(searchOptions: textSearchOptions);
+
+                plugin = new Dictionary<string, KernelFunction>
+                {
+                    { "Search", googleSearchFunc },
+                    { "GetSearchResults", googleGetResultsFunc },
+                    { "GetTextSearchResults", googleGetTextResultsFunc }
+                };
+
+                break;
         }
 
-        var initializer = new BaseClientService.Initializer
-        {
-            ApiKey = options.ApiKey
-        };
-        var googleTextSearch = new GoogleTextSearch(initializer, options.SearchEngineId);
-
-        var textSearchOptions = new TextSearchOptions(); // BUG: Options
-
-        var searchFunc = googleTextSearch
-            .CreateSearch(searchOptions: textSearchOptions);
-
-        var getResultsFunc = googleTextSearch
-            .CreateGetSearchResults(searchOptions: textSearchOptions);
-
-        var getTextResultsFunc = googleTextSearch
-            .CreateGetTextSearchResults(searchOptions: textSearchOptions);
-
-        var plugin = new Dictionary<string, KernelFunction>
-        {
-            { "Search", searchFunc },
-            { "GetSearchResults", getResultsFunc },
-            { "GetTextSearchResults", getTextResultsFunc }
-        };
-
         builder.Plugins
-            .AddFromObject(plugin, "GoogleSearch");
+            .AddFromObject(plugin, "VivetWebSearch"); // BUG: 222: name?
 
         return builder;
     }
