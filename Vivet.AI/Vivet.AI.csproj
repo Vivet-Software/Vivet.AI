@@ -62,26 +62,22 @@
 
 	<ItemGroup>
 	  	<PackageReference Include="FuzzySharp" Version="2.0.2" />
-	  	<PackageReference Include="Microsoft.SemanticKernel" Version="1.64.0" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Amazon" Version="1.64.0-alpha" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAIInference" Version="1.64.0-beta" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.64.0-preview" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.64.0" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.64.0-alpha" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.64.0-preview" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.64.0-alpha" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.64.0" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.PgVector" Version="1.64.0-preview" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.64.0-preview" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.64.0-preview" />
-	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.64.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel" Version="1.65.0" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Amazon" Version="1.65.0-alpha" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAIInference" Version="1.65.0-beta" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.65.0" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.65.0-alpha" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.65.0-alpha" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.65.0" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.PgVector" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.65.0-preview" />
 	  	<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.65.0-alpha" />
 	  	<PackageReference Include="Newtonsoft.Json" Version="13.0.4-beta1" />
 	  	<PackageReference Include="System.Linq.Async" Version="6.0.3" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Plugins\" />
 	</ItemGroup>
 
 </Project>

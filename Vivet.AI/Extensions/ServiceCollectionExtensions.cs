@@ -25,14 +25,6 @@ using ChatOptions = Vivet.AI.Config.ChatOptions;
 
 namespace Vivet.AI.Extensions;
 
-// BUG: Observability: https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/observability/?pivots=programming-language-csharp
-// - https://ai.azure.com/observability/applicationAnalytics?wsid=/subscriptions/b2b7a8a7-862e-478a-8761-58e41e726855/resourceGroups/AI/providers/Microsoft.CognitiveServices/accounts/vivet-software/projects/vivet-ai&tid=9071a89e-4c58-4163-9bb4-f87488ff1427
-// - https://ai.azure.com/tracing?wsid=/subscriptions/b2b7a8a7-862e-478a-8761-58e41e726855/resourceGroups/AI/providers/Microsoft.CognitiveServices/accounts/vivet-software/projects/vivet-ai&tid=9071a89e-4c58-4163-9bb4-f87488ff1427
-
-// BUG: Agent Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/?pivots=programming-language-csharp
-// - https://mem0.ai memory service (https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-memory?pivots=programming-language-csharp)
-// BUG: Process Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/process/process-framework
-
 internal static class ServiceCollectionExtensions
 {
     internal static IServiceCollection AddOptions(this IServiceCollection services, AiOptions options)

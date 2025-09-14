@@ -7,16 +7,13 @@ using Microsoft.SemanticKernel.Plugins.Web.Google;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Models;
 using Vivet.AI.Extensions.Consts;
 
 namespace Vivet.AI.Extensions;
-
-// TODO: Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
-
-// BUG: Check links in plugin config
 
 // BUG: Vector Plugin
 // REQUEST:
@@ -63,66 +60,104 @@ namespace Vivet.AI.Extensions;
 // - BlobMetadata
 // - CreatedAt
 
-//internal static class VectorStoreTextSearchExtensions
-//{
-//    private const string BASEVECTOR_STORE_SEARCH_FUNCTION_NAME = "Search{0}";
+internal static class VectorStoreTextSearchExtensions
+{
+    private const string BASEVECTOR_STORE_SEARCH_FUNCTION_NAME = "Search{0}";
 
-//    internal static KernelFunction CreateSearchFunction<T>(this VectorStoreTextSearch<T> textSearch, ChatOptions chatOptions)
-//        where T : BaseEmbedding
-//    {
-//        var functionName = string.Format(VectorStoreTextSearchExtensions.BASEVECTOR_STORE_SEARCH_FUNCTION_NAME, typeof(T).Name);
+    internal static KernelFunction CreateSearchFunction<T>(this VectorStoreTextSearch<T> textSearch, ChatOptions chatOptions)
+        where T : BaseEmbedding
+    {
+        var functionName = string.Format(VectorStoreTextSearchExtensions.BASEVECTOR_STORE_SEARCH_FUNCTION_NAME, typeof(T).Name);
 
-//        var parameters = typeof(T)
-//            .GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public)
-//            .Select(x =>
-//            {
-//                var parameterAttribute = x
-//                    .GetCustomAttribute<TextSearchParameterAttribute>();
+        //var parameters = typeof(T)
+        //    .GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public)
+        //    .Select(x =>
+        //    {
+        //        var parameterAttribute = x
+        //            .GetCustomAttribute<TextSearchParameterAttribute>();
 
-//                if (parameterAttribute == null)
-//                {
-//                    return null;
-//                }
+        //        if (parameterAttribute == null)
+        //        {
+        //            return null;
+        //        }
 
-//                return new KernelParameterMetadata(x.Name)
-//                {
-//                    Description = parameterAttribute.Description,
-//                    DefaultValue = parameterAttribute.DefaultValue,
-//                    IsRequired = parameterAttribute.IsRequired
-//                };
-//            })
-//            .Where(x => x != null)
-//            .ToList();
+        //        return new KernelParameterMetadata(x.Name)
+        //        {
+        //            Description = parameterAttribute.Description,
+        //            DefaultValue = parameterAttribute.DefaultValue,
+        //            IsRequired = parameterAttribute.IsRequired
+        //        };
+        //    })
+        //    .Where(x => x != null)
+        //    .ToList();
+        var parameters = new List<KernelParameterMetadata>();
 
-//        var limit = typeof(T) switch
-//        {
-//            var x when x == typeof(Memory) => chatOptions.Memory.ContextQueryLimit,
-//            var x when x == typeof(Knowledge) => chatOptions.Knowledge.ContextQueryLimit,
-//            _ => 5
-//        };
+        var limit = typeof(T) switch
+        {
+            var x when x == typeof(Memory) => chatOptions.Memory.ContextQueryLimit,
+            var x when x == typeof(Knowledge) => chatOptions.Knowledge.ContextQueryLimit,
+            _ => 5
+        };
 
-//        parameters
-//            .AddRange(
-//            [
-//                new KernelParameterMetadata("skip") { IsRequired = true, DefaultValue = 0 },
-//                new KernelParameterMetadata("limit") { IsRequired = true, DefaultValue = limit }
-//            ]);
+        parameters
+            .AddRange(
+            [
+                new KernelParameterMetadata("skip") { IsRequired = true, DefaultValue = 0 },
+                new KernelParameterMetadata("limit") { IsRequired = true, DefaultValue = limit }
+            ]);
 
-//        var options = new KernelFunctionFromMethodOptions
-//        {
-//            FunctionName = functionName,
-//            Description = null,
-//            Parameters = parameters,
-//            ReturnParameter = new KernelReturnParameterMetadata
-//            {
-//                ParameterType = typeof(KernelSearchResults<string>)
-//            }
-//        };
+        var options = new KernelFunctionFromMethodOptions
+        {
+            FunctionName = functionName,
+            Description = null,
+            Parameters = parameters,
+            ReturnParameter = new KernelReturnParameterMetadata
+            {
+                ParameterType = typeof(KernelSearchResults<string>)
+            }
+        };
 
-//        //return textSearch
-//        //    .CreateGetTextSearchResults(options); 
-//    }
-//}
+        return textSearch
+            .CreateGetTextSearchResults(options);
+    }
+}
+
+/// <summary>
+/// Result mapper which converts a <see cref="BaseEmbedding"/> to a <see cref="TextSearchResult"/>.
+/// </summary>
+public sealed class EmbeddingTextSearchResultMapper : ITextSearchResultMapper
+{
+    /// <inheritdoc />
+    public TextSearchResult MapFromResultToTextSearchResult(object result)
+    {
+        if (result is BaseEmbedding embedding)
+        {
+            return new TextSearchResult(embedding.Content)
+            {
+                Name = embedding.Id.ToString()
+            };
+        }
+
+        throw new ArgumentException("Invalid result type.");
+    }
+}
+
+/// <summary>
+/// String mapper which converts a <see cref="BaseEmbedding"/> to a string.
+/// </summary>
+public sealed class EmbeddingTextSearchStringMapper : ITextSearchStringMapper
+{
+    /// <inheritdoc />
+    public string MapFromResultToString(object result)
+    {
+        if (result is BaseEmbedding embedding)
+        {
+            return embedding.Content;
+        }
+
+        throw new ArgumentException("Invalid result type.");
+    }
+}
 
 internal static class KernelBuilderExtensions
 {
@@ -284,12 +319,12 @@ internal static class KernelBuilderExtensions
 
         var serviceId = typeof(TEmbedding).Name;
 
-        //var textSearchStringMapper = new EmbeddingTextSearchStringMapper();
-        //var textSearchResultMapper = new EmbeddingTextSearchResultMapper();
-        //var textSearchOptions = new VectorStoreTextSearchOptions();
+        var textSearchStringMapper = new EmbeddingTextSearchStringMapper();
+        var textSearchResultMapper = new EmbeddingTextSearchResultMapper();
+        var textSearchOptions = new VectorStoreTextSearchOptions();
 
-        //builder
-        //    .AddVectorStoreTextSearch<TEmbedding>(textSearchStringMapper, textSearchResultMapper, textSearchOptions);
+        builder
+            .AddVectorStoreTextSearch<TEmbedding>(textSearchStringMapper, textSearchResultMapper, textSearchOptions);
 
         var textSearch = serviceProvider
             .GetRequiredKeyedService<VectorStoreTextSearch<TEmbedding>>(serviceId);
@@ -297,13 +332,13 @@ internal static class KernelBuilderExtensions
         var chatOptions = serviceProvider
             .GetRequiredService<ChatOptions>();
 
-        //var kernelFunction = textSearch
-        //    .CreateSearchFunction(chatOptions);
+        var kernelFunction = textSearch
+            .CreateSearchFunction(chatOptions);
 
         var pluginName = string.Format(BuiltInPluginNames.VECTOR_STORE_SEARCH_PLUGIN, typeof(TEmbedding).Name);
         var description = "DESCRIPTION";
 
-        var searchPlugin = KernelPluginFactory.CreateFromFunctions(pluginName, description, [/*kernelFunction*/]);
+        var searchPlugin = KernelPluginFactory.CreateFromFunctions(pluginName, description, [kernelFunction]);
 
         builder.Plugins
             .Add(searchPlugin);
