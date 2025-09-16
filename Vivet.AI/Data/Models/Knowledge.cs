@@ -25,13 +25,6 @@ public class Knowledge : BaseEmbedding
     public virtual string SubTenantId { get; set; }
 
     /// <summary>
-    /// Gets or sets the user identifier associated with this knowledge entry.
-    /// Indexed for text search.
-    /// </summary>
-    [VectorStoreData(IsIndexed = true)]
-    public virtual string UserId { get; set; }
-
-    /// <summary>
     /// Gets or sets the source of the knowledge entry, e.g., document or URL.
     /// Indexed for vector store queries.
     /// </summary>

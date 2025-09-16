@@ -40,7 +40,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
             TenantId = this.tenantId,
             SubTenantId = this.subTenantId,
             ScopeId = scopeId,
-            UserId = this.userId,
             Language = this.language,
             CreatedBy = this.createdBy,
             Source = this.source,
@@ -85,7 +84,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         Assert.AreEqual(indexRequest.TenantId, knowledgeResponse.Result.TenantId);
         Assert.AreEqual(indexRequest.SubTenantId, knowledgeResponse.Result.SubTenantId);
         Assert.AreEqual(indexRequest.ScopeId, knowledgeResponse.Result.ScopeId);
-        Assert.AreEqual(indexRequest.UserId, knowledgeResponse.Result.UserId);
         Assert.AreEqual(indexRequest.Language, knowledgeResponse.Result.Language);
         Assert.AreEqual(indexRequest.CreatedBy, knowledgeResponse.Result.CreatedBy);
         Assert.AreEqual(indexRequest.Source, knowledgeResponse.Result.Source);
@@ -192,7 +190,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var request = new IndexImageRequest
         {
             TenantId = this.tenantId,
-            UserId = this.userId,
             ScopeId = scopeId,
             Blob = new ImageBlob
             {
@@ -247,7 +244,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var request = new IndexImageRequest
         {
             TenantId = this.tenantId,
-            UserId = this.userId,
             ScopeId = scopeId,
             Blob = new ImageBlob
             {
@@ -306,7 +302,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var indexRequest = new IndexImageRequest
         {
             ScopeId = scopeId,
-            UserId = this.userId,
             Language = this.language,
             Blob = new ImageBlob<ImageMetaData>
             {
@@ -367,7 +362,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var indexRequest = new IndexImageRequest
         {
             ScopeId = scopeId,
-            UserId = this.userId,
             Language = this.language,
             Blob = new ImageBlob<ImageMetaData>
             {
@@ -421,7 +415,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var indexRequest = new IndexImageRequest
         {
             ScopeId = scopeId,
-            UserId = this.userId,
             Language = this.language,
             Blob = new ImageBlob<ImageMetaData>
             {
@@ -479,7 +472,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var indexRequest = new IndexImageRequest
         {
             ScopeId = scopeId,
-            UserId = this.userId,
             Language = this.language,
             Blob = new ImageBlob<ImageMetaData>
             {
@@ -532,7 +524,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var indexRequest = new IndexImageRequest
         {
             ScopeId = scopeId,
-            UserId = this.userId,
             Language = this.language,
             Blob = new ImageBlob<ImageMetaData>
             {
@@ -588,7 +579,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
                 TenantId = this.tenantId,
                 SubTenantId = this.subTenantId,
                 ScopeId = scopeId,
-                UserId = this.userId,
                 Language = this.language,
                 CreatedBy = this.createdBy,
                 Source = this.source,
@@ -614,12 +604,11 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
                     TenantId = this.tenantId,
                     SubTenantId = this.subTenantId,
                     ScopeId = scopeId,
-                    UserId = this.userId,
                     Tag = "tag2",
                     DateRange = new DateRange
                     {
-                        FromAt = DateTimeOffset.UtcNow.AddHours(-1),
-                        ToAt = DateTimeOffset.UtcNow.AddHours(1)
+                        From = DateTimeOffset.UtcNow.AddHours(-1),
+                        To = DateTimeOffset.UtcNow.AddHours(1)
                     },
                     Language = this.language,
                     SearchFor = SearchFor.Text
@@ -659,7 +648,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
     [TestMethod]
     public async Task QueryTextWhenSkipTest()
     {
-        var localUserId = Guid.NewGuid().ToString();
+        var scopeId = Guid.NewGuid().ToString();
         const string TEXT = "The apple is black and old.";
 
         for (var i = 0; i < 2; i++)
@@ -668,8 +657,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
                 .IndexAsync(new IndexTextRequest
                 {
                     Text = TEXT,
-                    ScopeId = Guid.NewGuid().ToString(),
-                    UserId = localUserId
+                    ScopeId = scopeId
                 });
         }
 
@@ -678,7 +666,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
             {
                 Criteria =
                 {
-                    UserId = localUserId
+                    ScopeId = scopeId
                 },
                 Limit = 10,
                 Skip = 1
@@ -738,7 +726,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
                 TenantId = this.tenantId,
                 SubTenantId = this.subTenantId,
                 ScopeId = scopeId,
-                UserId = this.userId,
                 Language = this.language,
                 CreatedBy = this.createdBy,
                 Source = this.source,
@@ -757,7 +744,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
                 {
                     TenantId = this.tenantId,
                     SubTenantId = this.subTenantId,
-                    UserId = this.userId,
                     ScopeId = scopeId
                 },
                 Limit = 1
@@ -806,7 +792,6 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var request = new IndexImageRequest
         {
             TenantId = this.tenantId,
-            UserId = this.userId,
             ScopeId = scopeId,
             Blob = new ImageBlob
             {

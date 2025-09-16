@@ -34,6 +34,8 @@ configuration overrides**.
 
 ### ✨ [Services](#-services-1)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗨️ [Chat](#%EF%B8%8F-chat-service)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔌 [Built-In Plugins](#-built-in-plugins)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔌 [Custom Plugins](#-custom-plugins)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧩 [Embedding](#-embedding)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧠 [Memory](#-embedding-memory-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📚 [Knowledge](#-embedding-knowledge-service)  
@@ -49,7 +51,6 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;💚 [Health Checks](#-health-checks)  
 
 ### 💡 [Other Highlighted Features](#-other-highlighted-features-1)
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔧 [Plugins / Tools](#-plugins--tools)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔀 [Advanced Text Chunking](#-advanced-text-chunking)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧹 [Context Deduplication](#-context-deduplication)  
 
@@ -360,16 +361,19 @@ The `IChatService` combines LLMs, memory, knowledge bases, and multimodal contex
 #### Methods
 - `ChatAsync` returns a **plain string answer** plus metadata (reasoning, thinking trace, token usage, raw output, elapsed execution time, and reconstructed input prompt).
 - `ChatAsync<T>` supports **typed responses**, where the LLM is instructed in the prompt to return JSON matching the given type. The service automatically deserializes that JSON into your .NET type.  
-  ⚠️ **Note:** The developer is responsible for crafting the question so that the model outputs JSON that matches the type `T`. 
+  ⚠️ **Note:** The model will automatically output JSON that matches the type `T` in the answer of the response. 
 - `ChatStreamingAsync` allows **real-time streaming** of the model’s output, returning content token-by-token (or chunk-by-chunk) as it is generated. At the end of the stream, the service automatically saves the conversation to memory and optionally invokes a completion callback. Suppprts the same features as `ChatAsync`
 
 #### Memory & Knowledge Integration
 - Every request is enriched with **long-term memories** and **knowledge entries** retrieved using **approximate nearest neighbor (ANN) search** for efficient similarity matching.
 - Both **memory** and **knowledge** support **multi-dimensional segmentation** to scope retrieval:
   - **Memory segmentation**: `ScopeId`, `UserId`, `AgentId`, and `ThreadId` ensure the most relevant user- and thread-specific context is used.  
-  - **Knowledge segmentation**: `ScopeId`, `UserId`, `TenantId`, and `SubTenantId` allow fine-grained retrieval from organizational knowledge bases.  
+  - **Knowledge segmentation**: `ScopeId`, `TenantId`, and `SubTenantId` allow fine-grained retrieval from organizational knowledge bases.  
 - Built-in **deduplication** ensures only the most relevant and unique context is injected into the prompt.  
 - **Thread-awareness** boosts relevance by prioritizing memories from the active conversation.
+
+#### Web Search
+Allows searching the web with configurable provider.
 
 #### Blob Metadata Enrichment
 - You can attach blobs (e.g., PDFs, images, videos, audio files) to a `ChatRequest`.
@@ -406,18 +410,6 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
       }
     },
     "Timeout": "00:01:00",
-    "Memory": {
-      "RetentionInDays": 180,
-      "ContextQueryLimit": 3,
-      "CounterpartContextQueryLimit": 2,
-      "UseQueryDeduplication": true,
-      "DeduplicationMatchScoreThreshold": 0.90
-    },
-    "Knowledge": {
-      "ContextQueryLimit": 3,
-      "UseQueryDeduplication": true,
-      "DeduplicationMatchScoreThreshold": 0.90
-    },
     "Plugins": { 
       "CustomPlugins": [
       ],
@@ -446,22 +438,70 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 | Chat.Model.Parameters.TopK                      | int?              | null      | Limits candidate tokens considered per generation step.                                                                                                          |
 | Chat.Model.Parameters.ReasoningEffort           | ReasoningEffort?  | null      | Effort level to reduce reasoning complexity or token usage.                                                                                                      |
 | Chat.Timeout                                    | TimeSpan          | 00:01:00  | Maximum time allowed for a chat request.                                                                                                                         |
+| Chat.Plugins                                    |                   |           | Options for configuring chat plugins. Plugins (also called *tools*) are sets of related functions that can be exposed to a chat model. They allow the model to integrate with external services and invoke custom functionality. |
+| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in plugins that can be enabled for the chat model. See [Built-in Plugins](#-built-in-plugins)                                  |
+| Chat.Plugins.CustomPlugins                      | string[]          | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. |
+
+### 🔌 Built-in Plugins
+Built-in plugins provide additional functionality that can be enabled for the chat model through configuration.  
+
+The following variables are added as plugin context from the chat request:
+- UserId
+- ThreadId
+- AgentId
+- ScopeId
+- TenantId
+- SubTenantId
+
+Mention which is used by which built-in plugin.  
+
+#### 🌐 Memory
+Embedding Memory must be configured and enabled in order for the Memory plugin to take effect
+
+```json
+"BuiltInPlugins": {
+  "Memory": {
+    "RetentionInDays": 180,
+    "ContextQueryLimit": 3,
+    "CounterpartContextQueryLimit": 2,
+    "UseQueryDeduplication": true,
+    "DeduplicationMatchScoreThreshold": 0.90
+  }
+}
+```
+
 | Chat.Memory                                     |                   |           | Chat memory configuration. *Requires [Embedding Memory](#-embedding-memory-service) to be configured.*                                                           |
 | Chat.Memory.RetentionInDays                     | int               | 180       | How far back memories will be included in queries.                                                                                                               |
 | Chat.Memory.ContextQueryLimit                   | int               | 3         | Maximum number of memory entries retrieved per query.                                                                                                            |
 | Chat.Memory.CounterpartContextQueryLimit        | int               | 2         | Maximum number of counterpart (Q/A pair) entries retrieved.                                                                                                      |
 | Chat.Memory.UseQueryDeduplication               | bool              | true      | Deduplicate similar memory entries before building context.                                                                                                      |
 | Chat.Memory.DeduplicationMatchScoreThreshold    | double            | 0.90      | Fuzzy similarity threshold for deduplication.                                                                                                                    |
+
+
+
+
+#### 🌐 Knowledge
+Embedding Knowledge must be configured and enabled in order for the Memory plugin to take effect
+
+```json
+"BuiltInPlugins": {
+  "Knowledge": {
+    "ContextQueryLimit": 3,
+    "UseQueryDeduplication": true,
+    "DeduplicationMatchScoreThreshold": 0.90
+  }
+}
+```
+
 | Chat.Knowledge                                  |                   |           | Chat knowledge configuration. *Requires [Embedding Knowledge](#-embedding-memory-service) to be configured.*                                                     |
 | Chat.Knowledge.ContextQueryLimit                | int               | 3         | Maximum number of knowledge entries retrieved per query.                                                                                                         |
 | Chat.Knowledge.UseQueryDeduplication            | bool              | true      | Deduplicate similar knowledge entries before building context.                                                                                                   |
 | Chat.Knowledge.DeduplicationMatchScoreThreshold | double            | 0.90      | Fuzzy similarity threshold for knowledge deduplication.                                                                                                          |
-| Chat.Plugins                                    |                   |           | Options for configuring chat plugins. See [Plugins / Tools](#-plugins--tools)                                                                                    |
-| Chat.Plugins.CustomPlugins                      | string[]          | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. Ensure any plugin dependencies are registered before this library. |
-| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in plugins that can be enabled for the chat model. See [Built-in Plugins Configuration](#-built-in-plugins-configuration)                                  |
 
-### 🔌 Built-in Plugins Configuration
-Built-in plugins provide additional functionality that can be enabled for the chat model through configuration.  
+
+
+
+
 
 #### 🌐 Web Search
 Web Search enables the chat model to search the internet using a configured provider.  
@@ -493,6 +533,67 @@ The table below shows the supported providers and their required configuration v
 | --------- | ------------------------ | ---- |  
 | `Id`      | ✅ (`Search Engine ID`)  | ❌   |  
 | `ApiKey`  | ✅                       | ✅   |  
+<br />
+
+### 🔌 Custom Plugins
+Custom plugins can be added in two ways:  
+- **Configuration**: Registered globally in `appsettings.json`. These plugins are always available to the chat model.  
+- **Per request**: Passed along with a specific request. This gives fine-grained control over when a plugin is available.  
+
+Both approaches can be combined — for example, you might configure global plugins for core functionality and add request-specific plugins for special scenarios.  
+
+When adding a plugin via configuration:  
+- Use the fully qualified type name (see the configuration details for supported services).  
+
+When adding a plugin per request:  
+- Create and pass an instance of the plugin yourself.  
+- The caller is responsible for instantiating and wiring up dependencies.  
+
+#### How plugins are invoked  
+When plugins are available, the chat model automatically decides whether to invoke them based on the user’s query. This is by design — the model plans when and how to use plugins.  
+- If you require a plugin to **always** be invoked, call it manually in your application and include its result in the system message of the request.  
+
+#### Plugin context
+Custom plugin parameters should be passed alognside the system prompt in the chat request, 
+or use context that is alrady added based on the chat request.
+
+📖 Read more: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)  
+
+#### Example Plugin  
+A simple plugin that turns lights on and off:  
+
+```csharp
+public interface ILightsService
+{
+    LightModel TurnOn(int id);
+    LightModel TurnOff(int id);
+}
+
+public class LightModel
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
+
+    [JsonPropertyName("is_on")]
+    public bool? IsOn { get; set; }
+}
+
+public class LightsPlugin(ILightsService lightsService)
+{
+    private readonly ILightsService lightsService = lightsService ?? throw new ArgumentNullException(nameof(lightsService));
+
+    [KernelFunction("turn_on")]
+    [Description("Turn on the light")]
+    public LightModel TurnOn(int id) => this.lightsService.TurnOn(id);
+
+    [KernelFunction("turn_off")]
+    [Description("Turn off the light")]
+    public LightModel TurnOff(int id) => this.lightsService.TurnOff(id);
+}
+```
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -885,7 +986,7 @@ var embeddingKnowledgeService = serviceProvider.GetService<IEmbeddingKnowledgeSe
 var indexRequest = new IndexTextRequest
 {
     Text = "This device supports Bluetooth 5.3 and WiFi 6E."
-    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, Config Overrides, etc
+    // optional: TenantId, SubTenantId, ScopeId, Source, CreatedBy, Tags, Config Overrides, etc
 };
 
 var indexResponse = await knowledgeService
@@ -905,7 +1006,7 @@ public class Product
 var indexRequest = new IndexTextRequest<Product>
 {
     Text = new Product { Name = "SmartSensor 3000", Features = new[] { "Bluetooth 5.3", "WiFi 6E", "10-year battery" } };
-    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, Config Overrides, etc.
+    // optional: TenantId, SubTenantId, ScopeId, Source, CreatedBy, Tags, Config Overrides, etc.
 }
 
 var indexResponse = await knowledgeService
@@ -927,7 +1028,7 @@ var indexRequest = new IndexImageRequest
             Description = "Q2 financial summary graph"
         }
     }
-    // optional: TenantId, SubTenantId, ScopeId, UserId, Source, CreatedBy, Tags, etc.
+    // optional: TenantId, SubTenantId, ScopeId, Source, CreatedBy, Tags, etc.
 };
 
 var indexResponse = await knowledgeService
@@ -1026,10 +1127,7 @@ Example `appsettings.json` snippet showing how to configure `IMetadataService` u
     }
     "SummaryMaxWords": 30,
     "DescriptionMaxWords": 90,
-    "Timeout": "00:01:00",
-    "Plugins": { 
-      "CustomPlugins": [
-      ]
+    "Timeout": "00:01:00"
     }
   }
 }
@@ -1043,8 +1141,6 @@ Example `appsettings.json` snippet showing how to configure `IMetadataService` u
 | Metadata.SummaryMaxWords       | int      | 30        | The max words to include for metadata summary.                                                                                                                                                                        |
 | Metadata.DescriptionMaxWords   | int      | 90        | The max words to include for metadata description.                                                                                                                                                                    |
 | Metadata.Timeout               | TimeSpan | 00:01:00  | Maximum time allowed for a metadata request.                                                                                                                                                                          |
-| Metadata.Plugins               |          |           | Options for configuring metadata plugins. See [Plugins / Tools](#-plugins--tools)                                                                                                                                     |
-| Metadata.Plugins.CustomPlugins | string[] | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in metadata requests and cannot be disabled. For optional usage, register them per request. Ensure any plugin dependencies are registered before this library. |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -1124,11 +1220,7 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
       "Name": "<your-summarization-chat-model>",
     }
     "SummarizationDegree": 25,
-    "Timeout": "00:01:00",
-    "Plugins": { 
-      "CustomPlugins": [
-      ]
-    }
+    "Timeout": "00:01:00"
   }
 }
 ```
@@ -1140,8 +1232,6 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
 | Summarization.Model                 |          |           | Chat model configuration for summarization. The model configuration is identical to [Chat Model Configuration](#-chat-configuration-details). _The configured model may be overridden for individual requests._ |
 | Summarization.SummarizationDegree   | int      | 25        | Controls how aggressively content is summarized (0 - 100).                                                                                                                                                      |
 | Summarization.Timeout               | TimeSpan | 00:01:00  | Maximum time allowed for a summarization request.                                                                                                                                                               |
-| Summarization.Plugins               |          |           | Options for configuring summarization plugins. See [Plugins / Tools](#-plugins--tools)                                                                                                                          |
-| Summarization.Plugins.CustomPlugins | string[] | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in metadata requests and cannot be disabled. For optional usage, register them per request. Ensure any plugin dependencies are registered before this library. |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -1202,66 +1292,6 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 <br />
 
 ## 💡 Other Highlighted Features
-### 🔌 Plugins / Tools
-Plugins (also called *tools*) are sets of related functions that can be exposed to a chat model. They allow the model to integrate with external services and execute custom functionality.  
-
-Plugins can be added in two ways:  
-- **Configuration**: Registered globally in `appsettings.json`. These plugins are always available to the chat model.  
-- **Per request**: Passed along with a specific request. This gives fine-grained control over when a plugin is available.  
-
-Both approaches can be combined — for example, you might configure global plugins for core functionality and add request-specific plugins for special scenarios.  
-
-When adding a plugin via configuration:  
-- Use the fully qualified type name (see the configuration details for supported services).  
-- Ensure all plugin dependencies are registered in the service collection *before* this library, so they can be resolved.  
-
-When adding a plugin per request:  
-- Create and pass an instance of the plugin yourself.  
-- The caller is responsible for instantiating and wiring up dependencies.  
-
-#### How plugins are invoked  
-When plugins are available, the chat model automatically decides whether to invoke them based on the user’s query. This is by design — the model plans when and how to use plugins.  
-- If you require a plugin to **always** be invoked, call it manually in your application and include its result in the system message of the request.  
-
-📖 Read more: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)  
-
-#### Example Plugin  
-A simple plugin that turns lights on and off:  
-
-```csharp
-public interface ILightsService
-{
-    LightModel TurnOn(int id);
-    LightModel TurnOff(int id);
-}
-
-public class LightModel
-{
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("is_on")]
-    public bool? IsOn { get; set; }
-}
-
-public class LightsPlugin(ILightsService lightsService)
-{
-    private readonly ILightsService lightsService = lightsService ?? throw new ArgumentNullException(nameof(lightsService));
-
-    [KernelFunction("turn_on")]
-    [Description("Turn on the light")]
-    public LightModel TurnOn(int id) => this.lightsService.TurnOn(id);
-
-    [KernelFunction("turn_off")]
-    [Description("Turn off the light")]
-    public LightModel TurnOff(int id) => this.lightsService.TurnOff(id);
-}
-```
-<br />
-
 ### 🔀 Advanced Text Chunking  
 When storing embeddings in a vector store, the quality of retrieval depends heavily on how the original text is chunked.  
 This library includes an **advanced text-chunking engine** that goes far beyond simple paragraph or sentence splitting.  

@@ -78,7 +78,6 @@ public class KnowledgeResult : BaseResult
         this.TenantId = knowledge.TenantId;
         this.SubTenantId = knowledge.SubTenantId;
         this.ScopeId = knowledge.ScopeId;
-        this.UserId = knowledge.UserId;
         this.Source = knowledge.Source;
         this.CreatedBy = knowledge.CreatedBy;
         this.Tags = knowledge.Tags;

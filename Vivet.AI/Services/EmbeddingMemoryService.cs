@@ -379,7 +379,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                 }
 
                 var blobData = await x
-                    .GetBlobData()
+                    .GetBlobData(cancellationToken)
                     .ConfigureAwait(false);
 
                 var embeddings = await this.GenerateEmbeddings([metadataResponse.Metadata.Summary], request.ConfigOverrides, cancellationToken)

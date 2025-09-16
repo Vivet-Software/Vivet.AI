@@ -70,7 +70,7 @@ public class ParameterExpressionExtensionsTests
 
         var range = new DateRange
         {
-            FromAt = DateTimeOffset.UtcNow.AddDays(-1)
+            From = DateTimeOffset.UtcNow.AddDays(-1)
         };
 
         param.AddDateRangeExpression(range, ref body);
@@ -87,7 +87,7 @@ public class ParameterExpressionExtensionsTests
 
         var range = new DateRange
         {
-            ToAt = DateTimeOffset.UtcNow
+            To = DateTimeOffset.UtcNow
         };
 
         param.AddDateRangeExpression(range, ref body);

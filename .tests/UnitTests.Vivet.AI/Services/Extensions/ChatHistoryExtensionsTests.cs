@@ -24,62 +24,62 @@ public class ChatHistoryExtensionsTests
         const string SYSTEM_MESSAGE = "Test message";
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatSystemPrompt(SYSTEM_MESSAGE));
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatSystemPrompt<string>(SYSTEM_MESSAGE));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
+    // BUG: Remove
+    //[TestMethod]
+    //public void AddChatMemoryPromptTest()
+    //{
+    //    Assert.Inconclusive();
+    //}
 
-    [TestMethod]
-    public void AddChatMemoryPromptTest()
-    {
-        Assert.Inconclusive();
-    }
+    //[TestMethod]
+    //public void AddChatMemoryPromptWhenChatHistoryIsNullThrowsArgumentNullExceptionTest()
+    //{
+    //    ChatHistory chatHistory = null;
+    //    var memoryResults = Array.Empty<MemoryResult>();
+    //    const int COUNTERPART_CONTEXT_QUERY_LIMIT = 1;
 
-    [TestMethod]
-    public void AddChatMemoryPromptWhenChatHistoryIsNullThrowsArgumentNullExceptionTest()
-    {
-        ChatHistory chatHistory = null;
-        var memoryResults = Array.Empty<MemoryResult>();
-        const int COUNTERPART_CONTEXT_QUERY_LIMIT = 1;
+    //    // ReSharper disable ExpressionIsAlwaysNull
+    //    Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatMemoryPrompt(memoryResults, COUNTERPART_CONTEXT_QUERY_LIMIT));
+    //    // ReSharper restore ExpressionIsAlwaysNull
+    //}
 
-        // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatMemoryPrompt(memoryResults, COUNTERPART_CONTEXT_QUERY_LIMIT));
-        // ReSharper restore ExpressionIsAlwaysNull
-    }
+    //[TestMethod]
+    //public void AddChatMemoryPromptWhenMemoryResultsIsNullThrowsArgumentNullExceptionTest()
+    //{
+    //    var chatHistory = new ChatHistory();
 
-    [TestMethod]
-    public void AddChatMemoryPromptWhenMemoryResultsIsNullThrowsArgumentNullExceptionTest()
-    {
-        var chatHistory = new ChatHistory();
-
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatMemoryPrompt(null, 1));
-    }
+    //    Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatMemoryPrompt(null, 1));
+    //}
 
 
-    [TestMethod]
-    public void AddChatKnowledgePromptTest()
-    {
-        Assert.Inconclusive();
-    }
+    //[TestMethod]
+    //public void AddChatKnowledgePromptTest()
+    //{
+    //    Assert.Inconclusive();
+    //}
 
-    [TestMethod]
-    public void AddChatKnowledgePromptWhenChatHistoryIsNullThrowsArgumentNullExceptionTest()
-    {
-        ChatHistory chatHistory = null;
-        var knowledgeResults = Array.Empty<KnowledgeResult>();
+    //[TestMethod]
+    //public void AddChatKnowledgePromptWhenChatHistoryIsNullThrowsArgumentNullExceptionTest()
+    //{
+    //    ChatHistory chatHistory = null;
+    //    var knowledgeResults = Array.Empty<KnowledgeResult>();
 
-        // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatKnowledgePrompt(knowledgeResults));
-        // ReSharper restore ExpressionIsAlwaysNull
-    }
+    //    // ReSharper disable ExpressionIsAlwaysNull
+    //    Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatKnowledgePrompt(knowledgeResults));
+    //    // ReSharper restore ExpressionIsAlwaysNull
+    //}
 
-    [TestMethod]
-    public void AddChatKnowledgePromptWhenKnowledgeResultsIsNullThrowsArgumentNullExceptionTest()
-    {
-        var chatHistory = new ChatHistory();
+    //[TestMethod]
+    //public void AddChatKnowledgePromptWhenKnowledgeResultsIsNullThrowsArgumentNullExceptionTest()
+    //{
+    //    var chatHistory = new ChatHistory();
 
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatKnowledgePrompt(null));
-    }
+    //    Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatKnowledgePrompt(null));
+    //}
 
 
     [TestMethod]

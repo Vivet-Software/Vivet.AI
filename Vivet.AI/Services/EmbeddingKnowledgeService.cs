@@ -230,8 +230,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                         x.ContentHash == contentHash &&
                         x.TenantId == request.TenantId &&
                         x.SubTenantId == request.SubTenantId &&
-                        x.ScopeId == request.ScopeId &&
-                        x.UserId == request.UserId,
+                        x.ScopeId == request.ScopeId,
                     1, cancellationToken: cancellationToken)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -262,7 +261,6 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                     TenantId = request.TenantId,
                     SubTenantId = request.SubTenantId,
                     ScopeId = request.ScopeId,
-                    UserId = request.UserId,
                     Source = request.Source,
                     CreatedBy = request.CreatedBy,
                     Tags = request.Tags
@@ -296,7 +294,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             throw new ArgumentNullException(nameof(request));
 
         var blobData = await request.Blob
-            .GetBlobData()
+            .GetBlobData(cancellationToken)
             .ConfigureAwait(false);
 
         var metadataResponse = await this.GetBlobMetadata(request, cancellationToken).ConfigureAwait(false);
@@ -322,7 +320,6 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 TenantId = request.TenantId,
                 SubTenantId = request.SubTenantId,
                 ScopeId = request.ScopeId,
-                UserId = request.UserId,
                 Source = request.Source,
                 CreatedBy = request.CreatedBy,
                 Tags = request.Tags,

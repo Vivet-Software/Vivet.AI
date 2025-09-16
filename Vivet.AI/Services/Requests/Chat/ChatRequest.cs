@@ -38,7 +38,7 @@ public class ChatRequest
 
     /// <summary>
     /// Scope identifier for the request.
-    /// Used when looking up knowledge entries or memories.
+    /// Used when looking up knowledge or memories entries.
     /// </summary>
     public virtual string ScopeId { get; set; }
 
@@ -50,7 +50,7 @@ public class ChatRequest
 
     /// <summary>
     /// Identifier of the user making the request.
-    /// Used for personalizing memory and knowledge lookups.
+    /// Used for personalizing memory lookups.
     /// </summary>
     [Required]
     public virtual string UserId { get; set; }

@@ -11,11 +11,11 @@ public class DateRange
     /// Gets or sets the starting date and time of the range.
     /// Can be <c>null</c> if the range has no defined start.
     /// </summary>
-    public virtual DateTimeOffset? FromAt { get; set; }
+    public virtual DateTimeOffset? From { get; set; }
 
     /// <summary>
     /// Gets or sets the ending date and time of the range.
     /// Can be <c>null</c> if the range has no defined end.
     /// </summary>
-    public virtual DateTimeOffset? ToAt { get; set; }
+    public virtual DateTimeOffset? To { get; set; }
 }

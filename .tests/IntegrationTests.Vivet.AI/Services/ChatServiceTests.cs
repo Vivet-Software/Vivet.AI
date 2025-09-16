@@ -74,11 +74,172 @@ public class ChatServiceTests : BaseTests
         await onMemoryIndexedTask.Task;
     }
 
+
+    [TestMethod]
+    public async Task ChatTest2222()
+    {
+        const string QUESTION = "Yesterday you mentioned that when Ceasar was emporer, can you recall that";
+
+        var onMemoryIndexedTask = new TaskCompletionSource<bool>();
+
+        var response = await this.ChatService
+            .ChatAsync(new ChatRequest
+            {
+                Question = QUESTION,
+                UserId = this.userId,
+                CurrentThreadId = Guid.NewGuid().ToString(),
+                ConfigOverrides =
+                {
+                    //Memory =
+                    //{
+                    //    SkipMemoryContext = true
+                    //}
+                }
+            }, memoryResponse =>
+            {
+                try
+                {
+                    Assert.IsNotNull(memoryResponse);
+                    Assert.IsNotNull(memoryResponse.TokenUsage);
+                    Assert.AreEqual(2, memoryResponse.TotalEmbeddings);
+                    Assert.IsTrue(memoryResponse.TotalEmbeddingsSize > 0);
+
+                    onMemoryIndexedTask
+                        .SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    onMemoryIndexedTask
+                        .SetException(ex);
+                }
+
+                return Task.CompletedTask;
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsNull(response.ErrorMessage);
+        Assert.IsNull(response.Thinking);
+        Assert.IsNotNull(response.Answer);
+        Assert.IsNotNull(response.Reasoning);
+        Assert.IsNotNull(response.RawResponse);
+        Assert.IsNotNull(response.InputPrompt);
+        Assert.AreEqual("en", response.Language);
+        Assert.IsNotNull(response.TokenUsage);
+        Assert.IsTrue(response.TokenUsage.InputTokens > 200);
+        Assert.IsTrue(response.TokenUsage.OutputTokens > 50);
+
+        await onMemoryIndexedTask.Task;
+    }
+
+    [TestMethod]
+    public async Task ChatTest33333()
+    {
+        const string QUESTION = "How many orders did we get this year";
+
+        var onMemoryIndexedTask = new TaskCompletionSource<bool>();
+
+        var response = await this.ChatService
+            .ChatAsync(new ChatRequest
+            {
+                Question = QUESTION,
+                UserId = this.userId,
+                CurrentThreadId = Guid.NewGuid().ToString(),
+                ConfigOverrides =
+                {
+                    //Memory =
+                    //{
+                    //    SkipMemoryContext = true
+                    //}
+                }
+            }, memoryResponse =>
+            {
+                try
+                {
+                    Assert.IsNotNull(memoryResponse);
+                    Assert.IsNotNull(memoryResponse.TokenUsage);
+                    Assert.AreEqual(2, memoryResponse.TotalEmbeddings);
+                    Assert.IsTrue(memoryResponse.TotalEmbeddingsSize > 0);
+
+                    onMemoryIndexedTask
+                        .SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    onMemoryIndexedTask
+                        .SetException(ex);
+                }
+
+                return Task.CompletedTask;
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsNull(response.ErrorMessage);
+        Assert.IsNull(response.Thinking);
+        Assert.IsNotNull(response.Answer);
+        Assert.IsNotNull(response.Reasoning);
+        Assert.IsNotNull(response.RawResponse);
+        Assert.IsNotNull(response.InputPrompt);
+        Assert.AreEqual("en", response.Language);
+        Assert.IsNotNull(response.TokenUsage);
+        Assert.IsTrue(response.TokenUsage.InputTokens > 200);
+        Assert.IsTrue(response.TokenUsage.OutputTokens > 50);
+
+        await onMemoryIndexedTask.Task;
+    }
+
+    [TestMethod]
+    public async Task ChatWhenStreamingResponse4444Test()
+    {
+        const string QUESTION = "Yesterday you mentioned that when Ceasar was emporer, can you recall that";
+
+        var request = new ChatRequest
+        {
+            //SystemMessage = SYSTEM_MESSAGE,
+            Question = QUESTION,
+            UserId = this.userId,
+            CurrentThreadId = Guid.NewGuid().ToString()
+        };
+
+        var streamedResults = new List<string>();
+        var onChatCompletedTask = new TaskCompletionSource<bool>();
+
+        await foreach (var chunk in this.ChatService.ChatStreamingAsync(request, null, chatResponse =>
+                       {
+                           try
+                           {
+                               Assert.IsNotNull(chatResponse);
+                               Assert.IsNull(chatResponse.ErrorMessage);
+                               Assert.IsNotNull(chatResponse.Answer);
+                               Assert.AreEqual(chatResponse.RawResponse, string.Join("", streamedResults));
+                               Assert.IsNull(chatResponse.TokenUsage);
+
+                               onChatCompletedTask
+                                   .SetResult(true);
+                           }
+                           catch (Exception ex)
+                           {
+                               onChatCompletedTask
+                                   .SetException(ex);
+                           }
+
+                           return Task.CompletedTask;
+                       }))
+        {
+            Assert.IsTrue(chunk.Length > 0);
+
+            streamedResults
+                .Add(chunk);
+        }
+
+        await onChatCompletedTask.Task;
+    }
+
+
     [TestMethod]
     public async Task ChatWhenJsonResponseTest()
     {
         const string SYSTEM_MESSAGE = "You are an expert in meteorology.";
-        const string QUESTION = "Is it always summer in Denmark? Please respond in the following json format: { \"SummerAlways\": \"true/false\" }";
+        const string QUESTION = "Is it always summer in Denmark?";
 
         var response = await this.ChatService
             .ChatAsync<JsonClass>(new ChatRequest
@@ -311,15 +472,13 @@ public class ChatServiceTests : BaseTests
         var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
         var scopeId = Guid.NewGuid().ToString();
-        var localUserId = Guid.NewGuid().ToString();
 
         const string TEXT_INDEXED = "The apple is black and old.";
 
         var indexRequest = new IndexTextRequest
         {
             Text = TEXT_INDEXED,
-            ScopeId = scopeId,
-            UserId = localUserId
+            ScopeId = scopeId
         };
 
         await embeddingKnowledgeService
@@ -344,15 +503,13 @@ public class ChatServiceTests : BaseTests
         var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
         var scopeId = Guid.NewGuid().ToString();
-        var localUserId = Guid.NewGuid().ToString();
 
         const string TEXT_INDEXED = "The apple is black and old.";
 
         var indexRequest = new IndexTextRequest
         {
             Text = TEXT_INDEXED,
-            ScopeId = scopeId,
-            UserId = localUserId
+            ScopeId = scopeId
         };
 
         await embeddingKnowledgeService

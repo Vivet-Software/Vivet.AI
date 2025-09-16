@@ -11,6 +11,11 @@ namespace Vivet.AI.Services.Requests.Embedding.Memory.Models;
 public class MemoryCriteria : BaseCriteria<Data.Models.Memory>
 {
     /// <summary>
+    /// Gets or sets the user ID associated with this criteria.
+    /// </summary>
+    public virtual string UserId { get; set; }
+
+    /// <summary>
     /// The ID of the agent associated with the memory entry.
     /// </summary>
     public virtual string AgentId { get; set; }

@@ -12,29 +12,39 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
+using Vivet.AI.Plugins;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
-using Vivet.AI.Services.Helpers;
 using Vivet.AI.Services.Interfaces;
-using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Requests.Chat;
-using Vivet.AI.Services.Requests.Embedding.Knowledge;
 using Vivet.AI.Services.Requests.Embedding.Memory;
 using Vivet.AI.Services.Responses.Chat;
-using Vivet.AI.Services.Responses.Embeddings.Knowledge.Models;
 using Vivet.AI.Services.Responses.Embeddings.Memory;
-using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
 using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
+// BUG: Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
+// maybe setting for adding some logging, to log usage of Plugins, or other
+
+// BUG: Observability: https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/observability/?pivots=programming-language-csharp
+// - https://ai.azure.com/observability/applicationAnalytics?wsid=/subscriptions/b2b7a8a7-862e-478a-8761-58e41e726855/resourceGroups/AI/providers/Microsoft.CognitiveServices/accounts/vivet-software/projects/vivet-ai&tid=9071a89e-4c58-4163-9bb4-f87488ff1427
+// - https://ai.azure.com/tracing?wsid=/subscriptions/b2b7a8a7-862e-478a-8761-58e41e726855/resourceGroups/AI/providers/Microsoft.CognitiveServices/accounts/vivet-software/projects/vivet-ai&tid=9071a89e-4c58-4163-9bb4-f87488ff1427
+// - MLOps
+
+// BUG: Agent Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/?pivots=programming-language-csharp
+// - https://mem0.ai memory service (https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-memory?pivots=programming-language-csharp)
+// BUG: Process Framework: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/process/process-framework
+
 /// <inheritdoc cref="IChatService"/>
-public class ChatService(ChatOptions options, IChatCompletionService chatCompletionService, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null, IEmbeddingKnowledgeService embeddingKnowledgeService = null) 
+public class ChatService(ChatOptions options, IChatCompletionService chatCompletionService, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null) 
     : BaseService, IChatService
 {
     private readonly ChatOptions options = options ?? throw new ArgumentNullException(nameof(options));
     private readonly IChatCompletionService chatCompletionService = chatCompletionService ?? throw new ArgumentNullException(nameof(chatCompletionService));
     private readonly PromptExecutionSettings promptExecutionSettings = promptExecutionSettings ?? throw new ArgumentNullException(nameof(promptExecutionSettings));
+
+    // BUG: maybe always use streaming? just still have the one that just correlates the entire result 
 
     /// <inheritdoc />
     public virtual async Task<ChatResponse> ChatAsync(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
@@ -67,7 +77,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         stopwatch
             .Start();
 
-        var chatHistory = await this.BuildChatHistory(request, cancellationToken)
+        var chatHistory = await this.BuildChatHistory<T>(request, cancellationToken)
             .ConfigureAwait(false);
 
         var executionSettings = this.GetPromptExecutionSettings(request);
@@ -77,7 +87,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var chatMessageContent = await this.chatCompletionService
             .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
             .ConfigureAwait(false);
-
+ 
         if (chatMessageContent.Content == null)
         {
             return null;
@@ -96,13 +106,11 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var thinking = chatMessageContent.Content
             .GetChatResponseThinking();
 
-        var prompt = chatHistory
-            .GetPromptAsText();
-
         response.Thinking = thinking;
         response.RawResponse = chatMessageContent.Content;
         response.ElapsedTime = stopwatch.Elapsed;
-        response.InputPrompt = prompt;
+        response.InputPrompt = chatHistory
+            .GetPromptAsText();
         response.TokenUsage = chatMessageContent
             .GetTokenUsage();
         response.ExternalId = chatMessageContent
@@ -126,7 +134,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         stopwatch
             .Start();
 
-        var chatHistory = await this.BuildChatHistory(request, cancellationToken)
+        var chatHistory = await this.BuildChatHistory<string>(request, cancellationToken)
             .ConfigureAwait(false);
 
         var executionSettings = this.GetPromptExecutionSettings(request);
@@ -162,6 +170,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         response.Thinking = thinking;
         response.RawResponse = rawContent;
         response.ElapsedTime = stopwatch.Elapsed;
+        response.InputPrompt = chatHistory
+            .GetPromptAsText();
 
         // TODO: Chat Streaming Token Usage / External Id (not possible through SK yet)
         response.TokenUsage = null; 
@@ -181,28 +191,30 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
     }
 
 
-    private async Task<ChatHistory> BuildChatHistory(ChatRequest request, CancellationToken cancellationToken = default)
+    private async Task<ChatHistory> BuildChatHistory<T>(ChatRequest request, CancellationToken cancellationToken = default)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
-        var knowledgeTask = this.GetMatchingKnowledges(request, cancellationToken);
-        var memoriesTask = this.GetMatchingMemories(request, cancellationToken);
+        // BUG: Remove
+        //var knowledgeTask = this.GetMatchingKnowledges(request, cancellationToken);
+        //var memoriesTask = this.GetMatchingMemories(request, cancellationToken);
 
-        var knowledgeResults = await knowledgeTask.ConfigureAwait(false);
-        var memoryResults = await memoriesTask.ConfigureAwait(false);
+        //var knowledgeResults = await knowledgeTask.ConfigureAwait(false);
+        //var memoryResults = await memoriesTask.ConfigureAwait(false);
 
         var chatHistory = new ChatHistory();
         chatHistory
-            .AddChatSystemPrompt(request.SystemMessage)
-            .AddChatKnowledgePrompt(knowledgeResults)
-            .AddChatMemoryPrompt(memoryResults, this.options.Memory.CounterpartContextQueryLimit);
+            .AddChatSystemPrompt<T>(request.SystemMessage)
+            .AddChatPluginContextPrompt(request);
+        //.AddChatKnowledgePrompt(knowledgeResults)
+        //.AddChatMemoryPrompt(memoryResults, this.options.Memory.CounterpartContextQueryLimit) 
 
         var dataUris = await Task.WhenAll(request.Blobs
                 .Select(async x =>
                 {
                     var blobData = await x
-                        .GetBlobData()
+                        .GetBlobData(cancellationToken)
                         .ConfigureAwait(false);
 
                     return blobData.DataUri;
@@ -234,6 +246,30 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var kernel = kernelBuilder
             .Build();
 
+        if (request.ConfigOverrides.Memory.SkipMemoryContext)
+        {
+            var chatMemoryPlugin = kernel.Plugins
+                .FirstOrDefault(x => x.Name == nameof(ChatMemoryPlugin));
+
+            if (chatMemoryPlugin != null)
+            {
+                kernel.Plugins
+                    .Remove(chatMemoryPlugin);
+            }
+        }
+
+        if (request.ConfigOverrides.Knowledge.SkipKnowledgeContext)
+        {
+            var chatKnowledgePlugin = kernel.Plugins
+                .FirstOrDefault(x => x.Name == nameof(ChatKnowledgePlugin));
+
+            if (chatKnowledgePlugin != null)
+            {
+                kernel.Plugins
+                    .Remove(chatKnowledgePlugin);
+            }
+        }
+
         foreach (var requestPlguin in request.Plugins)
         {
             kernel.Plugins
@@ -242,113 +278,112 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return kernel;
     }
-    private async Task<MemoryResult[]> GetMatchingMemories(ChatRequest request, CancellationToken cancellationToken = default)
-    {
-        if (request == null)
-            throw new ArgumentNullException(nameof(request));
+    // BUG: Remove
+    //private async Task<MemoryResult[]> GetMatchingMemories(ChatRequest request, CancellationToken cancellationToken = default)
+    //{
+    //    if (request == null)
+    //        throw new ArgumentNullException(nameof(request));
 
-        if (embeddingMemoryService == null)
-        {
-            return [];
-        }
+    //    if (embeddingMemoryService == null)
+    //    {
+    //        return [];
+    //    }
 
-        if (request.ConfigOverrides.Memory.SkipMemoryContext)
-        {
-            return [];
-        }
+    //    if (request.ConfigOverrides.Memory.SkipMemoryContext)
+    //    {
+    //        return [];
+    //    }
 
-        var now = DateTimeOffset.UtcNow;
+    //    var from = DateTimeOffset.UtcNow
+    //        .AddDays(-this.options.Memory.RetentionInDays);
 
-        var fromAt = now
-            .AddDays(-this.options.Memory.RetentionInDays);
+    //    var limit = this.options.Memory.UseQueryDeduplication
+    //        ? this.options.Memory.ContextQueryLimit * 2 
+    //        : this.options.Memory.ContextQueryLimit;
 
-        var limit = this.options.Memory.UseQueryDeduplication
-            ? this.options.Memory.ContextQueryLimit * 2 
-            : this.options.Memory.ContextQueryLimit;
+    //    var response = await embeddingMemoryService
+    //        .SearchAsync(new SearchMemoryRequest
+    //        {
+    //            Query = request.Question,
+    //            Criteria =
+    //            {
+    //                UserId = request.UserId,
+    //                ScopeId = request.ScopeId,
+    //                AgentId = request.AgentId,
+    //                DateRange = new DateRange
+    //                {
+    //                    From = from
+    //                }
+    //            },
+    //            CurrentThreadId = request.CurrentThreadId,
+    //            Limit = limit
+    //        }, cancellationToken)
+    //        .ConfigureAwait(false);
 
-        var response = await embeddingMemoryService
-            .SearchAsync(new SearchMemoryRequest
-            {
-                Query = request.Question,
-                Criteria =
-                {
-                    UserId = request.UserId,
-                    ScopeId = request.ScopeId,
-                    AgentId = request.AgentId,
-                    DateRange = new DateRange
-                    {
-                        FromAt = fromAt
-                    }
-                },
-                CurrentThreadId = request.CurrentThreadId,
-                Limit = limit
-            }, cancellationToken)
-            .ConfigureAwait(false);
+    //    var results = response.Results
+    //        .Select(x => x.Result)
+    //        .ToArray();
 
-        var results = response.Results
-            .Select(x => x.Result)
-            .ToArray();
+    //    if (this.options.Memory.UseQueryDeduplication)
+    //    {
+    //        var deduplicatedResults = ContextDeduplicator.DeduplicateMemoryResults(results, this.options.Memory.DeduplicationMatchScoreThreshold);
 
-        if (this.options.Memory.UseQueryDeduplication)
-        {
-            var deduplicatedResults = ContextDeduplicator.DeduplicateMemoryResults(results, this.options.Memory.DeduplicationMatchScoreThreshold);
+    //        return deduplicatedResults
+    //            .Take(this.options.Memory.ContextQueryLimit)
+    //            .ToArray();
+    //    }
 
-            return deduplicatedResults
-                .Take(this.options.Memory.ContextQueryLimit)
-                .ToArray();
-        }
+    //    return results;
+    //}
+    //private async Task<KnowledgeResult[]> GetMatchingKnowledges(ChatRequest request, CancellationToken cancellationToken = default)
+    //{
+    //    if (request == null)
+    //        throw new ArgumentNullException(nameof(request));
 
-        return results;
-    }
-    private async Task<KnowledgeResult[]> GetMatchingKnowledges(ChatRequest request, CancellationToken cancellationToken = default)
-    {
-        if (request == null)
-            throw new ArgumentNullException(nameof(request));
+    //    if (embeddingKnowledgeService == null)
+    //    {
+    //        return [];
+    //    }
 
-        if (embeddingKnowledgeService == null)
-        {
-            return [];
-        }
+    //    if (request.ConfigOverrides.Knowledge.SkipKnowledgeContext)
+    //    {
+    //        return [];
+    //    }
 
-        if (request.ConfigOverrides.Knowledge.SkipKnowledgeContext)
-        {
-            return [];
-        }
+    //    var limit = this.options.Knowledge.UseQueryDeduplication
+    //        ? this.options.Knowledge.ContextQueryLimit * 2
+    //        : this.options.Knowledge.ContextQueryLimit;
 
-        var limit = this.options.Knowledge.UseQueryDeduplication
-            ? this.options.Knowledge.ContextQueryLimit * 2
-            : this.options.Knowledge.ContextQueryLimit;
+    //    var response = await embeddingKnowledgeService
+    //        .SearchAsync(new SearchKnowledgeRequest
+    //        {
+    //            Query = request.Question,
+    //            Criteria =
+    //            {
+    //                TenantId = request.TenantId,
+    //                SubTenantId = request.SubTenantId,
+    //                ScopeId = request.ScopeId,
+    //                UserId = request.UserId
+    //            },
+    //            Limit = limit
+    //        }, cancellationToken)
+    //        .ConfigureAwait(false);
 
-        var response = await embeddingKnowledgeService
-            .SearchAsync(new SearchKnowledgeRequest
-            {
-                Query = request.Question,
-                Criteria =
-                {
-                    TenantId = request.TenantId,
-                    SubTenantId = request.SubTenantId,
-                    ScopeId = request.ScopeId,
-                    UserId = request.UserId
-                },
-                Limit = limit
-            }, cancellationToken)
-            .ConfigureAwait(false);
+    //    var results = response.Results
+    //        .Select(x => x.Result)
+    //        .ToArray();
 
-        var results = response.Results
-            .Select(x => x.Result)
-            .ToArray();
+    //    if (this.options.Knowledge.UseQueryDeduplication)
+    //    {
+    //        var deduplicatedResults = ContextDeduplicator.DeduplicateKnowledgeResults(results, this.options.Knowledge.DeduplicationMatchScoreThreshold);
 
-        if (this.options.Knowledge.UseQueryDeduplication)
-        {
-            var deduplicatedResults = ContextDeduplicator.DeduplicateKnowledgeResults(results, this.options.Knowledge.DeduplicationMatchScoreThreshold);
+    //        return deduplicatedResults
+    //            .Take(this.options.Knowledge.ContextQueryLimit)
+    //            .ToArray();
+    //    }
 
-            return deduplicatedResults
-                .Take(this.options.Knowledge.ContextQueryLimit)
-                .ToArray();
-        }
-
-        return results;
-    }
+    //    return results;
+    //}
     private static ChatResponse GetResponseOrDefault(string answer)
     {
         if (answer == null)

@@ -4,9 +4,9 @@ using Vivet.AI.Config.Enums;
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Options for the web search plugin.
+/// Chat Web Search Plugin Options.
 /// </summary>
-public class WebSearchPluginOptions
+public class ChatWebSearchPluginOptions
 {
     /// <summary>
     /// The provider for the plugin to use when searching the web.

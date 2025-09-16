@@ -33,10 +33,4 @@ public class MetadataOptions
     /// Defailt to 60 seconds.
     /// </summary>
     public virtual TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);
-
-    /// <summary>
-    /// A collection of plugins to be added to the kernel from configuration.
-    /// </summary>
-    [Required]
-    public virtual MetadataPluginsOptions Plugins { get; set; } = new();
 }

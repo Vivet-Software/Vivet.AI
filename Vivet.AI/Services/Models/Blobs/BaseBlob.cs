@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Services.Models.Blobs.Data;
 
@@ -15,7 +16,7 @@ public abstract class BaseBlob
     [Required]
     public virtual BaseBlobData Data { get; set; }
 
-    internal abstract Task<(string Base64, string MimeType, string DataUri)> GetBlobData();
+    internal abstract Task<(string Base64, string MimeType, string DataUri)> GetBlobData(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -31,7 +32,7 @@ public abstract class BaseBlob<TMimeType> : BaseBlob
     [Required]
     public virtual TMimeType MimeType { get; set; }
 
-    internal override async Task<(string Base64, string MimeType, string DataUri)> GetBlobData()
+    internal override async Task<(string Base64, string MimeType, string DataUri)> GetBlobData(CancellationToken cancellationToken = default)
     {
         var base64 = await this.Data
             .GetBase64()

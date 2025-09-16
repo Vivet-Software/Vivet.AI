@@ -101,9 +101,9 @@ internal static class ParameterExpressionExtensions
             return parameterExpression;
         }
 
-        if (dateRange.FromAt.HasValue)
+        if (dateRange.From.HasValue)
         {
-            var unixTimestampStart = dateRange.FromAt.Value
+            var unixTimestampStart = dateRange.From.Value
                 .ToUnixTimeSeconds();
 
             var propertyExpression = Expression.Property(parameterExpression, nameof(BaseEmbedding.UnixTimestamp));
@@ -115,9 +115,9 @@ internal static class ParameterExpressionExtensions
                 : Expression.AndAlso(body, greaterThanOrEqualExpression);
         }
 
-        if (dateRange.ToAt != null)
+        if (dateRange.To != null)
         {
-            var unixTimestampEnd = dateRange.ToAt.Value
+            var unixTimestampEnd = dateRange.To.Value
                 .ToUnixTimeSeconds();
 
             var propertyExpression = Expression.Property(parameterExpression, nameof(BaseEmbedding.UnixTimestamp));

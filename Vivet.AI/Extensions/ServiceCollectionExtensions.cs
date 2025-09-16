@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Data;
 using System;
 using System.Net.Http;
 using Vivet.AI.Config;
@@ -67,13 +66,10 @@ internal static class ServiceCollectionExtensions
         services
             .AddKeyedSingleton(ServiceIds.CHAT_SERVICE_ID, (x, _) =>
             {
-                var chatOptions = x
-                    .GetRequiredService<ChatOptions>();
-
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddChatPluginsFromConfiguration(x, chatOptions);
+                    .AddChatPluginsFromConfiguration(x);
 
                 return builder;
             });
@@ -97,10 +93,7 @@ internal static class ServiceCollectionExtensions
                 var embeddingMemoryService = x
                     .GetService<IEmbeddingMemoryService>();
 
-                var embeddingKnowledgeService = x
-                    .GetService<IEmbeddingKnowledgeService>();
-
-                return new ChatService(chatOptions, chatCompletionService, kernelBuilder, promptExecutionSettings, embeddingMemoryService, embeddingKnowledgeService);
+                return new ChatService(chatOptions, chatCompletionService, kernelBuilder, promptExecutionSettings, embeddingMemoryService);
             });
 
         services
@@ -198,15 +191,9 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Metadata);
 
         services
-            .AddKeyedSingleton(ServiceIds.METADATA_SERVICE_ID, (x, _) =>
+            .AddKeyedSingleton(ServiceIds.METADATA_SERVICE_ID, (_, _) =>
             {
-                var metadataOptions = x
-                    .GetRequiredService<MetadataOptions>();
-
                 var builder = Kernel.CreateBuilder();
-
-                builder
-                    .AddMetadataPluginsFromConfiguration(x, metadataOptions);
 
                 return builder;
             });
@@ -250,15 +237,9 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Summarization);
 
         services
-            .AddKeyedSingleton(ServiceIds.SUMMARIZATION_SERVICE_ID, (x, _) =>
+            .AddKeyedSingleton(ServiceIds.SUMMARIZATION_SERVICE_ID, (_, _) =>
             {
-                var summarizationOptions = x
-                    .GetRequiredService<SummarizationOptions>();
-
                 var builder = Kernel.CreateBuilder();
-
-                builder
-                    .AddSummarizationPluginsFromConfiguration(x, summarizationOptions);
 
                 return builder;
             });
@@ -371,11 +352,10 @@ internal static class ServiceCollectionExtensions
             throw new ArgumentNullException(nameof(options));
 
         services
-            .AddVectorStore<Memory>(options.VectorStore)
-            .AddTextSearchServices<Memory>();
+            .AddVectorStore<Memory>(options.VectorStore);
 
         services
-            .AddTransient(x =>
+            .AddScoped(x =>
             {
                 const string SERVICE_ID = nameof(Memory);
 
@@ -405,11 +385,10 @@ internal static class ServiceCollectionExtensions
             throw new ArgumentNullException(nameof(options));
 
         services
-            .AddVectorStore<Knowledge>(options.VectorStore)
-            .AddTextSearchServices<Knowledge>();
+            .AddVectorStore<Knowledge>(options.VectorStore);
 
         services
-            .AddTransient(x =>
+            .AddScoped(x =>
             {
                 const string SERVICE_ID = nameof(Knowledge);
 
@@ -504,30 +483,6 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddTextSearchServices<TCollection>(this IServiceCollection services)
-        where TCollection : BaseEmbedding
-    {
-        if (services == null)
-            throw new ArgumentNullException(nameof(services));
-
-        var serviceId = typeof(TCollection).Name;
-
-        services
-            .AddKeyedTransient(serviceId, (x, y) =>
-            {
-                var vectorStoreCollection = x
-                    .GetRequiredKeyedService<VectorStoreCollection<Guid, TCollection>>(y);
-
-                var embeddingGenerator = x
-                    .GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>(serviceKey: ServiceIds.EMBEDDING_SERVICE_ID);
-
-                return new VectorStoreTextSearch<TCollection>(vectorStoreCollection, embeddingGenerator);
-            })
-            .AddKeyedTransient<ITextSearch>(serviceId,
-                (x, y) => x.GetRequiredKeyedService<VectorStoreTextSearch<TCollection>>(y));
-
-        return services;
-    }
     private static void EnsureCreated<TCollection>(this IServiceCollection services)
         where TCollection : BaseEmbedding
     {
@@ -537,12 +492,13 @@ internal static class ServiceCollectionExtensions
         var serviceId = typeof(TCollection).Name;
         var collectionName = typeof(TCollection).Name;
 
-        var vectorStoreCollection = services
-            .BuildServiceProvider()
+        var serviceProvider = services
+            .BuildServiceProvider();
+
+        var vectorStoreCollection = serviceProvider
             .GetRequiredKeyedService<VectorStore>(serviceId);
 
-        var vectorStoreCollectionDefinition = services
-            .BuildServiceProvider()
+        var vectorStoreCollectionDefinition = serviceProvider
             .GetRequiredService<VectorStoreCollectionDefinition>();
 
         var collection = vectorStoreCollection

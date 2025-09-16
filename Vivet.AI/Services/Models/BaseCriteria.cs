@@ -12,11 +12,6 @@ public abstract class BaseCriteria<TCollection>
     where TCollection : BaseEmbedding
 {
     /// <summary>
-    /// Gets or sets the user ID associated with this criteria.
-    /// </summary>
-    public virtual string UserId { get; set; }
-
-    /// <summary>
     /// Gets or sets the scope ID associated with this criteria.
     /// </summary>
     public virtual string ScopeId { get; set; }

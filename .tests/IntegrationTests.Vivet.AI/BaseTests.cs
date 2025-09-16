@@ -1,11 +1,12 @@
-﻿using System;
-using System.IO;
-using System.Reflection;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.IO;
+using System.Reflection;
 using Vivet.AI.Extensions.Orchestration.AzureInferenceAi;
+using Vivet.AI.Extensions.Orchestration.AzureOpenAi;
 
 namespace IntegrationTests.Vivet.AI;
 
@@ -39,5 +40,8 @@ public class BaseTests
         this.services
             //.AddVivetAzureOpenAi();
             .AddVivetAzureAiInference();
+
+        this.services
+            .AddScoped<TestPluginService>();
     }
 }

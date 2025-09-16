@@ -57,12 +57,6 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
             var kernel = kernelBuilder
                 .Build();
 
-            foreach (var requestPlguin in request.Plugins)
-            {
-                kernel.Plugins
-                    .AddFromObject(requestPlguin);
-            }
-
             chatMessageContent = await this.chatCompletionService
                 .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
                 .ConfigureAwait(false);

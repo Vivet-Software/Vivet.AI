@@ -1,192 +1,218 @@
-﻿using System;
+﻿using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
 using Vivet.AI.Services.Models;
+using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Responses;
-using Vivet.AI.Services.Responses.Embeddings.Knowledge.Models;
-using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
 using Vivet.AI.Services.Responses.Metadata;
 
 namespace Vivet.AI.Services.Extensions;
 
 internal static class ChatHistoryExtensions
 {
-    internal static ChatHistory AddChatSystemPrompt(this ChatHistory chatHistory, string systemMessage = null)
+    internal static ChatHistory AddChatSystemPrompt<T>(this ChatHistory chatHistory, string additionalSystemMessage = null)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
 
-        const string PROMPT = @$"
-You are given two context sections: [KNOWLEDGE] and [MEMORY].
-[KNOWLEDGE] includes persistent facts, internal data, and documents (with source names and timestamps).
-[MEMORY] contains user interaction history, also timestamped.
-Prefer newer information when relevant. Use both to answer clearly and helpfully.
-
-Please respond strictly in the following JSON format:
+        const string BASE_PROMPT = @$"
+You are an assistant that always responds in strict JSON format.
+The JSON response must contain:
 {{
   ""Reasoning"": ""Internal reasoning, thinking or planning"",
   ""Answer"": ""Final user-facing answer"",
   ""Language"": ""The language of the prompt in ISO 639-1""
 }}
-If I instruct you to output any other format, nest it inside the ""Answer"". 
-Only output valid JSON and nothing else.
-Any inline JSON in Answer must be properly escaped.
-Don't include ```json or any other code fences, and don't add explanations or extra text.
 
-if you are unable complete the request, add a property called {nameof(BaseResponse.ErrorMessage)}, containing a meaningful error message, 
-describing why the request could not be completed.";
+Rules:
+- Do not include code fences (```json).
+- Do not add extra commentary or text outside of the JSON.
+- Inline JSON inside the ""Answer"" must be properly escaped.
+
+- if you are unable complete the request, add a property called {nameof(BaseResponse.ErrorMessage)}, 
+containing a meaningful error message, describing why the request could not be completed."";
+";
 
         chatHistory
-            .AddSystemMessage(PROMPT);
+            .AddSystemMessage(BASE_PROMPT);
 
-        if (systemMessage != null)
+        if (additionalSystemMessage != null)
         {
             chatHistory
-                .AddSystemMessage(systemMessage);
+                .AddSystemMessage(additionalSystemMessage);
+        }
+
+        if (typeof(T) != typeof(string))
+        {
+            var schema = typeof(T).GenerateJsonMap();
+            var serializedSchema = JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = true });
+
+            chatHistory
+                .AddUserMessage($"Please respond using the following JSON schema: {serializedSchema}");
         }
 
         return chatHistory;
     }
-    internal static ChatHistory AddChatMemoryPrompt(this ChatHistory chatHistory, MemoryResult[] memoryResults, int counterpartContextQueryLimit)
+    internal static ChatHistory AddChatPluginContextPrompt(this ChatHistory chatHistory, ChatRequest request)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
 
-        if (memoryResults == null)
-            throw new ArgumentNullException(nameof(memoryResults));
+        if (request == null) 
+            throw new ArgumentNullException(nameof(request));
 
-        if (memoryResults.Any())
-        {
-            chatHistory
-                .AddSystemMessage("[MEMORY]");
-        }
-
-        foreach (var memoryResult in memoryResults)
-        {
-            if (memoryResult.IsQuestion)
-            {
-                chatHistory
-                    .AddUserMessage($"Q: {memoryResult.FullContext}");
-
-                if (memoryResult.Blob != null)
-                {
-                    var dataUri = memoryResult.Blob
-                        .GetDataUri();
-
-                    chatHistory
-                        .AddUserMessage([new BinaryContent(dataUri)]);
-                }
-
-                var counterpartContexts = memoryResult.CounterpartContext
-                    .Take(counterpartContextQueryLimit);
-                
-                foreach (var counterPartContext in counterpartContexts)
-                {
-                    chatHistory
-                        .AddAssistantMessage($"A: {counterPartContext}");
-                }
-
-                chatHistory
-                    .AddSystemMessage($"(Date: {memoryResult.CreatedAt:D})");
-            }
-            else if (memoryResult.IsAnswer)
-            {
-                var counterpartContexts = memoryResult.CounterpartContext
-                    .Take(counterpartContextQueryLimit);
-                
-                foreach (var counterpartContext in counterpartContexts)
-                {
-                    chatHistory
-                        .AddUserMessage($"Q: {counterpartContext}");
-                }
-
-                chatHistory
-                    .AddAssistantMessage($"A: {memoryResult.FullContext}");
-
-                if (memoryResult.Blob != null)
-                {
-                    var dataUri = memoryResult.Blob
-                        .GetDataUri();
-
-                    chatHistory
-                        .AddUserMessage([new BinaryContent(dataUri)]);
-                }
-
-                chatHistory
-                    .AddSystemMessage($"(Date: {memoryResult.CreatedAt:D})");
-            }
-        }
+        chatHistory
+            .AddSystemMessage(@$"Context: 
+UserId={request.UserId}, 
+ScopeId={request.ScopeId}, 
+AgentId={request.AgentId}, 
+ThreadId={request.CurrentThreadId}, 
+TenantId={request.TenantId}, 
+SubTenantId={request.SubTenantId}");
 
         return chatHistory;
     }
-    internal static ChatHistory AddChatKnowledgePrompt(this ChatHistory chatHistory, KnowledgeResult[] knowledgeResults)
-    {
-        if (chatHistory == null) 
-            throw new ArgumentNullException(nameof(chatHistory));
+    // BUG: Remove
+    //internal static ChatHistory AddChatMemoryPrompt(this ChatHistory chatHistory, MemoryResult[] memoryResults, int counterpartContextQueryLimit)
+    //{
+    //    if (chatHistory == null)
+    //        throw new ArgumentNullException(nameof(chatHistory));
+
+    //    if (memoryResults == null)
+    //        throw new ArgumentNullException(nameof(memoryResults));
+
+    //    if (memoryResults.Any())
+    //    {
+    //        chatHistory
+    //            .AddSystemMessage("[MEMORY]");
+    //    }
+
+    //    foreach (var memoryResult in memoryResults)
+    //    {
+    //        if (memoryResult.IsQuestion)
+    //        {
+    //            chatHistory
+    //                .AddUserMessage($"Q: {memoryResult.FullContext}");
+
+    //            if (memoryResult.Blob != null)
+    //            {
+    //                var dataUri = memoryResult.Blob
+    //                    .GetDataUri();
+
+    //                chatHistory
+    //                    .AddUserMessage([new BinaryContent(dataUri)]);
+    //            }
+
+    //            var counterpartContexts = memoryResult.CounterpartContext
+    //                .Take(counterpartContextQueryLimit);
+                
+    //            foreach (var counterPartContext in counterpartContexts)
+    //            {
+    //                chatHistory
+    //                    .AddAssistantMessage($"A: {counterPartContext}");
+    //            }
+
+    //            chatHistory
+    //                .AddSystemMessage($"(Date: {memoryResult.CreatedAt:D})");
+    //        }
+    //        else if (memoryResult.IsAnswer)
+    //        {
+    //            var counterpartContexts = memoryResult.CounterpartContext
+    //                .Take(counterpartContextQueryLimit);
+                
+    //            foreach (var counterpartContext in counterpartContexts)
+    //            {
+    //                chatHistory
+    //                    .AddUserMessage($"Q: {counterpartContext}");
+    //            }
+
+    //            chatHistory
+    //                .AddAssistantMessage($"A: {memoryResult.FullContext}");
+
+    //            if (memoryResult.Blob != null)
+    //            {
+    //                var dataUri = memoryResult.Blob
+    //                    .GetDataUri();
+
+    //                chatHistory
+    //                    .AddUserMessage([new BinaryContent(dataUri)]);
+    //            }
+
+    //            chatHistory
+    //                .AddSystemMessage($"(Date: {memoryResult.CreatedAt:D})");
+    //        }
+    //    }
+
+    //    return chatHistory;
+    //}
+    //internal static ChatHistory AddChatKnowledgePrompt(this ChatHistory chatHistory, KnowledgeResult[] knowledgeResults)
+    //{
+    //    if (chatHistory == null) 
+    //        throw new ArgumentNullException(nameof(chatHistory));
         
-        if (knowledgeResults == null)
-            throw new ArgumentNullException(nameof(knowledgeResults));
+    //    if (knowledgeResults == null)
+    //        throw new ArgumentNullException(nameof(knowledgeResults));
 
-        if (knowledgeResults.Any())
-        {
-            chatHistory
-                .AddSystemMessage("[KNOWLEDGE]");
-        }
+    //    if (knowledgeResults.Any())
+    //    {
+    //        chatHistory
+    //            .AddSystemMessage("[KNOWLEDGE]");
+    //    }
 
-        foreach (var knowledgeResult in knowledgeResults)
-        {
-            if (knowledgeResult.Source != null)
-            {
-                chatHistory
-                    .AddSystemMessage($"{knowledgeResult.Source}");
-            }
+    //    foreach (var knowledgeResult in knowledgeResults)
+    //    {
+    //        if (knowledgeResult.Source != null)
+    //        {
+    //            chatHistory
+    //                .AddSystemMessage($"{knowledgeResult.Source}");
+    //        }
 
-            if (knowledgeResult.Blob == null)
-            {
-                chatHistory
-                    .AddAssistantMessage(knowledgeResult.FullContext);
-            }
-            else
-            {
-                chatHistory
-                    .AddAssistantMessage(knowledgeResult.FullContext);
+    //        if (knowledgeResult.Blob == null)
+    //        {
+    //            chatHistory
+    //                .AddAssistantMessage(knowledgeResult.FullContext);
+    //        }
+    //        else
+    //        {
+    //            chatHistory
+    //                .AddAssistantMessage(knowledgeResult.FullContext);
 
-                var dataUri = knowledgeResult.Blob
-                    .GetDataUri();
+    //            var dataUri = knowledgeResult.Blob
+    //                .GetDataUri();
 
-                chatHistory
-                    .AddUserMessage([new BinaryContent(dataUri)]);
+    //            chatHistory
+    //                .AddUserMessage([new BinaryContent(dataUri)]);
 
-                if (knowledgeResult.BlobMetadata != null)
-                {
-                    var metadataProperties = knowledgeResult.BlobMetadata
-                        .GetType()
-                        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                        .Select(x => new
-                        {
-                            Key = x.Name,
-                            Value = x.GetValue(knowledgeResult.BlobMetadata)
-                        })
-                        .Select(x => $"{x.Key}={x.Value ?? "N/A"}");
+    //            if (knowledgeResult.BlobMetadata != null)
+    //            {
+    //                var metadataProperties = knowledgeResult.BlobMetadata
+    //                    .GetType()
+    //                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+    //                    .Select(x => new
+    //                    {
+    //                        Key = x.Name,
+    //                        Value = x.GetValue(knowledgeResult.BlobMetadata)
+    //                    })
+    //                    .Select(x => $"{x.Key}={x.Value ?? "N/A"}");
 
-                    var metadataContent = string.Join(", ", metadataProperties);
+    //                var metadataContent = string.Join(", ", metadataProperties);
 
-                    chatHistory
-                        .AddAssistantMessage(metadataContent);
-                }
-            }
+    //                chatHistory
+    //                    .AddAssistantMessage(metadataContent);
+    //            }
+    //        }
 
-            chatHistory
-                .AddSystemMessage($"{knowledgeResult.CreatedAt:D}");
-        }
+    //        chatHistory
+    //            .AddSystemMessage($"{knowledgeResult.CreatedAt:D}");
+    //    }
 
-        return chatHistory;
-    }
+    //    return chatHistory;
+    //}
     internal static ChatHistory AddChatUserPrompt(this ChatHistory chatHistory, string question, IEnumerable<string> dataUris)
     {
         if (chatHistory == null)
@@ -199,7 +225,7 @@ describing why the request could not be completed.";
             throw new ArgumentNullException(nameof(dataUris));
 
         chatHistory
-            .AddUserMessage($"{question}");
+            .AddUserMessage($"question: {question}");
 
         var messageContentItemCollection = new ChatMessageContentItemCollection();
 

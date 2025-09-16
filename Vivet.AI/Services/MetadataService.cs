@@ -59,7 +59,7 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         var chatHistory = new ChatHistory();
 
         var blobData = await request.Blob
-            .GetBlobData()
+            .GetBlobData(cancellationToken)
             .ConfigureAwait(false);
 
         var maxWordsSummary = request.ConfigOverrides.SummaryMaxWords ?? this.metadataOptions.SummaryMaxWords;
@@ -75,12 +75,6 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
 
         var kernel = kernelBuilder
             .Build();
-
-        foreach (var requestPlguin in request.Plugins)
-        {
-            kernel.Plugins
-                .AddFromObject(requestPlguin);
-        }
 
         var chatMessageContent = await this.chatCompletionService
             .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)

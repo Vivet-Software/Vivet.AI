@@ -1,5 +1,4 @@
 ﻿using Google.Apis.Services;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Data;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
@@ -7,161 +6,18 @@ using Microsoft.SemanticKernel.Plugins.Web.Google;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
-using Vivet.AI.Data.Models;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Plugins;
+using Vivet.AI.Services.Interfaces;
 
 namespace Vivet.AI.Extensions;
 
-// BUG: Vector Plugin
-// REQUEST:
-//        Query = request.Question,
-//        Criteria =
-//        {
-//            UserId = request.UserId,
-//            ScopeId = request.ScopeId,
-//            AgentId = request.AgentId,
-//            DateRange = new DateRange
-//            {
-//                FromAt = fromAt
-//            }
-//        },
-//        CurrentThreadId = request.CurrentThreadId,
-//        Limit = limit
-//var limit = this.options.Memory.UseQueryDeduplication
-//    ? this.options.Memory.ContextQueryLimit * 2
-//    : this.options.Memory.ContextQueryLimit;
-
-// RESPONSE:
-// - FullContext
-// - CounterpartContext
-// - CreatedAt
-// - Blob (GetDataUri)
-
-// REQUEST:
-//Query = request.Question,
-//Criteria =
-//{
-//    TenantId = request.TenantId,
-//    SubTenantId = request.SubTenantId,
-//    ScopeId = request.ScopeId,
-//    UserId = request.UserId
-//},
-//Limit = limit
-//var limit = this.options.Knowledge.UseQueryDeduplication
-//    ? this.options.Knowledge.ContextQueryLimit * 2
-//    : this.options.Knowledge.ContextQueryLimit;
-
-// RESPONSE:
-// - Source
-// - FullContext
-// - BlobMetadata
-// - CreatedAt
-
-internal static class VectorStoreTextSearchExtensions
-{
-    private const string BASEVECTOR_STORE_SEARCH_FUNCTION_NAME = "Search{0}";
-
-    internal static KernelFunction CreateSearchFunction<T>(this VectorStoreTextSearch<T> textSearch, ChatOptions chatOptions)
-        where T : BaseEmbedding
-    {
-        var functionName = string.Format(VectorStoreTextSearchExtensions.BASEVECTOR_STORE_SEARCH_FUNCTION_NAME, typeof(T).Name);
-
-        //var parameters = typeof(T)
-        //    .GetProperties(BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public)
-        //    .Select(x =>
-        //    {
-        //        var parameterAttribute = x
-        //            .GetCustomAttribute<TextSearchParameterAttribute>();
-
-        //        if (parameterAttribute == null)
-        //        {
-        //            return null;
-        //        }
-
-        //        return new KernelParameterMetadata(x.Name)
-        //        {
-        //            Description = parameterAttribute.Description,
-        //            DefaultValue = parameterAttribute.DefaultValue,
-        //            IsRequired = parameterAttribute.IsRequired
-        //        };
-        //    })
-        //    .Where(x => x != null)
-        //    .ToList();
-        var parameters = new List<KernelParameterMetadata>();
-
-        var limit = typeof(T) switch
-        {
-            var x when x == typeof(Memory) => chatOptions.Memory.ContextQueryLimit,
-            var x when x == typeof(Knowledge) => chatOptions.Knowledge.ContextQueryLimit,
-            _ => 5
-        };
-
-        parameters
-            .AddRange(
-            [
-                new KernelParameterMetadata("skip") { IsRequired = true, DefaultValue = 0 },
-                new KernelParameterMetadata("limit") { IsRequired = true, DefaultValue = limit }
-            ]);
-
-        var options = new KernelFunctionFromMethodOptions
-        {
-            FunctionName = functionName,
-            Description = null,
-            Parameters = parameters,
-            ReturnParameter = new KernelReturnParameterMetadata
-            {
-                ParameterType = typeof(KernelSearchResults<string>)
-            }
-        };
-
-        return textSearch
-            .CreateGetTextSearchResults(options);
-    }
-}
-
-/// <summary>
-/// Result mapper which converts a <see cref="BaseEmbedding"/> to a <see cref="TextSearchResult"/>.
-/// </summary>
-public sealed class EmbeddingTextSearchResultMapper : ITextSearchResultMapper
-{
-    /// <inheritdoc />
-    public TextSearchResult MapFromResultToTextSearchResult(object result)
-    {
-        if (result is BaseEmbedding embedding)
-        {
-            return new TextSearchResult(embedding.Content)
-            {
-                Name = embedding.Id.ToString()
-            };
-        }
-
-        throw new ArgumentException("Invalid result type.");
-    }
-}
-
-/// <summary>
-/// String mapper which converts a <see cref="BaseEmbedding"/> to a string.
-/// </summary>
-public sealed class EmbeddingTextSearchStringMapper : ITextSearchStringMapper
-{
-    /// <inheritdoc />
-    public string MapFromResultToString(object result)
-    {
-        if (result is BaseEmbedding embedding)
-        {
-            return embedding.Content;
-        }
-
-        throw new ArgumentException("Invalid result type.");
-    }
-}
-
 internal static class KernelBuilderExtensions
 {
-    internal static IKernelBuilder AddChatPluginsFromConfiguration(this IKernelBuilder builder, IServiceProvider serviceProvider, ChatOptions chatOptions)
+    internal static IKernelBuilder AddChatPluginsFromConfiguration(this IKernelBuilder builder, IServiceProvider serviceProvider)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -169,13 +25,13 @@ internal static class KernelBuilderExtensions
         if (serviceProvider == null) 
             throw new ArgumentNullException(nameof(serviceProvider));
 
-        if (chatOptions == null)
-            throw new ArgumentNullException(nameof(chatOptions));
+        var chatOptions = serviceProvider
+            .GetRequiredService<ChatOptions>();
 
         builder
-            .AddWebSearchPlugin(chatOptions.Plugins.BuiltInPlugins.WebSearch)
-            .AddVectorStorePlugin<Knowledge>(serviceProvider)
-            .AddVectorStorePlugin<Memory>(serviceProvider);
+            .AddMemoryPlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.Memory)
+            .AddKnowledgePlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.Knowledge)
+            .AddWebSearchPlugin(chatOptions.Plugins.BuiltInPlugins.WebSearch);
 
         var types = chatOptions.Plugins.CustomPlugins
             .Select(x => Type.GetType(x, true)); 
@@ -188,53 +44,59 @@ internal static class KernelBuilderExtensions
 
         return builder;
     }
-    internal static IKernelBuilder AddMetadataPluginsFromConfiguration(this IKernelBuilder builder, IServiceProvider serviceProvider, MetadataOptions metadataOptions)
+
+
+    private static IKernelBuilder AddMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, ChatMemoryPluginOptions options)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
 
-        if (serviceProvider == null)
-            throw new ArgumentNullException(nameof(serviceProvider));
-
-        if (metadataOptions == null)
-            throw new ArgumentNullException(nameof(metadataOptions));
-
-        var types = metadataOptions.Plugins.CustomPlugins
-            .Select(x => Type.GetType(x, true));
-
-        foreach (var type in types)
+        if (options == null)
         {
-            builder
-                .AddFromType(type, serviceProvider);
+            return builder;
         }
+
+        var embeddingMemoryService = serviceProvider
+            .GetService<IEmbeddingMemoryService>();
+
+        if (embeddingMemoryService == null)
+        {
+            return builder;
+        }
+
+        var chatMemoryPlugin = new ChatMemoryPlugin(options, embeddingMemoryService);
+
+        builder.Plugins
+            .AddFromObject(chatMemoryPlugin);
 
         return builder;
     }
-    internal static IKernelBuilder AddSummarizationPluginsFromConfiguration(this IKernelBuilder builder, IServiceProvider serviceProvider, SummarizationOptions summarizationOptions)
+    private static IKernelBuilder AddKnowledgePlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, ChatKnowledgePluginOptions options)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
 
-        if (serviceProvider == null)
-            throw new ArgumentNullException(nameof(serviceProvider));
-
-        if (summarizationOptions == null) 
-            throw new ArgumentNullException(nameof(summarizationOptions));
-
-        var types = summarizationOptions.Plugins.CustomPlugins
-            .Select(x => Type.GetType(x, true));
-
-        foreach (var type in types)
+        if (options == null)
         {
-            builder
-                .AddFromType(type, serviceProvider);
+            return builder;
         }
+
+        var embeddingKnowledgeService = serviceProvider
+            .GetService<IEmbeddingKnowledgeService>();
+
+        if (embeddingKnowledgeService == null)
+        {
+            return builder;
+        }
+
+        var chatMemoryPlugin = new ChatKnowledgePlugin(options, embeddingKnowledgeService);
+
+        builder.Plugins
+            .AddFromObject(chatMemoryPlugin);
 
         return builder;
     }
-
-
-    private static IKernelBuilder AddWebSearchPlugin(this IKernelBuilder builder, WebSearchPluginOptions options = null)
+    private static IKernelBuilder AddWebSearchPlugin(this IKernelBuilder builder, ChatWebSearchPluginOptions options = null)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -308,43 +170,6 @@ internal static class KernelBuilderExtensions
 
         return builder;
     }
-    private static IKernelBuilder AddVectorStorePlugin<TEmbedding>(this IKernelBuilder builder, IServiceProvider serviceProvider)
-        where TEmbedding : BaseEmbedding
-    {
-        if (builder == null)
-            throw new ArgumentNullException(nameof(builder));
-
-        if (serviceProvider == null)
-            throw new ArgumentNullException(nameof(serviceProvider));
-
-        var serviceId = typeof(TEmbedding).Name;
-
-        var textSearchStringMapper = new EmbeddingTextSearchStringMapper();
-        var textSearchResultMapper = new EmbeddingTextSearchResultMapper();
-        var textSearchOptions = new VectorStoreTextSearchOptions();
-
-        builder
-            .AddVectorStoreTextSearch<TEmbedding>(textSearchStringMapper, textSearchResultMapper, textSearchOptions);
-
-        var textSearch = serviceProvider
-            .GetRequiredKeyedService<VectorStoreTextSearch<TEmbedding>>(serviceId);
-
-        var chatOptions = serviceProvider
-            .GetRequiredService<ChatOptions>();
-
-        var kernelFunction = textSearch
-            .CreateSearchFunction(chatOptions);
-
-        var pluginName = string.Format(BuiltInPluginNames.VECTOR_STORE_SEARCH_PLUGIN, typeof(TEmbedding).Name);
-        var description = "DESCRIPTION";
-
-        var searchPlugin = KernelPluginFactory.CreateFromFunctions(pluginName, description, [kernelFunction]);
-
-        builder.Plugins
-            .Add(searchPlugin);
-
-        return builder;
-    }
     private static void AddFromType(this IKernelBuilder kernelBuilder, Type type, IServiceProvider serviceProvider)
     {
         if (kernelBuilder == null) 
@@ -363,7 +188,8 @@ internal static class KernelBuilderExtensions
 
         var constructorInfo = type
             .GetConstructors()
-            .OrderByDescending(x => x.GetParameters().Length)
+            .OrderByDescending(x => x
+                .GetParameters().Length)
             .FirstOrDefault();
 
         if (constructorInfo == null)
@@ -373,7 +199,8 @@ internal static class KernelBuilderExtensions
 
         var parameters = constructorInfo
             .GetParameters()
-            .Select(x => serviceProvider.GetService(x.ParameterType) ?? throw new InvalidOperationException($"Cannot resolve constructor parameter {x.ParameterType.FullName} for plugin {type.FullName}"))
+            .Select(x => serviceProvider
+                .GetService(x.ParameterType))
             .ToArray();
 
         var instance = constructorInfo
