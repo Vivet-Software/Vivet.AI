@@ -16,6 +16,7 @@ using Vivet.AI.Plugins;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Embedding.Memory;
 using Vivet.AI.Services.Responses.Chat;
@@ -43,8 +44,6 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
     private readonly ChatOptions options = options ?? throw new ArgumentNullException(nameof(options));
     private readonly IChatCompletionService chatCompletionService = chatCompletionService ?? throw new ArgumentNullException(nameof(chatCompletionService));
     private readonly PromptExecutionSettings promptExecutionSettings = promptExecutionSettings ?? throw new ArgumentNullException(nameof(promptExecutionSettings));
-
-    // BUG: maybe always use streaming? just still have the one that just correlates the entire result 
 
     /// <inheritdoc />
     public virtual async Task<ChatResponse> ChatAsync(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
@@ -211,14 +210,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         //.AddChatMemoryPrompt(memoryResults, this.options.Memory.CounterpartContextQueryLimit) 
 
         var dataUris = await Task.WhenAll(request.Blobs
-                .Select(async x =>
-                {
-                    var blobData = await x
-                        .GetBlobData(cancellationToken)
-                        .ConfigureAwait(false);
-
-                    return blobData.DataUri;
-                }))
+                .Select(x => x
+                    .GetBinaryContent(cancellationToken)))
             .ConfigureAwait(false);
 
         chatHistory
@@ -479,29 +472,34 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return Task.Run(async () =>
         {
-            var indexResponse = await embeddingMemoryService
-                .IndexAsync(new IndexMemoryRequest<T>
-                    {
-                        Question = request.Question,
-                        Answer = response.Answer,
-                        UserId = request.UserId,
-                        ThreadId = request.CurrentThreadId,
-                        Language = response.Language, 
-                        Blobs = request.Blobs,
-                        ConfigOverrides =
-                        {
-                            Metadata = request.ConfigOverrides.Memory.Metadata,
-                            Summarization = request.ConfigOverrides.Memory.Summarization
-                        }
-                    },
-                    cancellationToken)
-                .ConfigureAwait(false);
+            await Task.CompletedTask;
 
-            if (onMemoryIndexed != null)
-            {
-                await onMemoryIndexed(indexResponse)
-                    .ConfigureAwait(false);
-            }
+            throw new Exception();
+
+            // BUG: 000: Fix process hangs, when exception
+            //var indexResponse = await embeddingMemoryService
+            //    .IndexAsync(new IndexMemoryRequest<T>
+            //        {
+            //            Question = request.Question,
+            //            Answer = response.Answer,
+            //            UserId = request.UserId,
+            //            ThreadId = request.CurrentThreadId,
+            //            Language = response.Language,
+            //            Blobs = request.Blobs,
+            //            ConfigOverrides =
+            //            {
+            //                Metadata = request.ConfigOverrides.Memory.Metadata,
+            //                Summarization = request.ConfigOverrides.Memory.Summarization
+            //            }
+            //        },
+            //        cancellationToken)
+            //    .ConfigureAwait(false);
+
+            //if (onMemoryIndexed != null)
+            //{
+            //    await onMemoryIndexed(indexResponse)
+            //        .ConfigureAwait(false);
+            //}
         }, cancellationToken);
     }
 }

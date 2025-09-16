@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.SemanticKernel;
+using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Services.Models.Blobs.Data;
@@ -17,6 +19,26 @@ public abstract class BaseBlob
     public virtual BaseBlobData Data { get; set; }
 
     internal abstract Task<(string Base64, string MimeType, string DataUri)> GetBlobData(CancellationToken cancellationToken = default);
+
+    internal async Task<BinaryContent> GetBinaryContent(CancellationToken cancellationToken = default)
+    {
+        var blobData = await this
+            .GetBlobData(cancellationToken)
+            .ConfigureAwait(false);
+
+        return this switch
+        {
+            AudioBlob => new AudioContent(blobData.DataUri),
+            Requests.Metadata.Models.AudioBlob => new AudioContent(blobData.DataUri),
+            DocumentBlob => new BinaryContent(blobData.DataUri),
+            Requests.Metadata.Models.DocumentBlob => new BinaryContent(blobData.DataUri),
+            ImageBlob => new ImageContent(blobData.DataUri),
+            Requests.Metadata.Models.ImageBlob => new ImageContent(blobData.DataUri),
+            VideoBlob => new BinaryContent(blobData.DataUri),
+            Requests.Metadata.Models.VideoBlob => new BinaryContent(blobData.DataUri),
+            _ => throw new ArgumentOutOfRangeException(nameof(BaseBlob), this, "The blob type is not supported.")
+        };
+    }
 }
 
 /// <summary>

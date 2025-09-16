@@ -47,7 +47,7 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
             var chatHistory = new ChatHistory();
 
             chatHistory
-                .AddSuummarizationMemoryPrompt(request.Question, request.Answer, summarizationDegree);
+                .AddSummarizationMemoryPrompt(request.Question, request.Answer, summarizationDegree);
 
             var executionSettings = this.promptExecutionSettings
                 .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);

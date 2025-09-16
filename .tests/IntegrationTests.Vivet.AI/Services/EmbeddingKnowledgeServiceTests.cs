@@ -648,7 +648,8 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
     [TestMethod]
     public async Task QueryTextWhenSkipTest()
     {
-        var scopeId = Guid.NewGuid().ToString();
+        var localUserId = Guid.NewGuid().ToString();
+
         const string TEXT = "The apple is black and old.";
 
         for (var i = 0; i < 2; i++)
@@ -657,7 +658,8 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
                 .IndexAsync(new IndexTextRequest
                 {
                     Text = TEXT,
-                    ScopeId = scopeId
+                    ScopeId = Guid.NewGuid().ToString(),
+                    TenantId = localUserId
                 });
         }
 
@@ -666,7 +668,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
             {
                 Criteria =
                 {
-                    ScopeId = scopeId
+                    TenantId = localUserId
                 },
                 Limit = 10,
                 Skip = 1

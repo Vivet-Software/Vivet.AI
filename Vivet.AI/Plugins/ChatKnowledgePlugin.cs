@@ -39,9 +39,10 @@ public sealed class ChatKnowledgePlugin
     /// <param name="tenantId">The tenant id.</param>
     /// <param name="subTenantId">The sub-tenant id.</param>
     /// <returns>The knowledge chat prompt snippet.</returns>
-    [KernelFunction]
-    [Description("Retrieve and inject relevant knowledge entries into the current chat history.")]
-    public async Task<string> UseMemoryAsync([Description("The current user question or message")]string question, string scopeId, string tenantId, string subTenantId)
+    [KernelFunction("knowledge")] 
+    [Description(@"Retrieve knowledge stored in private or scoped sources such as notes, documents, organizational records or similar. 
+Always use this function when the user’s request may relate to these sources, even if similar information exists in public knowledge.")]
+    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, string scopeId, string tenantId, string subTenantId)
     {
         if (string.IsNullOrEmpty(question))
         {
@@ -85,52 +86,57 @@ public sealed class ChatKnowledgePlugin
 
         var stringBuilder = new StringBuilder();
 
+        stringBuilder
+            .AppendLine("[KNOWLEDGE]");
+
         if (knowledgeResults.Any())
         {
-            stringBuilder
-                .AppendLine("[KNOWLEDGE]");
-        }
-
-        foreach (var knowledgeResult in knowledgeResults)
-        {
-            if (knowledgeResult.Source != null)
+            foreach (var knowledgeResult in knowledgeResults)
             {
-                stringBuilder
-                    .AppendLine($"system: {knowledgeResult.Source}");
-            }
-
-            stringBuilder
-                .AppendLine($"assistant: {knowledgeResult.FullContext}");
-
-            if (knowledgeResult.Blob != null)
-            {
-                var dataUri = knowledgeResult.Blob
-                    .GetDataUri();
-
-                stringBuilder
-                    .AppendLine($"assistant: [Blob: {dataUri}]");
-
-                if (knowledgeResult.BlobMetadata != null)
+                if (knowledgeResult.Source != null)
                 {
-                    var metadataProperties = knowledgeResult.BlobMetadata
-                        .GetType()
-                        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                        .Select(x => new
-                        {
-                            Key = x.Name,
-                            Value = x.GetValue(knowledgeResult.BlobMetadata)
-                        })
-                        .Select(x => $"{x.Key}={x.Value ?? "N/A"}");
+                    stringBuilder
+                        .AppendLine($"system: {knowledgeResult.Source}");
+                }
 
-                    var metadataContent = string.Join(", ", metadataProperties);
+                stringBuilder
+                    .AppendLine($"assistant: {knowledgeResult.FullContext}");
+
+                if (knowledgeResult.Blob != null)
+                {
+                    var dataUri = knowledgeResult.Blob
+                        .GetDataUri();
 
                     stringBuilder
-                        .AppendLine($"assistant: {metadataContent}");
-                }
-            }
+                        .AppendLine($"assistant: [Blob: {dataUri}]");
 
+                    if (knowledgeResult.BlobMetadata != null)
+                    {
+                        var metadataProperties = knowledgeResult.BlobMetadata
+                            .GetType()
+                            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                            .Select(x => new
+                            {
+                                Key = x.Name,
+                                Value = x.GetValue(knowledgeResult.BlobMetadata)
+                            })
+                            .Select(x => $"{x.Key}={x.Value ?? "N/A"}");
+
+                        var metadataContent = string.Join(", ", metadataProperties);
+
+                        stringBuilder
+                            .AppendLine($"assistant: {metadataContent}");
+                    }
+                }
+
+                stringBuilder
+                    .AppendLine($"system: {knowledgeResult.CreatedAt:D}");
+            }
+        }
+        else
+        {
             stringBuilder
-                .AppendLine($"system: {knowledgeResult.CreatedAt:D}");
+                .AppendLine("None found.");
         }
 
         return stringBuilder

@@ -213,7 +213,7 @@ SubTenantId={request.SubTenantId}");
 
     //    return chatHistory;
     //}
-    internal static ChatHistory AddChatUserPrompt(this ChatHistory chatHistory, string question, IEnumerable<string> dataUris)
+    internal static ChatHistory AddChatUserPrompt(this ChatHistory chatHistory, string question, IEnumerable<KernelContent> blobContents)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
@@ -221,18 +221,15 @@ SubTenantId={request.SubTenantId}");
         if (question == null) 
             throw new ArgumentNullException(nameof(question));
 
-        if (dataUris == null)
-            throw new ArgumentNullException(nameof(dataUris));
+        if (blobContents == null)
+            throw new ArgumentNullException(nameof(blobContents));
 
         chatHistory
             .AddUserMessage($"question: {question}");
 
         var messageContentItemCollection = new ChatMessageContentItemCollection();
 
-        var binaryContents = dataUris
-            .Select(x => new BinaryContent(x));
-
-        foreach (var binaryContent in binaryContents)
+        foreach (var binaryContent in blobContents)
         {
             messageContentItemCollection
                 .Add(binaryContent);
@@ -246,14 +243,14 @@ SubTenantId={request.SubTenantId}");
 
         return chatHistory;
     }
-    internal static ChatHistory AddMetadataPrompt<T>(this ChatHistory chatHistory, string dataUri, int summaryMaxWords, int descriptionMaxWords)
+    internal static ChatHistory AddMetadataPrompt<T>(this ChatHistory chatHistory, KernelContent blobContent, int summaryMaxWords, int descriptionMaxWords)
         where T : class, new()
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
 
-        if (dataUri == null)
-            throw new ArgumentNullException(nameof(dataUri));
+        if (blobContent == null)
+            throw new ArgumentNullException(nameof(blobContent));
 
         chatHistory
             .AddSystemMessage("You are a metadata extraction assistant.");
@@ -298,7 +295,7 @@ SubTenantId={request.SubTenantId}");
         }
 
         chatHistory
-            .AddUserMessage([new BinaryContent(dataUri)]);
+            .AddUserMessage([blobContent]);
 
         chatHistory
             .AddUserMessage(
@@ -307,7 +304,7 @@ SubTenantId={request.SubTenantId}");
 
         return chatHistory;
     }
-    internal static ChatHistory AddSuummarizationMemoryPrompt(this ChatHistory chatHistory, string question, string answer, int summarizationDegree)
+    internal static ChatHistory AddSummarizationMemoryPrompt(this ChatHistory chatHistory, string question, string answer, int summarizationDegree)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
@@ -381,7 +378,15 @@ A: {answer}
                         break;
 
                     case AudioContent:
+                        stringBuilder
+                            .AppendLine("[AudioContent]");
+                        break;
+
                     case ImageContent:
+                        stringBuilder
+                            .AppendLine("[ImageContent]");
+                        break;
+                    
                     case BinaryContent:
                         stringBuilder
                             .AppendLine("[BinaryContent]");

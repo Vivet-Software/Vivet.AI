@@ -41,8 +41,9 @@ public sealed class ChatMemoryPlugin
     /// <param name="agentId">The agent id.</param>
     /// <param name="threadId">The thread id.</param>
     /// <returns>The memory chat prompt snippet.</returns>
-    [KernelFunction]
-    [Description("Retrieve and inject relevant memory entries into the current chat history.")]
+    [KernelFunction("Memory")]
+    [Description(@"Retrieve relevant user-specific memories, including past questions, answers, notes, or uploaded content, 
+and inject them into the current chat context to support personalized and consistent responses.")]
     public async Task<string> GetMemoriesAsync([Description("The current user question or message")]string question, string userId, string scopeId, string agentId, string threadId) 
     {
         if (string.IsNullOrEmpty(question))
@@ -101,58 +102,64 @@ public sealed class ChatMemoryPlugin
 
         var stringBuilder = new StringBuilder();
 
+        stringBuilder
+            .AppendLine("[MEMORY]");
+
         if (memoryResults.Any())
         {
-            stringBuilder
-                .AppendLine("[MEMORY]");
-        }
+            foreach (var memoryResult in memoryResults)
+            {
+                if (memoryResult.IsQuestion)
+                {
+                    stringBuilder
+                        .AppendLine($"user: Q: {memoryResult.FullContext}");
 
-        foreach (var memoryResult in memoryResults)
+                    var counterpartContexts = memoryResult.CounterpartContext
+                        .Take(this.options.CounterpartContextQueryLimit);
+
+                    foreach (var counterPartContext in counterpartContexts)
+                    {
+                        stringBuilder
+                            .AppendLine($"Assistant: A: {counterPartContext}");
+                    }
+                }
+                else if (memoryResult.IsAnswer)
+                {
+                    var counterpartContexts = memoryResult.CounterpartContext
+                        .Take(this.options.CounterpartContextQueryLimit);
+
+                    foreach (var counterpartContext in counterpartContexts)
+                    {
+                        stringBuilder
+                            .AppendLine($"user: Q: {counterpartContext}");
+                    }
+
+                    stringBuilder
+                        .AppendLine($"assistant: A: {memoryResult.FullContext}");
+                }
+
+                if (memoryResult.Blob is not null)
+                {
+                    var dataUri = memoryResult.Blob
+                        .GetDataUri();
+
+                    stringBuilder
+                        .AppendLine($"user: [Blob: {dataUri}]");
+                }
+
+                stringBuilder
+                    .AppendLine($"system: (Date: {memoryResult.CreatedAt:D})");
+
+                stringBuilder
+                    .AppendLine();
+            }
+        }
+        else
         {
-            if (memoryResult.IsQuestion)
-            {
-                stringBuilder
-                    .AppendLine($"user: Q: {memoryResult.FullContext}");
-
-                var counterpartContexts = memoryResult.CounterpartContext
-                    .Take(this.options.CounterpartContextQueryLimit);
-
-                foreach (var counterPartContext in counterpartContexts)
-                {
-                    stringBuilder
-                        .AppendLine($"Assistant: A: {counterPartContext}");
-                }
-            }
-            else if (memoryResult.IsAnswer)
-            {
-                var counterpartContexts = memoryResult.CounterpartContext
-                    .Take(this.options.CounterpartContextQueryLimit);
-
-                foreach (var counterpartContext in counterpartContexts)
-                {
-                    stringBuilder
-                        .AppendLine($"user: Q: {counterpartContext}");
-                }
-
-                stringBuilder
-                    .AppendLine($"assistant: A: {memoryResult.FullContext}");
-            }
-
-            if (memoryResult.Blob is not null)
-            {
-                var dataUri = memoryResult.Blob
-                    .GetDataUri();
-
-                stringBuilder
-                    .AppendLine($"user: [Blob: {dataUri}]");
-            }
-
             stringBuilder
-                .AppendLine($"system: (Date: {memoryResult.CreatedAt:D})");
-
-            stringBuilder
-                .AppendLine();
+                .AppendLine("None found.");
         }
+
 
         return stringBuilder
             .ToString();

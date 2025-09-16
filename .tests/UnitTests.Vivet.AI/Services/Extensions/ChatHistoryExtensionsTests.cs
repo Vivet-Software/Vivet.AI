@@ -3,8 +3,6 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Vivet.AI.Services.Extensions;
-using Vivet.AI.Services.Responses.Embeddings.Knowledge.Models;
-using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
 
 namespace UnitTests.Vivet.AI.Services.Extensions;
 
@@ -131,7 +129,7 @@ public class ChatHistoryExtensionsTests
         ChatHistory chatHistory = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddMetadataPrompt<object>("datauri", 0, 0));
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddMetadataPrompt<object>(new BinaryContent(), 0, 0));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -158,7 +156,7 @@ public class ChatHistoryExtensionsTests
         const string ANSWER = "A";
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddSuummarizationMemoryPrompt(QUESTION, ANSWER, 50));
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddSummarizationMemoryPrompt(QUESTION, ANSWER, 50));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -168,7 +166,7 @@ public class ChatHistoryExtensionsTests
         var chatHistory = new ChatHistory();
         const string ANSWER = "A";
 
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddSuummarizationMemoryPrompt(null, ANSWER, 50));
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddSummarizationMemoryPrompt(null, ANSWER, 50));
     }
 
     [TestMethod]
@@ -177,7 +175,7 @@ public class ChatHistoryExtensionsTests
         var chatHistory = new ChatHistory();
         const string QUESTION = "Q";
 
-        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddSuummarizationMemoryPrompt(QUESTION, null, 50));
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddSummarizationMemoryPrompt(QUESTION, null, 50));
     }
 
 
@@ -213,15 +211,16 @@ public class ChatHistoryExtensionsTests
             new ChatMessageContent
             {
                 Role = AuthorRole.Assistant,
-                Items = { new BinaryContent("data:image/png;base64,AAAA") }
+                Items =
+                {
+                    new BinaryContent("data:image/png;base64,AAAA")
+                }
             }
         };
 
         var result = chatHistory.GetPromptAsText();
         StringAssert.Contains(result, "assistant:");
         StringAssert.Contains(result, "[BinaryContent]");
-
-        //"assistant:\r\n[BinaryContent]\r\n\r\n"
     }
 
     [TestMethod]

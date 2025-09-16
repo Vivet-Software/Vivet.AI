@@ -143,10 +143,10 @@ internal static class ServiceCollectionExtensions
                         .GetRequiredService<MemoryVectorStore>();
 
                     var metadataService = x
-                        .GetKeyedService<IMetadataService>(ServiceIds.METADATA_SERVICE_ID);
+                        .GetService<IMetadataService>();
 
                     var summarizationService = x
-                        .GetKeyedService<ISummarizationService>(ServiceIds.SUMMARIZATION_SERVICE_ID);
+                        .GetService<ISummarizationService>();
 
                     return new EmbeddingMemoryService(embeddingOptions, embeddingGenerator, memoryVectorStore, metadataService, summarizationService);
                 });
@@ -169,7 +169,7 @@ internal static class ServiceCollectionExtensions
                         .GetRequiredService<KnowledgeVectorStore>();
 
                     var metadataService = x
-                        .GetKeyedService<IMetadataService>(ServiceIds.METADATA_SERVICE_ID);
+                        .GetService<IMetadataService>();
 
                     return new EmbeddingKnowledgeService(embeddingOptions, embeddingGenerator, memoryVectorStore, metadataService);
                 });
