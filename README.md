@@ -2,7 +2,7 @@
 [![Build and Deploy](https://github.com/Vivet-Software/Vivet.AI/actions/workflows/build-and-deploy.yml/badge.svg)](https://github.com/Vivet-Software/Vivet.AI/actions/workflows/build-and-deploy.yml)
 [![NuGet](https://img.shields.io/nuget/dt/Vivet.AI.svg)](https://www.nuget.org/packages/Vivet.AI)
 [![NuGet](https://img.shields.io/nuget/v/Vivet.AI.svg)](https://www.nuget.org/packages/Vivet.AI)
-![GitHub License](https://img.shields.io/github/license/Vivet-Software/Vivet.AI)
+![License](https://img.shields.io/badge/license-Polyform%20Noncommercial%201.0.0-blue)
 ![GitHub Issues](https://img.shields.io/github/issues/Vivet-Software/Vivet.AI)
 
 Unlock the full power of AI in your .NET applications with a **comprehensive library** for chat, embeddings, memory, 
