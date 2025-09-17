@@ -1,4 +1,5 @@
 ﻿using Google.Apis.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Data;
 using Microsoft.SemanticKernel.Plugins.Web.Bing;
@@ -6,7 +7,6 @@ using Microsoft.SemanticKernel.Plugins.Web.Google;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
 using Vivet.AI.Extensions.Consts;
@@ -40,6 +40,26 @@ internal static class KernelBuilderExtensions
         {
             builder
                 .AddFromType(type, serviceProvider);
+        }
+
+        return builder;
+    }
+    
+    internal static IKernelBuilder AddFilters<TFilter>(this IKernelBuilder builder, IServiceCollection services)
+        where TFilter : class
+    {
+        if (builder == null) 
+            throw new ArgumentNullException(nameof(builder));
+        
+        if (services == null) 
+            throw new ArgumentNullException(nameof(services));
+        
+        var filterDescriptors = services.Where(sd => sd.ServiceType == typeof(TFilter));
+
+        foreach (var filterDescriptor in filterDescriptors)
+        {
+            builder.Services
+                .Add(filterDescriptor);
         }
 
         return builder;

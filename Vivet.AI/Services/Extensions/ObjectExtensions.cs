@@ -25,6 +25,7 @@ internal static class ObjectExtensions
         }
     }
 
+
     private static void ValidateObjectRecursive(this object @object, List<ValidationResult> results, HashSet<object> visited)
     {
         if (@object == null)
@@ -79,7 +80,6 @@ internal static class ObjectExtensions
             }
         }
     }
-
     private static bool ShouldRecurse(Type type)
     {
         return !type.IsPrimitive &&
@@ -87,7 +87,6 @@ internal static class ObjectExtensions
                type != typeof(string) &&
                !type.IsValueType;
     }
-
     private sealed class ReferenceEqualityComparer : IEqualityComparer<object>
     {
         public static readonly ReferenceEqualityComparer Instance = new();

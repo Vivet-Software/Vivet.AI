@@ -6,6 +6,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using System;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Definitions;
@@ -68,9 +69,18 @@ internal static class ServiceCollectionExtensions
             {
                 var builder = Kernel.CreateBuilder();
 
+                // TODO: Exception Handling (Function Invocation Filter, e.g. Logging)
+                // TODO: Prompt Caching (Prompt Render Filter - https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Caching/SemanticCachingWithFilters.cs)
+                // TODO: PII Identification (Prompt Render Filter - http://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Filtering/PIIDetection.cs)
+
+                builder
+                    .AddFilters<IFunctionInvocationFilter>(services)
+                    .AddFilters<IAutoFunctionInvocationFilter>(services)
+                    .AddFilters<IPromptRenderFilter>(services);
+
                 builder
                     .AddChatPluginsFromConfiguration(x);
-
+                
                 return builder;
             });
 

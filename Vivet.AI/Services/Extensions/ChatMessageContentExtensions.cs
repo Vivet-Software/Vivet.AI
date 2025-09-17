@@ -31,6 +31,7 @@ internal static class ChatMessageContentExtensions
             return null;
         }
     }
+
     internal static TokenUsage GetTokenUsage(this ChatMessageContent chatMessageContent)
     {
         if (chatMessageContent == null)

@@ -58,6 +58,7 @@ containing a meaningful error message, describing why the request could not be c
 
         return chatHistory;
     }
+
     internal static ChatHistory AddChatPluginContextPrompt(this ChatHistory chatHistory, ChatRequest request)
     {
         if (chatHistory == null)
@@ -77,6 +78,7 @@ SubTenantId={request.SubTenantId}");
 
         return chatHistory;
     }
+    
     // TODO: Remove
     //internal static ChatHistory AddChatMemoryPrompt(this ChatHistory chatHistory, MemoryResult[] memoryResults, int counterpartContextQueryLimit)
     //{
@@ -213,6 +215,7 @@ SubTenantId={request.SubTenantId}");
 
     //    return chatHistory;
     //}
+    
     internal static ChatHistory AddChatUserPrompt(this ChatHistory chatHistory, string question, IEnumerable<KernelContent> blobContents)
     {
         if (chatHistory == null)
@@ -243,6 +246,7 @@ SubTenantId={request.SubTenantId}");
 
         return chatHistory;
     }
+    
     internal static ChatHistory AddMetadataPrompt<T>(this ChatHistory chatHistory, KernelContent blobContent, int summaryMaxWords, int descriptionMaxWords)
         where T : class, new()
     {
@@ -304,6 +308,7 @@ SubTenantId={request.SubTenantId}");
 
         return chatHistory;
     }
+    
     internal static ChatHistory AddSummarizationMemoryPrompt(this ChatHistory chatHistory, string question, string answer, int summarizationDegree)
     {
         if (chatHistory == null)
@@ -356,6 +361,7 @@ A: {answer}
 
         return chatHistory;
     }
+    
     internal static string GetPromptAsText(this ChatHistory chatHistory)
     {
         if (chatHistory == null)

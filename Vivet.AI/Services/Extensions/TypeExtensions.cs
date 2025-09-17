@@ -26,6 +26,7 @@ internal static class TypeExtensions
 
         return null;
     }
+
     internal static Dictionary<string, object> GenerateJsonMap(this Type type)
     {
         if (type == null) 
