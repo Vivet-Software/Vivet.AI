@@ -16,11 +16,9 @@ using Vivet.AI.Plugins;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
-using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Embedding.Memory;
 using Vivet.AI.Services.Responses.Chat;
-using Vivet.AI.Services.Responses.Embeddings.Memory;
 using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
@@ -46,7 +44,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
     private readonly PromptExecutionSettings promptExecutionSettings = promptExecutionSettings ?? throw new ArgumentNullException(nameof(promptExecutionSettings));
 
     /// <inheritdoc />
-    public virtual async Task<ChatResponse> ChatAsync(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+    public virtual async Task<ChatResponse> ChatAsync(ChatRequest request, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
     {
         var response = await this.ChatAsync<string>(request, onMemoryIndexed, cancellationToken)
             .ConfigureAwait(false);
@@ -66,7 +64,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
     }
 
     /// <inheritdoc />
-    public virtual async Task<ChatResponse<T>> ChatAsync<T>(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default) 
+    public virtual async Task<ChatResponse<T>> ChatAsync<T>(ChatRequest request, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default) 
         where T : class
     {
         if (request == null)
@@ -124,7 +122,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
     }
 
     /// <inheritdoc />
-    public virtual async IAsyncEnumerable<string> ChatStreamingAsync(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, Func<ChatResponse, Task> onChatStreamingComplete = null, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+    public virtual async IAsyncEnumerable<string> ChatStreamingAsync(ChatRequest request, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, Func<ChatResponse, Task> onChatStreamingComplete = null, [EnumeratorCancellation]CancellationToken cancellationToken = default)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -195,7 +193,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
-        // BUG: Remove
+        // TODO: Remove
         //var knowledgeTask = this.GetMatchingKnowledges(request, cancellationToken);
         //var memoriesTask = this.GetMatchingMemories(request, cancellationToken);
 
@@ -271,7 +269,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return kernel;
     }
-    // BUG: Remove
+    // TODO: Remove
     //private async Task<MemoryResult[]> GetMatchingMemories(ChatRequest request, CancellationToken cancellationToken = default)
     //{
     //    if (request == null)
@@ -451,7 +449,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return response;
     }
-    private Task SaveMemory<T>(ChatRequest request, ChatResponse<T> response, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+    private Task SaveMemory<T>(ChatRequest request, ChatResponse<T> response, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
         where T : class
     {
         if (request == null) 
@@ -472,34 +470,44 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return Task.Run(async () =>
         {
-            await Task.CompletedTask;
+            ChatIndexMemoryResponse chatIndexMemoryResponse;
+            try
+            {
+                var indexMemoryResponse = await embeddingMemoryService
+                    .IndexAsync(new IndexMemoryRequest<T>
+                    {
+                        Question = request.Question,
+                        Answer = response.Answer,
+                        UserId = request.UserId,
+                        ThreadId = request.CurrentThreadId,
+                        Language = response.Language,
+                        Blobs = request.Blobs,
+                        ConfigOverrides =
+                        {
+                            Metadata = request.ConfigOverrides.Memory.Metadata,
+                            Summarization = request.ConfigOverrides.Memory.Summarization
+                        }
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
 
-            throw new Exception();
+                chatIndexMemoryResponse = new ChatIndexMemoryResponse
+                {
+                    Result = indexMemoryResponse
+                };
+            }
+            catch (Exception ex)
+            {
+                chatIndexMemoryResponse = new ChatIndexMemoryResponse
+                {
+                    Exception = ex
+                };
+            }
 
-            // BUG: 000: Fix process hangs, when exception
-            //var indexResponse = await embeddingMemoryService
-            //    .IndexAsync(new IndexMemoryRequest<T>
-            //        {
-            //            Question = request.Question,
-            //            Answer = response.Answer,
-            //            UserId = request.UserId,
-            //            ThreadId = request.CurrentThreadId,
-            //            Language = response.Language,
-            //            Blobs = request.Blobs,
-            //            ConfigOverrides =
-            //            {
-            //                Metadata = request.ConfigOverrides.Memory.Metadata,
-            //                Summarization = request.ConfigOverrides.Memory.Summarization
-            //            }
-            //        },
-            //        cancellationToken)
-            //    .ConfigureAwait(false);
-
-            //if (onMemoryIndexed != null)
-            //{
-            //    await onMemoryIndexed(indexResponse)
-            //        .ConfigureAwait(false);
-            //}
+            if (onMemoryIndexed != null)
+            {
+                await onMemoryIndexed(chatIndexMemoryResponse)
+                    .ConfigureAwait(false);
+            }
         }, cancellationToken);
     }
 }

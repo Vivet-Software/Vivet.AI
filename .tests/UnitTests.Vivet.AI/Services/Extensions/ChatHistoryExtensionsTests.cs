@@ -26,7 +26,7 @@ public class ChatHistoryExtensionsTests
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
-    // BUG: Remove
+    // TODO: Remove
     //[TestMethod]
     //public void AddChatMemoryPromptTest()
     //{
@@ -91,7 +91,7 @@ public class ChatHistoryExtensionsTests
     {
         ChatHistory chatHistory = null;
         const string QUESTION = "Test question";
-        var dataUris = Array.Empty<string>();
+        var dataUris = Array.Empty<BinaryContent>();
 
         // ReSharper disable ExpressionIsAlwaysNull
         Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatUserPrompt(QUESTION, dataUris));
@@ -102,7 +102,7 @@ public class ChatHistoryExtensionsTests
     public void AddChatUserPromptWhenQuestionIsNullThrowsArgumentNullExceptionTest()
     {
         var chatHistory = new ChatHistory();
-        var dataUris = Array.Empty<string>();
+        var dataUris = Array.Empty<BinaryContent>();
 
         Assert.Throws<ArgumentNullException>(() => chatHistory.AddChatUserPrompt(null, dataUris));
     }

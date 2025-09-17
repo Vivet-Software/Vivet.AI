@@ -1,9 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using Vivet.AI.Config;
+using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Services;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.Blobs;
@@ -46,9 +53,10 @@ public class ChatServiceTests : BaseTests
                 try
                 {
                     Assert.IsNotNull(memoryResponse);
-                    Assert.IsNotNull(memoryResponse.TokenUsage);
-                    Assert.AreEqual(2, memoryResponse.TotalEmbeddings);
-                    Assert.IsTrue(memoryResponse.TotalEmbeddingsSize > 0);
+                    Assert.IsNotNull(memoryResponse.Result);
+                    Assert.IsNotNull(memoryResponse.Result.TokenUsage);
+                    Assert.AreEqual(2, memoryResponse.Result.TotalEmbeddings);
+                    Assert.IsTrue(memoryResponse.Result.TotalEmbeddingsSize > 0);
 
                     onMemoryIndexedTask
                         .SetResult(true);
@@ -106,21 +114,14 @@ public class ChatServiceTests : BaseTests
                 }
             }, memoryResponse =>
             {
-                try
-                {
-                    Assert.IsNotNull(memoryResponse);
-                    Assert.IsNotNull(memoryResponse.TokenUsage);
-                    Assert.AreEqual(3, memoryResponse.TotalEmbeddings);
-                    Assert.IsTrue(memoryResponse.TotalEmbeddingsSize > 0);
+                Assert.IsNotNull(memoryResponse);
+                Assert.IsNotNull(memoryResponse.Result);
+                Assert.IsNotNull(memoryResponse.Result.TokenUsage);
+                Assert.AreEqual(3, memoryResponse.Result.TotalEmbeddings);
+                Assert.IsTrue(memoryResponse.Result.TotalEmbeddingsSize > 0);
 
-                    onMemoryIndexedTask
-                        .SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    onMemoryIndexedTask
-                        .SetException(ex);
-                }
+                onMemoryIndexedTask
+                    .SetResult(true);
 
                 return Task.CompletedTask;
             });
@@ -128,13 +129,7 @@ public class ChatServiceTests : BaseTests
         Assert.IsNotNull(response);
         Assert.IsTrue(response.InputPrompt.Contains("[ImageContent]"));
 
-        await onMemoryIndexedTask.Task.ContinueWith(t =>
-        {
-            if (t.IsFaulted)
-            {
-                Console.WriteLine($"Exception caught: {t.Exception?.InnerException?.Message}");
-            }
-        }, TaskContinuationOptions.OnlyOnFaulted);
+        await onMemoryIndexedTask.Task;
     }
 
     [TestMethod]
@@ -155,9 +150,10 @@ public class ChatServiceTests : BaseTests
                 await Task.CompletedTask;
 
                 Assert.IsNotNull(memoryResponse);
-                Assert.IsNotNull(memoryResponse.TokenUsage);
-                Assert.AreEqual(2, memoryResponse.TotalEmbeddings);
-                Assert.IsTrue(memoryResponse.TotalEmbeddingsSize > 0);
+                Assert.IsNotNull(memoryResponse.Result);
+                Assert.IsNotNull(memoryResponse.Result.TokenUsage);
+                Assert.AreEqual(2, memoryResponse.Result.TotalEmbeddings);
+                Assert.IsTrue(memoryResponse.Result.TotalEmbeddingsSize > 0);
             });
 
         Assert.IsNotNull(response);
@@ -192,9 +188,10 @@ public class ChatServiceTests : BaseTests
                 await Task.CompletedTask;
 
                 Assert.IsNotNull(memoryResponse);
-                Assert.IsNotNull(memoryResponse.TokenUsage);
-                Assert.AreEqual(2, memoryResponse.TotalEmbeddings);
-                Assert.IsTrue(memoryResponse.TotalEmbeddingsSize > 0);
+                Assert.IsNotNull(memoryResponse.Result);
+                Assert.IsNotNull(memoryResponse.Result.TokenUsage);
+                Assert.AreEqual(2, memoryResponse.Result.TotalEmbeddings);
+                Assert.IsTrue(memoryResponse.Result.TotalEmbeddingsSize > 0);
             });
 
         Assert.IsNotNull(response);
@@ -456,5 +453,54 @@ public class ChatServiceTests : BaseTests
                 UserId = this.userId,
                 CurrentThreadId = Guid.NewGuid().ToString()
             }));
+    }
+
+    [TestMethod]
+    public async Task ChatWhenOnMemoryIndexedIsFaultedTest()
+    {
+        var chatOptions = this.ServiceProvider.GetRequiredService<ChatOptions>();
+        var chatCompletionService = this.ServiceProvider.GetRequiredKeyedService<IChatCompletionService>(ServiceIds.CHAT_SERVICE_ID);
+        var kernelBuilder = Kernel.CreateBuilder();
+        var promptExecutionSettings = new PromptExecutionSettings();
+
+        var mockEmbeddingMemoryService = new Mock<IEmbeddingMemoryService>();
+        mockEmbeddingMemoryService
+            .Setup(s => s.IndexAsync(It.IsAny<IndexMemoryRequest<string>>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Indexing failed"));
+
+        var chatService = new ChatService(chatOptions, chatCompletionService, kernelBuilder, promptExecutionSettings, mockEmbeddingMemoryService.Object);
+
+        const string SYSTEM_MESSAGE = "You are an expert in meteorology.";
+        const string QUESTION = "Is it always summer in Denmark?";
+
+        var onMemoryIndexedTask = new TaskCompletionSource<bool>();
+
+        var response = await chatService
+            .ChatAsync(new ChatRequest
+            {
+                SystemMessage = SYSTEM_MESSAGE,
+                Question = QUESTION,
+                UserId = this.userId,
+                CurrentThreadId = Guid.NewGuid().ToString()
+            }, memoryResponse =>
+            {
+                Assert.IsNotNull(memoryResponse.Exception);
+
+                onMemoryIndexedTask
+                    .SetException(memoryResponse.Exception);
+
+                return Task.CompletedTask;
+            });
+
+        Assert.IsNotNull(response);
+
+        await onMemoryIndexedTask.Task
+            .ContinueWith(x =>
+            {
+                if (x.IsFaulted)
+                {
+                    Assert.IsNotNull(x.Exception);
+                }
+            }, TaskContinuationOptions.OnlyOnFaulted);
     }
 }

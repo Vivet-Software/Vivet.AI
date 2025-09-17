@@ -77,7 +77,7 @@ SubTenantId={request.SubTenantId}");
 
         return chatHistory;
     }
-    // BUG: Remove
+    // TODO: Remove
     //internal static ChatHistory AddChatMemoryPrompt(this ChatHistory chatHistory, MemoryResult[] memoryResults, int counterpartContextQueryLimit)
     //{
     //    if (chatHistory == null)
@@ -110,7 +110,7 @@ SubTenantId={request.SubTenantId}");
 
     //            var counterpartContexts = memoryResult.CounterpartContext
     //                .Take(counterpartContextQueryLimit);
-                
+
     //            foreach (var counterPartContext in counterpartContexts)
     //            {
     //                chatHistory
@@ -124,7 +124,7 @@ SubTenantId={request.SubTenantId}");
     //        {
     //            var counterpartContexts = memoryResult.CounterpartContext
     //                .Take(counterpartContextQueryLimit);
-                
+
     //            foreach (var counterpartContext in counterpartContexts)
     //            {
     //                chatHistory
@@ -154,7 +154,7 @@ SubTenantId={request.SubTenantId}");
     //{
     //    if (chatHistory == null) 
     //        throw new ArgumentNullException(nameof(chatHistory));
-        
+
     //    if (knowledgeResults == null)
     //        throw new ArgumentNullException(nameof(knowledgeResults));
 

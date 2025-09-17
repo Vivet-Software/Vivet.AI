@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Responses.Chat;
-using Vivet.AI.Services.Responses.Embeddings.Memory;
 
 namespace Vivet.AI.Services.Interfaces;
 
@@ -27,7 +26,7 @@ public interface IChatService
     /// </param>
     /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation, containing the <see cref="ChatResponse"/>.</returns>
-    Task<ChatResponse> ChatAsync(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default);
+    Task<ChatResponse> ChatAsync(ChatRequest request, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Sends a chat request and returns a typed <see cref="ChatResponse{T}"/> containing
@@ -45,7 +44,7 @@ public interface IChatService
     /// </param>
     /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation, containing the typed<see cref="ChatResponse{T}"/>.</returns>
-    Task<ChatResponse<T>> ChatAsync<T>(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+    Task<ChatResponse<T>> ChatAsync<T>(ChatRequest request, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
         where T : class;
 
     /// <summary>
@@ -62,5 +61,5 @@ public interface IChatService
     /// <param name="onChatStreamingComplete">Optional callback invoked when streaming is complete with the full <see cref="ChatResponse"/>.</param>
     /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
     /// <returns>An asynchronous enumerable of partial response strings.</returns>
-    IAsyncEnumerable<string> ChatStreamingAsync(ChatRequest request, Func<IndexMemoryResponse, Task> onMemoryIndexed = null, Func<ChatResponse, Task> onChatStreamingComplete = null, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<string> ChatStreamingAsync(ChatRequest request, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, Func<ChatResponse, Task> onChatStreamingComplete = null, CancellationToken cancellationToken = default);
 }
