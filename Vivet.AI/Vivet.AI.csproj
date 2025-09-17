@@ -29,7 +29,7 @@
 		<RepositoryType>git</RepositoryType>
 		<RepositoryType>GitHub</RepositoryType>
 		<PackageReleaseNotes>
-			- Preview-1 release
+			- Preview release
 			- Free for non-commercial use. Commercial use requires a license
 		</PackageReleaseNotes>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
