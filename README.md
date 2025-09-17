@@ -361,11 +361,11 @@ The `IChatService` combines LLMs, memory, knowledge bases, and multimodal contex
 #### Methods
 - `ChatAsync` returns a **plain string answer** plus metadata (reasoning, thinking trace, token usage, raw output, elapsed execution time, and reconstructed input prompt).
 - `ChatAsync<T>` supports **typed responses**, where the LLM is instructed in the prompt to return JSON matching the given type. The service automatically deserializes that JSON into your .NET type.  
-  ⚠️ **Note:** The model will automatically output JSON that matches the type `T` in the answer of the response. 
+  ⚠️ **Note:** The model will automatically output JSON that matches the type `T` in the answer of the response. No need to manually add the json schema to the system message or question of the chat request
 - `ChatStreamingAsync` allows **real-time streaming** of the model’s output, returning content token-by-token (or chunk-by-chunk) as it is generated. At the end of the stream, the service automatically saves the conversation to memory and optionally invokes a completion callback. Suppprts the same features as `ChatAsync`
 
 #### Memory & Knowledge Integration
-- Every request is enriched with **long-term memories** and **knowledge entries** retrieved using **approximate nearest neighbor (ANN) search** for efficient similarity matching.
+- Through optional built-in plugins, requests may be enriched with **long-term memories** and **knowledge entries** retrieved using **approximate nearest neighbor (ANN) search** for efficient similarity matching.
 - Both **memory** and **knowledge** support **multi-dimensional segmentation** to scope retrieval:
   - **Memory segmentation**: `ScopeId`, `UserId`, `AgentId`, and `ThreadId` ensure the most relevant user- and thread-specific context is used.  
   - **Knowledge segmentation**: `ScopeId`, `TenantId`, and `SubTenantId` allow fine-grained retrieval from organizational knowledge bases.  
@@ -373,7 +373,7 @@ The `IChatService` combines LLMs, memory, knowledge bases, and multimodal contex
 - **Thread-awareness** boosts relevance by prioritizing memories from the active conversation.
 
 #### Web Search
-Allows searching the web with configurable provider.
+- Enables on-demand web search through a configurable provider.  
 
 #### Blob Metadata Enrichment
 - You can attach blobs (e.g., PDFs, images, videos, audio files) to a `ChatRequest`.
@@ -443,21 +443,26 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 | Chat.Plugins.CustomPlugins                      | string[]          | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. |
 
 ### 🔌 Built-in Plugins
-Built-in plugins provide additional functionality that can be enabled for the chat model through configuration.  
+Built-in plugins extend ChatService with additional functionality.  
+
+- 🧠 Memory – retrieves long-term user/thread context.
+- 📚 Knowledge – retrieves organizational knowledge.
+- 🌐 Web Search – integrates external web search (Google, Bing, etc.).
+
+Each plugin can be enabled through configuration.   
+To disable a plugin, simply omit its configuration section.
+
+#### 🧠 Memory
+Provides retrieval of long-term conversational context (question and answer pairs, thread history, etc.).  
+Requires [Embedding Memory](#-embedding-memory-service) to be configured and enabled.  
 
 The following variables are added as plugin context from the chat request:
-- UserId
-- ThreadId
+- UserId (required)
+- ThreadId (boosts relevance)
 - AgentId
 - ScopeId
-- TenantId
-- SubTenantId
 
-Mention which is used by which built-in plugin.  
-
-#### 🌐 Memory
-Embedding Memory must be configured and enabled in order for the Memory plugin to take effect
-
+##### Configuration
 ```json
 "BuiltInPlugins": {
   "Memory": {
@@ -469,20 +474,26 @@ Embedding Memory must be configured and enabled in order for the Memory plugin t
   }
 }
 ```
+##### Configuration Details
+| Setting                                                   | Type   | Default | Description                                                                                            |
+| --------------------------------------------------------- | ------ | ------- | ------------------------------------------------------------------------------------------------------ |
+| BuiltInPlugins.Memory                                     |        |         | Chat memory configuration. *Requires [Embedding Memory](#-embedding-memory-service) to be configured.* |
+| BuiltInPlugins.Memory.RetentionInDays                     | int    | 180     | How far back memories will be included in queries.                                                     |
+| BuiltInPlugins.Memory.ContextQueryLimit                   | int    | 3       | Maximum number of memory entries retrieved per query.                                                  |
+| BuiltInPlugins.Memory.CounterpartContextQueryLimit        | int    | 2       | Maximum number of counterpart (Q/A pair) entries retrieved.                                            |
+| BuiltInPlugins.Memory.UseQueryDeduplication               | bool   | true    | Deduplicate similar memory entries before building context.                                            |
+| BuiltInPlugins.Memory.DeduplicationMatchScoreThreshold    | double | 0.90    | Fuzzy similarity threshold for deduplication.                                                          |
 
-| Chat.Memory                                     |                   |           | Chat memory configuration. *Requires [Embedding Memory](#-embedding-memory-service) to be configured.*                                                           |
-| Chat.Memory.RetentionInDays                     | int               | 180       | How far back memories will be included in queries.                                                                                                               |
-| Chat.Memory.ContextQueryLimit                   | int               | 3         | Maximum number of memory entries retrieved per query.                                                                                                            |
-| Chat.Memory.CounterpartContextQueryLimit        | int               | 2         | Maximum number of counterpart (Q/A pair) entries retrieved.                                                                                                      |
-| Chat.Memory.UseQueryDeduplication               | bool              | true      | Deduplicate similar memory entries before building context.                                                                                                      |
-| Chat.Memory.DeduplicationMatchScoreThreshold    | double            | 0.90      | Fuzzy similarity threshold for deduplication.                                                                                                                    |
+#### 📚 Knowledge
+Provides retrieval of organizational, private or scoped sources such as notes, documents, organizational records or similar.  
+Requires [Embedding Knowledge](#-embedding-knowledge-service) to be configured and enabled.  
 
+The following variables are added as plugin context from the chat request:
+- TenantId
+- SubTenantId
+- ScopeId
 
-
-
-#### 🌐 Knowledge
-Embedding Knowledge must be configured and enabled in order for the Memory plugin to take effect
-
+##### Configuration
 ```json
 "BuiltInPlugins": {
   "Knowledge": {
@@ -492,22 +503,18 @@ Embedding Knowledge must be configured and enabled in order for the Memory plugi
   }
 }
 ```
-
-| Chat.Knowledge                                  |                   |           | Chat knowledge configuration. *Requires [Embedding Knowledge](#-embedding-memory-service) to be configured.*                                                     |
-| Chat.Knowledge.ContextQueryLimit                | int               | 3         | Maximum number of knowledge entries retrieved per query.                                                                                                         |
-| Chat.Knowledge.UseQueryDeduplication            | bool              | true      | Deduplicate similar knowledge entries before building context.                                                                                                   |
-| Chat.Knowledge.DeduplicationMatchScoreThreshold | double            | 0.90      | Fuzzy similarity threshold for knowledge deduplication.                                                                                                          |
-
-
-
-
-
+##### Configuration Details
+| Setting                                                   | Type   | Default | Description                                                                                                     |
+| --------------------------------------------------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------- |
+| BuiltInPlugins.Knowledge                                  |        |         | Chat knowledge configuration. *Requires [Embedding Knowledge](#-embedding-knowledge-service) to be configured.* |
+| BuiltInPlugins.Knowledge.ContextQueryLimit                | int    | 3       | Maximum number of knowledge entries retrieved per query.                                                        |
+| BuiltInPlugins.Knowledge.UseQueryDeduplication            | bool   | true    | Deduplicate similar knowledge entries before building context.                                                  |
+| BuiltInPlugins.Knowledge.DeduplicationMatchScoreThreshold | double | 0.90    | Fuzzy similarity threshold for knowledge deduplication.                                                         |
 
 #### 🌐 Web Search
-Web Search enables the chat model to search the internet using a configured provider.  
+Enables the chat model to perform live internet searches through a configurable provider.  
 
 ##### Configuration
-Example `appsettings.json` snippet showing how to configure the built-in plugin for `WebSearch` under the `"BuiltInPlugins"` section:
 ```json
 "BuiltInPlugins": {
   "WebSearch": {
@@ -518,15 +525,14 @@ Example `appsettings.json` snippet showing how to configure the built-in plugin 
   }
 }
 ```
-
-##### Web Search Configuration Details
-| Setting                                         | Type              | Default   | Description                                                         |
-| ----------------------------------------------- | ----------------- | --------- | ------------------------------------------------------------------- |
-| Chat.Plugins.BuiltInPlugins.WebSearch           |                   | null      | Web search plugin. Dafault null, not enabled.                       |
-| Chat.Plugins.BuiltInPlugins.WebSearch.Provider  | WebSearchProvider | `Google`  | The provider for the plugin to use when searching the web.          |
-| Chat.Plugins.BuiltInPlugins.WebSearch.Id        | string            | null      | The identifier used for web search. _Only used by some providers_.  |
-| Chat.Plugins.BuiltInPlugins.WebSearch.ApiKey    | string            | null      | The api-key of the web search provider.                             |
-| Chat.Plugins.BuiltInPlugins.WebSearch.Limit     | int               | null      | Number of search results to return for the web search.              |
+##### Configuration Details
+| Setting                            | Type              | Default  | Description                                                         |
+| ---------------------------------- | ----------------  | -------- | ------------------------------------------------------------------- |
+| BuiltInPlugins.WebSearch           |                   | null     | Web search plugin. Dafault null, not enabled.                       |
+| BuiltInPlugins.WebSearch.Provider  | WebSearchProvider | `Google` | The provider for the plugin to use when searching the web.          |
+| BuiltInPlugins.WebSearch.Id        | string            | null     | The identifier used for web search. _Only used by some providers_.  |
+| BuiltInPlugins.WebSearch.ApiKey    | string            | null     | The api-key of the web search provider.                             |
+| BuiltInPlugins.WebSearch.Limit     | int               | null     | Number of search results to return for the web search.              |
 
 The table below shows the supported providers and their required configuration values (`Id`, `ApiKey`):  
 | Setting   | Google                   | Bing |  
@@ -536,28 +542,41 @@ The table below shows the supported providers and their required configuration v
 <br />
 
 ### 🔌 Custom Plugins
-Custom plugins can be added in two ways:  
-- **Configuration**: Registered globally in `appsettings.json`. These plugins are always available to the chat model.  
-- **Per request**: Passed along with a specific request. This gives fine-grained control over when a plugin is available.  
+Custom plugins extend the chat model with your own functionality. They can be added in two ways:  
+- **Configuration (global)** – Registered in `appsettings.json`. Always available to the chat model.  
+- **Per request (scoped)** – Passed with a specific `ChatRequest`, giving fine-grained control.  
 
-Both approaches can be combined — for example, you might configure global plugins for core functionality and add request-specific plugins for special scenarios.  
+You can combine both — e.g., register global plugins for core features and add request-specific plugins for special scenarios.  
 
-When adding a plugin via configuration:  
-- Use the fully qualified type name (see the configuration details for supported services).  
+##### ⚙️ Configuration
+When adding a plugin globally via `appsettings.json`:  
+- Use the **fully qualified type name** (`"{namespace}.{name}, {assembly}"`).  
 
-When adding a plugin per request:  
+```json
+"CustomPlugins": {
+  "Custom": [
+    "MyApp.Plugins.LightsPlugin, MyApp"
+  ]
+}
+```
+##### 📦 Per request
+When adding a plugin per request:
 - Create and pass an instance of the plugin yourself.  
 - The caller is responsible for instantiating and wiring up dependencies.  
 
-#### How plugins are invoked  
-When plugins are available, the chat model automatically decides whether to invoke them based on the user’s query. This is by design — the model plans when and how to use plugins.  
+```csharp
+var lightsPlugin = new LightsPlugin(new MyLightsService());
+chatRequest.Plugins.Add(lightsPlugin);
+```
+##### ⚡ Invocation model
+When plugins are available, the chat model automatically decides whether to invoke them based on the user’s query. This is by design — the model plans and decides when and how to use plugins.  
 - If you require a plugin to **always** be invoked, call it manually in your application and include its result in the system message of the request.  
 
-#### Plugin context
-Custom plugin parameters should be passed alognside the system prompt in the chat request, 
-or use context that is alrady added based on the chat request.
+##### 📝 Plugin context
+Custom plugin parameters should be passed in the system prompt in the chat request, 
+or derive context that is alrady added based on the chat request (`UserId`, `TenantId`, etc.).  
 
-📖 Read more: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)  
+📖 More details: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)  
 
 #### Example Plugin  
 A simple plugin that turns lights on and off:  
@@ -583,7 +602,7 @@ public class LightModel
 
 public class LightsPlugin(ILightsService lightsService)
 {
-    private readonly ILightsService lightsService = lightsService ?? throw new ArgumentNullException(nameof(lightsService));
+    private readonly ILightsService lightsService = lightsService;
 
     [KernelFunction("turn_on")]
     [Description("Turn on the light")]
