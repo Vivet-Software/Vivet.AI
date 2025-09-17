@@ -1,4 +1,4 @@
-Polyform Noncommercial License 1.0.0
+MIT License
 
 <https://polyformproject.org/licenses/noncommercial/1.0.0>
 
