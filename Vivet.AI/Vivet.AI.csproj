@@ -1,0 +1,83 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+		<AssemblyVersion>0.8.0.0</AssemblyVersion>
+		<FileVersion>0.8.0.0</FileVersion>
+		<Version>0.8.0.0-preview-1</Version>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+		<LangVersion>latest</LangVersion>
+		<Authors>Michael Vivet</Authors>
+		<Owners>Vivet Software ApS</Owners>
+		<Product>Vivet.AI</Product>
+		<Summary>
+			This .NET library enables developers to integrate AI features like chat, embeddings, memory, and summarization with minimal boilerplate. It supports multimodal content, real-time streaming, structured metadata, and advanced context management across all major orchestration frameworks and vector stores. Fully extensible, it allows custom implementations while providing built-in usage tracking, configuration overrides, and robust memory and knowledge workflows.
+		</Summary>
+		<Description>
+			Unlock the full power of AI in your .NET applications with a comprehensive library for chat, embeddings, memory, knowledge, metadata, and summarization. Instantly enrich conversations and documents with context, structured metadata, and insights, including real-time streaming, multimodal content (images, audio, video), advanced text chunking, and context deduplication. Track usage, override configurations on the fly, and plug in custom implementations with ease. Build smarter, faster, and context-aware AI experiences with minimal boilerplate.
+			The library supports all major orchestration frameworks and a variety of vector stores for memory and knowledge management. Every service follows a request/response pattern, includes token and performance tracking, and allows per-request configuration overrides. With built-in extensibility, developers can replace any service with their own implementation while still benefiting from robust memory, metadata, and summarization workflows.
+		</Description>
+		<PackageTags>
+			ai llm memory knowledge rag vector-store chat embedding metadata summarization text-chunking context-deduplication
+			openai azure-openai azure-ai-inference huggingface ollama amazon-bedrock qdrant weaviate pinecone postgres-pgvector azure-ai-search
+			context-engineering prompt
+		</PackageTags>
+		<NeutralLanguage>en-US</NeutralLanguage>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<License>LICENSE.md</License>
+		<RepositoryUrl>https://github.com/Vivet-Software/Vivet.AI.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryType>GitHub</RepositoryType>
+		<PackageReleaseNotes>
+			- Preview-1 release
+			- Free for non-commercial use. Commercial use requires a license
+		</PackageReleaseNotes>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageMetadata>
+			<Summary>Free for non-commercial use. Commercial use requires a license. See https://github.com/Vivet-Software/Vivet.AI/blob/master/README.md#license.</Summary>
+		</PackageMetadata>
+		<RepositoryUrl>https://github.com/Vivet-Software/Vivet.AI.git</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/Vivet-Software/Vivet.AI</PackageProjectUrl>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<DocumentationFile>$(MSBuildThisFileDirectory)\bin\$(Configuration)\Vivet.AI.xml</DocumentationFile>
+		<WarningsAsErrors />
+		<NoWarn>SKEXP0001, SKEXP0010, SKEXP0070, SKEXP0050, NU5104</NoWarn>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\LICENSE.md" Pack="true" Visible="false" PackagePath="" />
+		<None Include="..\README.md" Pack="true" Visible="false" PackagePath="" />
+		<None Include="..\icon.png" Pack="true" Visible="false" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  	<PackageReference Include="FuzzySharp" Version="2.0.2" />
+	  	<PackageReference Include="Microsoft.SemanticKernel" Version="1.65.0" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Amazon" Version="1.65.0-alpha" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAIInference" Version="1.65.0-beta" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureAISearch" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.65.0" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Google" Version="1.65.0-alpha" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.HuggingFace" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Ollama" Version="1.65.0-alpha" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.65.0" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.PgVector" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Pinecone" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Qdrant" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Weaviate" Version="1.65.0-preview" />
+	  	<PackageReference Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.65.0-alpha" />
+	  	<PackageReference Include="Newtonsoft.Json" Version="13.0.4-beta1" />
+	  	<PackageReference Include="System.Linq.Async" Version="6.0.3" />
+	</ItemGroup>
+
+</Project>
