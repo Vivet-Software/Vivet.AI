@@ -34,8 +34,6 @@ configuration overrides**.
 
 ### ✨ [Services](#-services-1)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗨️ [Chat](#%EF%B8%8F-chat-service)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔌 [Built-In Plugins](#-built-in-plugins)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔌 [Custom Plugins](#-custom-plugins)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧩 [Embedding](#-embedding)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧠 [Memory](#-embedding-memory-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📚 [Knowledge](#-embedding-knowledge-service)  
@@ -49,6 +47,7 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;💰 [Token & Performance Tracking](#-token--performance-tracking)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🛠️ [Extensible Implementations](#%EF%B8%8F-extensible-implementations)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;💚 [Health Checks](#-health-checks)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📈 [Observability](#-observability)  
 
 ### 💡 [Other Highlighted Features](#-other-highlighted-features-1)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🔀 [Advanced Text Chunking](#-advanced-text-chunking)  
@@ -356,38 +355,66 @@ Detailed explanations and usage examples for each service are provided in the fo
 <br /><br />
 
 ## 🗨️ Chat Service
-The `IChatService` combines LLMs, memory, knowledge bases, and multimodal context into a single conversational API. It supports both **plain text and typed JSON responses**, **real-time streaming**, and automatic **memory + knowledge enrichment**. Developers can attach blobs (documents, images, audio, video), and the service will automatically extract **summary and description metadata** to ground the conversation. With built-in support for **reasoning transparency**, **token usage tracking**, and **automatic memory indexing**, `ChatService` provides everything needed to build intelligent, context-aware chat applications on .NET.
+The `IChatService` combines LLMs, memory, knowledge bases, and multimodal context into a single conversational API. It supports **plain text and typed JSON responses**, **real-time streaming**, and automatic **memory + knowledge enrichment**. Developers can attach blobs (documents, images, audio, video), and the service automatically extracts **summary and description metadata** to ground the conversation. With built-in support for **reasoning transparency**, **token usage tracking**, and **automatic memory indexing**, `ChatService` provides everything needed to build intelligent, context-aware chat applications on .NET.
 
 #### Methods
 - `ChatAsync` returns a **plain string answer** plus metadata (reasoning, thinking trace, token usage, raw output, elapsed execution time, and reconstructed input prompt).
-- `ChatAsync<T>` supports **typed responses**, where the LLM is instructed in the prompt to return JSON matching the given type. The service automatically deserializes that JSON into your .NET type.  
-  ⚠️ **Note:** The model will automatically output JSON that matches the type `T` in the answer of the response. No need to manually add the json schema to the system message or question of the chat request
-- `ChatStreamingAsync` allows **real-time streaming** of the model’s output, returning content token-by-token (or chunk-by-chunk) as it is generated. At the end of the stream, the service automatically saves the conversation to memory and optionally invokes a completion callback. Suppprts the same features as `ChatAsync`
+- `ChatAsync<T>` supports **typed responses**, where the LLM is instructed in the prompt to return JSON matching the specified type. The service automatically deserializes that JSON into your .NET type.  
+  ⚠️ **Note:** The model will automatically output JSON that matches the type `T` in the response. No need to manually add the JSON schema to the system message or question of the chat request.
+- `ChatStreamingAsync` allows **real-time streaming** of the model’s output, returning content token-by-token (or chunk-by-chunk) as it is generated. At the end of the stream, the service automatically saves the conversation to memory and optionally invokes a completion callback. Supports the same features as `ChatAsync`.
 
-#### Memory & Knowledge Integration
-- Through optional built-in plugins, requests may be enriched with **long-term memories** and **knowledge entries** retrieved using **approximate nearest neighbor (ANN) search** for efficient similarity matching.
+#### Memory & Knowledge Integration (Plugin)
+- Through optional built-in plugins, requests can be enriched with **long-term memories** and **knowledge entries** retrieved using **approximate nearest neighbor (ANN) search** for efficient similarity matching.
 - Both **memory** and **knowledge** support **multi-dimensional segmentation** to scope retrieval:
   - **Memory segmentation**: `ScopeId`, `UserId`, `AgentId`, and `ThreadId` ensure the most relevant user- and thread-specific context is used.  
   - **Knowledge segmentation**: `ScopeId`, `TenantId`, and `SubTenantId` allow fine-grained retrieval from organizational knowledge bases.  
 - Built-in **deduplication** ensures only the most relevant and unique context is injected into the prompt.  
 - **Thread-awareness** boosts relevance by prioritizing memories from the active conversation.
+- The chat model determines if and when to include memory and knowledge in the context, based on the user’s query.
 
-#### Web Search
-- Enables on-demand web search through a configurable provider.  
+#### Web Search (Plugin)
+- Enables the chat model to perform external web searches through a configurable provider (Google, Bing, etc.).  
+- Web search is used when additional or updated context is required that is not available in the model's training data or memory.
 
 #### Blob Metadata Enrichment
 - You can attach blobs (e.g., PDFs, images, videos, audio files) to a `ChatRequest`.
-- The service automatically retrieves and indexes **summary and description metadata** and makes it available to the model as part of the prompt, no preprocessing required. This requires Metadata enabled and configured in ```appsettings```, otherwise metadata must be passed alongside the blob in the `ChatRequest` or the request will fail.
+- The service automatically extracts and indexes **summary and description metadata**, making it available to the model as part of the prompt without preprocessing. This requires metadata processing to be enabled and configured in `appsettings`; otherwise, metadata must be passed alongside the blob in the `ChatRequest`.
 
 #### Reasoning Transparency
 When supported by the provider (e.g., **DeepSeek R1**), the service exposes:
-- **Reasoning**: concise explanation of why an answer was given.
-- **Thinking**: a more detailed breakdown of the model’s step-by-step thought process.
+- **Reasoning**: a concise explanation of why an answer was provided.
+- **Thinking**: a detailed breakdown of the model’s step-by-step thought process.
 
 #### Automatic Asynchronous Memory Indexing
-- Questions and answers are persisted to memory using the `IEmbeddingMemoryService` (if memory embedding is configured in ```appsettings```).
-- Optional callbacks (`onMemoryIndexed`) let you hook into the lifecycle for logging or analytics.
- 
+- Questions and answers are persisted to memory using the `IEmbeddingMemoryService` (if memory embedding is configured in `appsettings`).
+- Optional callbacks (`onMemoryIndexed`) allow you to hook into the lifecycle for logging or analytics.
+
+#### Custom Plugins
+Custom plugins extend the chat model with your own functionality. They can be added in two ways:  
+- **Configuration (global)** – Registered in `appsettings.json`. Always available to the chat model.  
+- **Per request (scoped)** – Passed with a specific `ChatRequest`, giving fine-grained control. The caller is responsible for instantiating and wiring up dependencies.  
+
+You can combine both approaches — for example, register global plugins for core features and add request-specific plugins for special scenarios.  
+
+When plugins are available, the chat model automatically decides whether to invoke them based on the user’s query. This is by design — the model plans and decides when and how to use plugins.  
+- For custom plugins, if you require a plugin to **always** be invoked, call it manually in your application and include its result in the system message of the request.  
+- Custom plugin parameters should be passed in the `SystemMessage` of the `ChatRequest`, or derived from existing context in the request (`UserId`, `TenantId`, etc.).
+
+📖 More details: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)
+
+#### Filters
+Filters in `IChatService` act like **middleware** for your chat pipeline. They allow you to **intercept, inspect, modify, or augment requests and responses** as they flow through the system.  
+
+- **Registration:** Add filters to your `IServiceCollection` in the order you want them to execute. The service will transfer them to the Kernel in the same order, ensuring predictable execution.  
+- **Use cases:**  
+  - **Logging:** Capture request and response data for auditing or analytics.  
+  - **Validation:** Ensure inputs meet specific criteria before being sent to the LLM.  
+  - **Enrichment:** Automatically inject context, metadata, or additional prompts into requests.  
+
+This design allows you to customize the chat workflow, apply cross-cutting concerns, and extend behavior without modifying core service logic.
+
+📖 More details: [Filters (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp)
+
 ### ⚙️ Chat Configuration
 Example `appsettings.json` snippet showing how to configure `IChatService` under the `"Ai"` section:
 ```json
@@ -439,33 +466,11 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 | Chat.Model.Parameters.ReasoningEffort           | ReasoningEffort?  | null      | Effort level to reduce reasoning complexity or token usage.                                                                                                      |
 | Chat.Timeout                                    | TimeSpan          | 00:01:00  | Maximum time allowed for a chat request.                                                                                                                         |
 | Chat.Plugins                                    |                   |           | Options for configuring chat plugins. Plugins (also called *tools*) are sets of related functions that can be exposed to a chat model. They allow the model to integrate with external services and invoke custom functionality. |
-| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in plugins that can be enabled for the chat model. See [Built-in Plugins](#-built-in-plugins)                                                              |
 | Chat.Plugins.CustomPlugins                      | string[]          | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. |
+| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in Plugins that can be enabled for the chat model. To disable a plugin, simply omit it's configuration section. See configuration below                    |
 
-<br />
-
-### 🔌 Built-in Plugins
-Built-in plugins extend ChatService with additional functionality.  
-
-- 🧠 Memory – retrieves long-term user/thread context.
-- 📚 Knowledge – retrieves organizational knowledge.
-- 🌐 Web Search – integrates external web search (Google, Bing, etc.).
-
-Each plugin can be enabled through configuration.   
-To disable a plugin, simply omit its configuration section.
-<br />
-
+### 🔌 Chat Built-in Plugin Configuration
 #### 🧠 Memory
-Provides retrieval of long-term conversational context (question and answer pairs, thread history, etc.).  
-Requires [Embedding Memory](#-embedding-memory-service) to be configured and enabled.  
-
-The following variables are added as plugin context from the chat request:
-- UserId (required)
-- ThreadId (boosts relevance)
-- AgentId
-- ScopeId
-
-##### Configuration
 ```json
 "BuiltInPlugins": {
   "Memory": {
@@ -477,8 +482,6 @@ The following variables are added as plugin context from the chat request:
   }
 }
 ```
-
-##### Configuration Details
 | Setting                                                   | Type   | Default | Description                                                                                            |
 | --------------------------------------------------------- | ------ | ------- | ------------------------------------------------------------------------------------------------------ |
 | BuiltInPlugins.Memory                                     |        |         | Chat memory configuration. *Requires [Embedding Memory](#-embedding-memory-service) to be configured.* |
@@ -489,15 +492,6 @@ The following variables are added as plugin context from the chat request:
 | BuiltInPlugins.Memory.DeduplicationMatchScoreThreshold    | double | 0.90    | Fuzzy similarity threshold for deduplication.                                                          |
 
 #### 📚 Knowledge
-Provides retrieval of organizational, private or scoped sources such as notes, documents, organizational records or similar.  
-Requires [Embedding Knowledge](#-embedding-knowledge-service) to be configured and enabled.  
-
-The following variables are added as plugin context from the chat request:
-- TenantId
-- SubTenantId
-- ScopeId
-
-##### Configuration
 ```json
 "BuiltInPlugins": {
   "Knowledge": {
@@ -507,7 +501,6 @@ The following variables are added as plugin context from the chat request:
   }
 }
 ```
-##### Configuration Details
 | Setting                                                   | Type   | Default | Description                                                                                                     |
 | --------------------------------------------------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------- |
 | BuiltInPlugins.Knowledge                                  |        |         | Chat knowledge configuration. *Requires [Embedding Knowledge](#-embedding-knowledge-service) to be configured.* |
@@ -516,9 +509,6 @@ The following variables are added as plugin context from the chat request:
 | BuiltInPlugins.Knowledge.DeduplicationMatchScoreThreshold | double | 0.90    | Fuzzy similarity threshold for knowledge deduplication.                                                         |
 
 #### 🌐 Web Search
-Enables the chat model to perform live internet searches through a configurable provider.  
-
-##### Configuration
 ```json
 "BuiltInPlugins": {
   "WebSearch": {
@@ -529,7 +519,6 @@ Enables the chat model to perform live internet searches through a configurable 
   }
 }
 ```
-##### Configuration Details
 | Setting                            | Type              | Default  | Description                                                         |
 | ---------------------------------- | ----------------  | -------- | ------------------------------------------------------------------- |
 | BuiltInPlugins.WebSearch           |                   | null     | Web search plugin. Dafault null, not enabled.                       |
@@ -538,85 +527,12 @@ Enables the chat model to perform live internet searches through a configurable 
 | BuiltInPlugins.WebSearch.ApiKey    | string            | null     | The api-key of the web search provider.                             |
 | BuiltInPlugins.WebSearch.Limit     | int               | null     | Number of search results to return for the web search.              |
 
-The table below shows the supported providers and their required configuration values (`Id`, `ApiKey`):  
+The table below shows the supported providers and their required configuration values (`Id`, `ApiKey`):
 
 | Setting   | Google                   | Bing |  
 | --------- | ------------------------ | ---- |  
 | `Id`      | ✅ (`Search Engine ID`)  | ❌   |  
 | `ApiKey`  | ✅                       | ✅   |  
-
-### 🔌 Custom Plugins
-Custom plugins extend the chat model with your own functionality. They can be added in two ways:  
-- **Configuration (global)** – Registered in `appsettings.json`. Always available to the chat model.  
-- **Per request (scoped)** – Passed with a specific `ChatRequest`, giving fine-grained control.  
-
-You can combine both — e.g., register global plugins for core features and add request-specific plugins for special scenarios.  
-
-##### ⚙️ Configuration
-When adding a plugin globally via `appsettings.json`:  
-- Use the **fully qualified type name** (`"{namespace}.{name}, {assembly}"`).  
-
-```json
-"CustomPlugins": {
-  "Custom": [
-    "MyApp.Plugins.LightsPlugin, MyApp"
-  ]
-}
-```
-##### 📦 Per request
-When adding a plugin per request:
-- Create and pass an instance of the plugin yourself.  
-- The caller is responsible for instantiating and wiring up dependencies.  
-
-```csharp
-var lightsPlugin = new LightsPlugin(new MyLightsService());
-chatRequest.Plugins.Add(lightsPlugin);
-```
-##### ⚡ Invocation model
-When plugins are available, the chat model automatically decides whether to invoke them based on the user’s query. This is by design — the model plans and decides when and how to use plugins.  
-- If you require a plugin to **always** be invoked, call it manually in your application and include its result in the system message of the request.  
-
-##### 📝 Plugin context
-Custom plugin parameters should be passed in the system prompt in the chat request, 
-or derive context that is alrady added based on the chat request (`UserId`, `TenantId`, etc.).  
-
-📖 More details: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)  
-
-#### Example Plugin  
-A simple plugin that turns lights on and off:  
-
-```csharp
-public interface ILightsService
-{
-    LightModel TurnOn(int id);
-    LightModel TurnOff(int id);
-}
-
-public class LightModel
-{
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
-
-    [JsonPropertyName("is_on")]
-    public bool? IsOn { get; set; }
-}
-
-public class LightsPlugin(ILightsService lightsService)
-{
-    private readonly ILightsService lightsService = lightsService;
-
-    [KernelFunction("turn_on")]
-    [Description("Turn on the light")]
-    public LightModel TurnOn(int id) => this.lightsService.TurnOn(id);
-
-    [KernelFunction("turn_off")]
-    [Description("Turn off the light")]
-    public LightModel TurnOff(int id) => this.lightsService.TurnOff(id);
-}
-```
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -1330,6 +1246,12 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 
 ### 💚 Health Checks
 - Health-checks can be enabled for all services (models) in confiugration. When enabling and ASP.NET Core health-check middleware is configured in your application, each service will invoke periodic health requests to your models and ensure they are alive. The request simply invokes a prompt "ping", and expect to get one token back for success.
+<br />
+
+### 📈 Observability
+- All services integrate with the registered `ILoggerFactory`, ensuring that any logging performed by underlying components is consistent with your application's logging configuration and routed through your preferred providers.  
+- This integration allows developers to capture logs, metrics, and diagnostic information provided by the underlying services without modifying the library.  
+- By leveraging the application's logging infrastructure, you get **centralized monitoring**, **performance tracking**, and **diagnostic insights** across all services.
 <br />
 <br />
 
