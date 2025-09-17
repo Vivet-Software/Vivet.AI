@@ -23,13 +23,6 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// BUG: Check ToC links
-// BUG: Check Config table links and descriptions
-// BUG: Example Usage: OnMemoryIndexed 
-// BUG: Example Usage: Plugins (Custom / Built-In)
-
-// ----------------------------------------------------------------------------------------------------------------------------------------------------------
-
 // BUG: Function Filters https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/filters?pivots=programming-language-csharp
 // maybe setting for adding some logging, to log usage of Plugins, or other
 

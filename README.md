@@ -439,8 +439,10 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 | Chat.Model.Parameters.ReasoningEffort           | ReasoningEffort?  | null      | Effort level to reduce reasoning complexity or token usage.                                                                                                      |
 | Chat.Timeout                                    | TimeSpan          | 00:01:00  | Maximum time allowed for a chat request.                                                                                                                         |
 | Chat.Plugins                                    |                   |           | Options for configuring chat plugins. Plugins (also called *tools*) are sets of related functions that can be exposed to a chat model. They allow the model to integrate with external services and invoke custom functionality. |
-| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in plugins that can be enabled for the chat model. See [Built-in Plugins](#-built-in-plugins)                                  |
+| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in plugins that can be enabled for the chat model. See [Built-in Plugins](#-built-in-plugins)                                                              |
 | Chat.Plugins.CustomPlugins                      | string[]          | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. |
+
+<br />
 
 ### 🔌 Built-in Plugins
 Built-in plugins extend ChatService with additional functionality.  
@@ -451,6 +453,7 @@ Built-in plugins extend ChatService with additional functionality.
 
 Each plugin can be enabled through configuration.   
 To disable a plugin, simply omit its configuration section.
+<br />
 
 #### 🧠 Memory
 Provides retrieval of long-term conversational context (question and answer pairs, thread history, etc.).  
@@ -474,6 +477,7 @@ The following variables are added as plugin context from the chat request:
   }
 }
 ```
+
 ##### Configuration Details
 | Setting                                                   | Type   | Default | Description                                                                                            |
 | --------------------------------------------------------- | ------ | ------- | ------------------------------------------------------------------------------------------------------ |
@@ -535,11 +539,11 @@ Enables the chat model to perform live internet searches through a configurable 
 | BuiltInPlugins.WebSearch.Limit     | int               | null     | Number of search results to return for the web search.              |
 
 The table below shows the supported providers and their required configuration values (`Id`, `ApiKey`):  
+
 | Setting   | Google                   | Bing |  
 | --------- | ------------------------ | ---- |  
 | `Id`      | ✅ (`Search Engine ID`)  | ❌   |  
 | `ApiKey`  | ✅                       | ✅   |  
-<br />
 
 ### 🔌 Custom Plugins
 Custom plugins extend the chat model with your own functionality. They can be added in two ways:  
@@ -626,8 +630,8 @@ var request = new ChatRequest
     Question = "Summarize the attached document in 3 bullet points.",
     UserId = "user-id",
     CurrentThreadId = "thread-id",
-    Blobs = new BaseBlobMetadata[]
-    {
+    Blobs = 
+    [
         new ImageBlob
         {
             Data = new BlobDataBase64 { Base64 = "base64" }, // or File, Uri, Stream, etc. 
@@ -638,15 +642,33 @@ var request = new ChatRequest
                 Description = "Q2 financial summary graph"
             }
         }
-    },
+    ],
     // optional: SystemMessage, TenantId, SubTenantId, ScopeId, AgentId, Language, Config Overrides, etc.
 };
 
+var onMemoryIndexedTask = new TaskCompletionSource<bool>();
+
 var response = await chatService
-    .ChatAsync(request, memoryResponse => { /* Handle memory indexed callback */ });
+    .ChatAsync(request, memoryResponse => 
+    { 
+        try
+        {
+            // Handle callback.
+
+            onMemoryIndexedTask.SetResult(true);
+        }
+        catch (Exception ex)
+        {
+            onMemoryIndexedTask.SetException(ex);
+        }
+
+        return Task.CompletedTask;
+    });
 
 Console.WriteLine($"Answer: {response.Answer}");
 Console.WriteLine($"Reasoning: {response.Reasoning}");
+
+await onMemoryIndexedTask.Task;
 ```
 #### Typed response (question must instruct model to output valid JSON matching the type)
 ```csharp
@@ -740,6 +762,7 @@ Defines how documents are split into smaller segments before embedding.
 }
 ```
 ⚠️ **Note:** Read more about [Text Chunking](#-advanced-text-chunking)  
+
 | Setting                                   | Type | Default | Description                                                                                            |
 | ----------------------------------------- | ---- | ------- | ------------------------------------------------------------------------------------------------------ |
 | `MinTokens`                               | int  | `20`    | Minimum number of tokens per chunk. (Approximation)                                                    |
