@@ -4,9 +4,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace IntegrationTests.Vivet.AI;
 
-internal sealed class TestPlugin(TestPluginService knowledgeService)
+internal sealed class TestPlugin(TestPluginService testPluginService)
 {
-    private readonly TestPluginService testPluginService = knowledgeService ?? throw new ArgumentNullException(nameof(knowledgeService));
+    // ReSharper disable UnusedMember.Local
+    private readonly TestPluginService testPluginService = testPluginService ?? throw new ArgumentNullException(nameof(testPluginService));
+    // ReSharper restore UnusedMember.Local
 
     [KernelFunction]
     [Description("Test Plugin.")]

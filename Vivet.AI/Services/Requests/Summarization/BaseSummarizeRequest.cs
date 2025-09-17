@@ -1,7 +1,4 @@
-﻿using Microsoft.SemanticKernel;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Requests.Summarization.Models;
 
 namespace Vivet.AI.Services.Requests.Summarization;

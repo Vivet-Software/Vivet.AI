@@ -5,7 +5,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 using System.Reflection;
-using Vivet.AI.Extensions.Orchestration.AzureInferenceAi;
 using Vivet.AI.Extensions.Orchestration.AzureOpenAi;
 
 namespace IntegrationTests.Vivet.AI;

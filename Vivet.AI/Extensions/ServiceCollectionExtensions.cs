@@ -6,7 +6,6 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Definitions;
@@ -68,6 +67,9 @@ internal static class ServiceCollectionExtensions
             .AddKeyedSingleton(ServiceIds.CHAT_SERVICE_ID, (x, _) =>
             {
                 var builder = Kernel.CreateBuilder();
+
+                builder
+                    .AddLoggerFactory(services);
 
                 // TODO: Exception Handling (Function Invocation Filter, e.g. Logging)
                 // TODO: Prompt Caching (Prompt Render Filter - https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Caching/SemanticCachingWithFilters.cs)
@@ -205,6 +207,9 @@ internal static class ServiceCollectionExtensions
             {
                 var builder = Kernel.CreateBuilder();
 
+                builder
+                    .AddLoggerFactory(services);
+
                 return builder;
             });
 
@@ -250,6 +255,9 @@ internal static class ServiceCollectionExtensions
             .AddKeyedSingleton(ServiceIds.SUMMARIZATION_SERVICE_ID, (_, _) =>
             {
                 var builder = Kernel.CreateBuilder();
+
+                builder
+                    .AddLoggerFactory(services);
 
                 return builder;
             });

@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
 using Vivet.AI.Plugins;
@@ -23,16 +22,6 @@ using Vivet.AI.Services.Responses.Chat;
 using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
-
-// BUG: Observability: https://learn.microsoft.com/en-us/semantic-kernel/concepts/enterprise-readiness/observability/?pivots=programming-language-csharp
-// - https://ai.azure.com/observability/applicationAnalytics?wsid=/subscriptions/b2b7a8a7-862e-478a-8761-58e41e726855/resourceGroups/AI/providers/Microsoft.CognitiveServices/accounts/vivet-software/projects/vivet-ai&tid=9071a89e-4c58-4163-9bb4-f87488ff1427
-// - https://ai.azure.com/tracing?wsid=/subscriptions/b2b7a8a7-862e-478a-8761-58e41e726855/resourceGroups/AI/providers/Microsoft.CognitiveServices/accounts/vivet-software/projects/vivet-ai&tid=9071a89e-4c58-4163-9bb4-f87488ff1427
-
-// BUG: Finish Readme 
-// - Finish Plugins(consider making Plugins section with Built-in and custom underneath)
-// - Filters
-//   - invocation works like middleware
-//   - Add them to IServiceCollection in the desired order.It will work, because they are all transfered to the Kernel in the correct order.
 
 /// <inheritdoc cref="IChatService"/>
 public class ChatService(ChatOptions options, IChatCompletionService chatCompletionService, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null) 
@@ -73,7 +62,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         stopwatch
             .Start();
 
-        var chatHistory = await this.BuildChatHistory<T>(request, cancellationToken)
+        var chatHistory = await BuildChatHistory<T>(request, cancellationToken)
             .ConfigureAwait(false);
 
         var executionSettings = this.GetPromptExecutionSettings(request);
@@ -130,7 +119,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         stopwatch
             .Start();
 
-        var chatHistory = await this.BuildChatHistory<string>(request, cancellationToken)
+        var chatHistory = await BuildChatHistory<string>(request, cancellationToken)
             .ConfigureAwait(false);
 
         var executionSettings = this.GetPromptExecutionSettings(request);
@@ -187,7 +176,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
     }
 
 
-    private async Task<ChatHistory> BuildChatHistory<T>(ChatRequest request, CancellationToken cancellationToken = default)
+    private static async Task<ChatHistory> BuildChatHistory<T>(ChatRequest request, CancellationToken cancellationToken = default)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
