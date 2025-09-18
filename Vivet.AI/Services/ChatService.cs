@@ -181,19 +181,10 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
-        // TODO: Remove
-        //var knowledgeTask = this.GetMatchingKnowledges(request, cancellationToken);
-        //var memoriesTask = this.GetMatchingMemories(request, cancellationToken);
-
-        //var knowledgeResults = await knowledgeTask.ConfigureAwait(false);
-        //var memoryResults = await memoriesTask.ConfigureAwait(false);
-
         var chatHistory = new ChatHistory();
         chatHistory
             .AddChatSystemPrompt<T>(request.SystemMessage)
             .AddChatPluginContextPrompt(request);
-        //.AddChatKnowledgePrompt(knowledgeResults)
-        //.AddChatMemoryPrompt(memoryResults, this.options.Memory.CounterpartContextQueryLimit) 
 
         var dataUris = await Task.WhenAll(request.Blobs
                 .Select(x => x
@@ -257,112 +248,6 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return kernel;
     }
-    // TODO: Remove
-    //private async Task<MemoryResult[]> GetMatchingMemories(ChatRequest request, CancellationToken cancellationToken = default)
-    //{
-    //    if (request == null)
-    //        throw new ArgumentNullException(nameof(request));
-
-    //    if (embeddingMemoryService == null)
-    //    {
-    //        return [];
-    //    }
-
-    //    if (request.ConfigOverrides.Memory.SkipMemoryContext)
-    //    {
-    //        return [];
-    //    }
-
-    //    var from = DateTimeOffset.UtcNow
-    //        .AddDays(-this.options.Memory.RetentionInDays);
-
-    //    var limit = this.options.Memory.UseQueryDeduplication
-    //        ? this.options.Memory.ContextQueryLimit * 2 
-    //        : this.options.Memory.ContextQueryLimit;
-
-    //    var response = await embeddingMemoryService
-    //        .SearchAsync(new SearchMemoryRequest
-    //        {
-    //            Query = request.Question,
-    //            Criteria =
-    //            {
-    //                UserId = request.UserId,
-    //                ScopeId = request.ScopeId,
-    //                AgentId = request.AgentId,
-    //                DateRange = new DateRange
-    //                {
-    //                    From = from
-    //                }
-    //            },
-    //            CurrentThreadId = request.CurrentThreadId,
-    //            Limit = limit
-    //        }, cancellationToken)
-    //        .ConfigureAwait(false);
-
-    //    var results = response.Results
-    //        .Select(x => x.Result)
-    //        .ToArray();
-
-    //    if (this.options.Memory.UseQueryDeduplication)
-    //    {
-    //        var deduplicatedResults = ContextDeduplicator.DeduplicateMemoryResults(results, this.options.Memory.DeduplicationMatchScoreThreshold);
-
-    //        return deduplicatedResults
-    //            .Take(this.options.Memory.ContextQueryLimit)
-    //            .ToArray();
-    //    }
-
-    //    return results;
-    //}
-    //private async Task<KnowledgeResult[]> GetMatchingKnowledges(ChatRequest request, CancellationToken cancellationToken = default)
-    //{
-    //    if (request == null)
-    //        throw new ArgumentNullException(nameof(request));
-
-    //    if (embeddingKnowledgeService == null)
-    //    {
-    //        return [];
-    //    }
-
-    //    if (request.ConfigOverrides.Knowledge.SkipKnowledgeContext)
-    //    {
-    //        return [];
-    //    }
-
-    //    var limit = this.options.Knowledge.UseQueryDeduplication
-    //        ? this.options.Knowledge.ContextQueryLimit * 2
-    //        : this.options.Knowledge.ContextQueryLimit;
-
-    //    var response = await embeddingKnowledgeService
-    //        .SearchAsync(new SearchKnowledgeRequest
-    //        {
-    //            Query = request.Question,
-    //            Criteria =
-    //            {
-    //                TenantId = request.TenantId,
-    //                SubTenantId = request.SubTenantId,
-    //                ScopeId = request.ScopeId,
-    //                UserId = request.UserId
-    //            },
-    //            Limit = limit
-    //        }, cancellationToken)
-    //        .ConfigureAwait(false);
-
-    //    var results = response.Results
-    //        .Select(x => x.Result)
-    //        .ToArray();
-
-    //    if (this.options.Knowledge.UseQueryDeduplication)
-    //    {
-    //        var deduplicatedResults = ContextDeduplicator.DeduplicateKnowledgeResults(results, this.options.Knowledge.DeduplicationMatchScoreThreshold);
-
-    //        return deduplicatedResults
-    //            .Take(this.options.Knowledge.ContextQueryLimit)
-    //            .ToArray();
-    //    }
-
-    //    return results;
-    //}
     private static ChatResponse GetResponseOrDefault(string answer)
     {
         if (answer == null)

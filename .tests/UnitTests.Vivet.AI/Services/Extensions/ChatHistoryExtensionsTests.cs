@@ -26,59 +26,6 @@ public class ChatHistoryExtensionsTests
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
-    // TODO: Remove
-    //[TestMethod]
-    //public void AddChatMemoryPromptTest()
-    //{
-    //    Assert.Inconclusive();
-    //}
-
-    //[TestMethod]
-    //public void AddChatMemoryPromptWhenChatHistoryIsNullThrowsArgumentNullExceptionTest()
-    //{
-    //    ChatHistory chatHistory = null;
-    //    var memoryResults = Array.Empty<MemoryResult>();
-    //    const int COUNTERPART_CONTEXT_QUERY_LIMIT = 1;
-
-    //    // ReSharper disable ExpressionIsAlwaysNull
-    //    Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatMemoryPrompt(memoryResults, COUNTERPART_CONTEXT_QUERY_LIMIT));
-    //    // ReSharper restore ExpressionIsAlwaysNull
-    //}
-
-    //[TestMethod]
-    //public void AddChatMemoryPromptWhenMemoryResultsIsNullThrowsArgumentNullExceptionTest()
-    //{
-    //    var chatHistory = new ChatHistory();
-
-    //    Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatMemoryPrompt(null, 1));
-    //}
-
-
-    //[TestMethod]
-    //public void AddChatKnowledgePromptTest()
-    //{
-    //    Assert.Inconclusive();
-    //}
-
-    //[TestMethod]
-    //public void AddChatKnowledgePromptWhenChatHistoryIsNullThrowsArgumentNullExceptionTest()
-    //{
-    //    ChatHistory chatHistory = null;
-    //    var knowledgeResults = Array.Empty<KnowledgeResult>();
-
-    //    // ReSharper disable ExpressionIsAlwaysNull
-    //    Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatKnowledgePrompt(knowledgeResults));
-    //    // ReSharper restore ExpressionIsAlwaysNull
-    //}
-
-    //[TestMethod]
-    //public void AddChatKnowledgePromptWhenKnowledgeResultsIsNullThrowsArgumentNullExceptionTest()
-    //{
-    //    var chatHistory = new ChatHistory();
-
-    //    Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatKnowledgePrompt(null));
-    //}
-
 
     [TestMethod]
     public void AddChatUserPromptTest()
