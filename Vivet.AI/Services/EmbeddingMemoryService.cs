@@ -81,15 +81,17 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         var tokenUsage = EmbeddingMemoryService.GetTokenUsageOrDefault(questionEmbeddings.Usage, answerEmbeddings.Usage, blobsUsage);
 
+        var totalEmbeddings = embeddings
+            .Select(x => x.Content)
+            .Sum(x => x.GetUtf8ByteCount());
+
         stopwatch
             .Stop();
 
         return new IndexMemoryResponse
         {
             TotalEmbeddings = embeddings.Length,
-            TotalEmbeddingsSize = embeddings
-                .Select(x => x.Content)
-                .Sum(x => x.GetUtf8ByteCount()),
+            TotalEmbeddingsSize = totalEmbeddings,
             ElapsedTime = stopwatch.Elapsed,
             TokenUsage = tokenUsage,
             MetadataTokenUsage = metadataUsage,

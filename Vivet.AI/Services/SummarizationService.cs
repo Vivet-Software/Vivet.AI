@@ -80,12 +80,18 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
             };
         }
 
+        var tokenUsage = chatMessageContent?
+            .GetTokenUsage();
+
+        var externalId = chatMessageContent
+            .GetExternalId();
+
         stopwatch
             .Stop();
 
+        response.TokenUsage = tokenUsage;
+        response.ExternalId = externalId;
         response.ElapsedTime = stopwatch.Elapsed;
-        response.TokenUsage = chatMessageContent?
-            .GetTokenUsage();
 
         return response;
     }

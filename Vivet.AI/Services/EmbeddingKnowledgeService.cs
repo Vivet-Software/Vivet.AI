@@ -38,7 +38,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
     private readonly EmbeddingOptions.KnowledgeOptions knowledgeOptions = options.Knowledge ?? throw new ArgumentNullException(nameof(options.Knowledge));
 
     /// <inheritdoc />
-    public virtual Task<IndexKnowledgeResponse> IndexAsync<TOverrides>(BaseIndexKnowledgeRequst<TOverrides> request, CancellationToken cancellationToken = default)
+    public virtual async Task<IndexKnowledgeResponse> IndexAsync<TOverrides>(BaseIndexKnowledgeRequst<TOverrides> request, CancellationToken cancellationToken = default)
         where TOverrides : BaseConfigOverrides, new()
     {
         if (request == null) 
@@ -47,19 +47,30 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
         request
             .Validate();
 
-        return request switch
+        var stopwatch = new Stopwatch();
+        stopwatch
+            .Start();
+
+        var response = request switch
         {
             BaseIndexKnowledgeRequst<KnowledgeConfigOverrides> genericRequest
                 when genericRequest.GetType().IsGenericType && genericRequest.GetType().GetGenericTypeDefinition() == typeof(IndexTextRequest<>)
-                => this.IndexTextReflectionAsync(genericRequest, cancellationToken),
+                => await this.IndexTextReflectionAsync(genericRequest, cancellationToken),
 
-            IndexTextRequest textRequest => this.IndexTextAsync(textRequest, cancellationToken),
-            IndexImageRequest imageRequest => this.IndexBlobAsync(imageRequest, cancellationToken),
-            IndexAudioRequest videoRequest => this.IndexBlobAsync(videoRequest, cancellationToken),
-            IndexVideoRequest videoRequest => this.IndexBlobAsync(videoRequest, cancellationToken),
-            IndexDocumentRequest documentRequest => this.IndexBlobAsync(documentRequest, cancellationToken),
+            IndexTextRequest textRequest => await this.IndexTextAsync(textRequest, cancellationToken),
+            IndexImageRequest imageRequest => await this.IndexBlobAsync(imageRequest, cancellationToken),
+            IndexAudioRequest videoRequest => await this.IndexBlobAsync(videoRequest, cancellationToken),
+            IndexVideoRequest videoRequest => await this.IndexBlobAsync(videoRequest, cancellationToken),
+            IndexDocumentRequest documentRequest => await this.IndexBlobAsync(documentRequest, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(request))
         };
+
+        stopwatch
+            .Stop();
+
+        response.ElapsedTime = stopwatch.Elapsed;
+
+        return response;
     }
 
     /// <inheritdoc />

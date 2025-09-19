@@ -17,7 +17,7 @@ public class ChatOptions
     public virtual ChatModel Model { get; set; } = new();
 
     /// <summary>
-    /// Timeout in seconds before requests are aborted.
+    /// Timeout before requests are aborted.
     /// Defailt to 60 seconds.
     /// </summary>
     public virtual TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);

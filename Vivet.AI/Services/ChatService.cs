@@ -91,18 +91,24 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var thinking = chatMessageContent.Content
             .GetChatResponseThinking();
 
-        response.Thinking = thinking;
-        response.RawResponse = chatMessageContent.Content;
-        response.ElapsedTime = stopwatch.Elapsed;
-        response.InputPrompt = chatHistory
+        var inputPrompt = chatHistory
             .GetPromptAsText();
-        response.TokenUsage = chatMessageContent
+
+        var tokenUsage = chatMessageContent
             .GetTokenUsage();
-        response.ExternalId = chatMessageContent
+
+        var externalId = chatMessageContent
             .GetExternalId();
 
         stopwatch
             .Stop();
+
+        response.Thinking = thinking;
+        response.RawResponse = chatMessageContent.Content;
+        response.InputPrompt = inputPrompt;
+        response.TokenUsage = tokenUsage;
+        response.ExternalId = externalId;
+        response.ElapsedTime = stopwatch.Elapsed;
 
         _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken);
 
@@ -152,18 +158,19 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var thinking = rawContent
             .GetChatResponseThinking();
 
-        response.Thinking = thinking;
-        response.RawResponse = rawContent;
-        response.ElapsedTime = stopwatch.Elapsed;
-        response.InputPrompt = chatHistory
+        var inputPrompt = chatHistory
             .GetPromptAsText();
 
+        stopwatch
+            .Stop();
+
+        response.Thinking = thinking;
+        response.RawResponse = rawContent;
+        response.InputPrompt = inputPrompt;
+        response.ElapsedTime = stopwatch.Elapsed;
         // TODO: Chat Streaming Token Usage / External Id (not possible through SK yet)
         response.TokenUsage = null; 
         response.ExternalId = null;
-        
-        stopwatch
-            .Stop();
 
         _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
             .ConfigureAwait(false);

@@ -73,4 +73,9 @@ public class AiOptions
     /// Summarization.
     /// </summary>
     public virtual SummarizationOptions Summarization { get; set; }
+
+    /// <summary>
+    /// Agent.
+    /// </summary>
+    public virtual AgentOptions Agent { get; set; }
 }

@@ -9,6 +9,12 @@ public class MetadataResponse : BaseResponse
     /// The extracted metadata.
     /// </summary>
     public virtual Models.Metadata Metadata { get; set; }
+
+    /// <summary>
+    /// This ID may be exposed by the underlying language model through its metadata. 
+    /// Its presence is model-dependent and may not always be available.
+    /// </summary>
+    public virtual string ExternalId { get; set; }
 }
 
 /// <summary>
