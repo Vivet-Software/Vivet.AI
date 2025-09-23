@@ -40,7 +40,7 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
         SummarizationMemoryResponse response;
         ChatMessageContent chatMessageContent = null;
 
-        var summarizationDegree = request.ConfigOverrides.SummarizationDegree ?? this.summarizationOptions.SummarizationDegree;
+        var summarizationDegree = request.ConfigOverrides?.SummarizationDegree ?? this.summarizationOptions.SummarizationDegree;
 
         if (summarizationDegree > 0)
         {
@@ -50,9 +50,9 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
                 .AddSummarizationMemoryPrompt(request.Question, request.Answer, summarizationDegree);
 
             var executionSettings = this.promptExecutionSettings
-                .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
+                .GetOverridePromptExecutionSettings(request.ConfigOverrides?.ModelParameters);
 
-            executionSettings.ModelId = request.ConfigOverrides.ModelName;
+            executionSettings.ModelId = request.ConfigOverrides?.ModelName;
 
             var kernel = kernelBuilder
                 .Build();

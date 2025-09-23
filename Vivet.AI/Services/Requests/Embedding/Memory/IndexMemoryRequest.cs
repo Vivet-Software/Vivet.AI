@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Vivet.AI.Attributes;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Requests.Embedding.Memory.Models;
 
@@ -29,8 +30,14 @@ public class IndexMemoryRequest<T> : BaseIndexRequest<MemoryConfigOverrides>
     /// <summary>
     /// The ID of the user creating the memory entry.
     /// </summary>
-    [Required]
+    [RequiredOneOf(nameof(this.UserId))]
     public virtual string UserId { get; set; }
+
+    /// <summary>
+    /// The ID of the user creating the memory entry.
+    /// </summary>
+    [RequiredOneOf(nameof(this.AgentId))]
+    public virtual string AgentId { get; set; }
 
     /// <summary>
     /// The ID of the thread or conversation.

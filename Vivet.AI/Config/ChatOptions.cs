@@ -23,7 +23,7 @@ public class ChatOptions
     public virtual TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);
 
     /// <summary>
-    /// Options for configuring chat plugins.
+    /// Options for configuring plugins.
     /// </summary>
-    public virtual ChatPluginsOptions Plugins { get; set; } = new();
+    public virtual PluginsOptions Plugins { get; set; } = new();
 }

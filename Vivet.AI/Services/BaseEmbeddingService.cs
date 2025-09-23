@@ -45,7 +45,7 @@ public abstract class BaseEmbeddingService(EmbeddingOptions options, IEmbeddingG
 
         var generationOptions = new EmbeddingGenerationOptions
         {
-            ModelId = embedingConfigOverrides.ModelName
+            ModelId = embedingConfigOverrides?.ModelName
         };
 
         return await this.embeddingGenerator

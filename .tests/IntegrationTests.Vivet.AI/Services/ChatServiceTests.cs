@@ -16,7 +16,9 @@ using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.Blobs.Data;
 using Vivet.AI.Services.Models.MimeTypes;
+using Vivet.AI.Services.Models.Plugins.BuiltIn;
 using Vivet.AI.Services.Requests.Chat;
+using Vivet.AI.Services.Requests.Chat.Models.Plugins.BuiltIn;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
 using Vivet.AI.Services.Requests.Embedding.Memory;
 using Vivet.AI.Services.Responses;
@@ -46,8 +48,17 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        }
+                    }
+                }
             }, memoryResponse =>
             {
                 try
@@ -99,8 +110,6 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString(),
                 Blobs = new List<BaseBlobMetadata>
                 {
                     new ImageBlob
@@ -110,6 +119,17 @@ public class ChatServiceTests : BaseTests
                             Base64 = BASE64
                         },
                         MimeType = ImageMimeType.Jpg
+                    }
+                },
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        }
                     }
                 }
             }, memoryResponse =>
@@ -143,8 +163,17 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        }
+                    }
+                }
             }, async memoryResponse =>
             {
                 await Task.CompletedTask;
@@ -181,8 +210,17 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        }
+                    }
+                }
             }, async memoryResponse =>
             {
                 await Task.CompletedTask;
@@ -209,8 +247,17 @@ public class ChatServiceTests : BaseTests
         {
             SystemMessage = SYSTEM_MESSAGE,
             Question = QUESTION,
-            UserId = this.userId,
-            CurrentThreadId = Guid.NewGuid().ToString()
+            Plugins =
+            {
+                Context =
+                {
+                    Memory = new ChatMemoryPluginContext
+                    {
+                        UserId = this.userId,
+                        CurrentThreadId = Guid.NewGuid().ToString()
+                    }
+                }
+            }
         };
 
         var streamedResults = new List<string>();
@@ -297,8 +344,17 @@ public class ChatServiceTests : BaseTests
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                UserId = localUserId,
-                CurrentThreadId = threadId
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = localUserId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        }
+                    }
+                }
             });
 
         Assert.IsNotNull(response);
@@ -339,8 +395,17 @@ public class ChatServiceTests : BaseTests
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                UserId = localUserId,
-                CurrentThreadId = threadId
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = localUserId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        }
+                    }
+                }
             });
 
         Assert.IsNotNull(response);
@@ -390,7 +455,16 @@ public class ChatServiceTests : BaseTests
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                ScopeId = scopeId
+                Plugins =
+                {
+                    Context =
+                    {
+                        Knowledge = new KnowledgePluginContext
+                        {
+                            ScopeId = scopeId
+                        }
+                    }
+                }
             });
 
         Assert.IsNotNull(response);
@@ -425,7 +499,16 @@ public class ChatServiceTests : BaseTests
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                ScopeId = scopeId
+                Plugins =
+                {
+                    Context =
+                    {
+                        Knowledge = new KnowledgePluginContext
+                        {
+                            ScopeId = scopeId
+                        }
+                    }
+                }
             });
 
         Assert.IsNotNull(response);
@@ -450,8 +533,17 @@ public class ChatServiceTests : BaseTests
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        }
+                    }
+                }
             }));
     }
 
@@ -468,7 +560,7 @@ public class ChatServiceTests : BaseTests
             .Setup(s => s.IndexAsync(It.IsAny<IndexMemoryRequest<string>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Indexing failed"));
 
-        var chatService = new ChatService(chatOptions, chatCompletionService, kernelBuilder, promptExecutionSettings, mockEmbeddingMemoryService.Object);
+        var chatService = new ChatService(chatOptions, chatCompletionService, kernelBuilder, this.ServiceProvider, promptExecutionSettings, mockEmbeddingMemoryService.Object);
 
         const string SYSTEM_MESSAGE = "You are an expert in meteorology.";
         const string QUESTION = "Is it always summer in Denmark?";
@@ -480,8 +572,17 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        }
+                    }
+                }
             }, memoryResponse =>
             {
                 Assert.IsNotNull(memoryResponse.Exception);

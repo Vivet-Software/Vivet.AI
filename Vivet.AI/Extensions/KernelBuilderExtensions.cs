@@ -9,9 +9,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Vivet.AI.Config;
-using Vivet.AI.Config.Enums;
-using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Models.Enums;
 using Vivet.AI.Plugins;
+using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Interfaces;
 
 namespace Vivet.AI.Extensions;
@@ -34,13 +34,17 @@ internal static class KernelBuilderExtensions
             .AddKnowledgePlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.Knowledge)
             .AddWebSearchPlugin(chatOptions.Plugins.BuiltInPlugins.WebSearch);
 
-        var types = chatOptions.Plugins.CustomPlugins
-            .Select(x => Type.GetType(x, true)); 
+        var typeAndNames = chatOptions.Plugins.CustomPlugins
+            .Select(x => new
+            {
+                x.Name,
+                Type = Type.GetType(x.Type, true)
+            }); 
 
-        foreach (var type in types)
+        foreach (var typeAndName in typeAndNames)
         {
-            builder
-                .AddFromType(type, serviceProvider);
+            builder.Plugins
+                .AddFromType(serviceProvider, typeAndName.Type, typeAndName.Name);
         }
 
         return builder;
@@ -88,7 +92,7 @@ internal static class KernelBuilderExtensions
     }
 
 
-    private static IKernelBuilder AddMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, ChatMemoryPluginOptions options)
+    private static IKernelBuilder AddMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, MemoryPluginOptions options)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -106,14 +110,14 @@ internal static class KernelBuilderExtensions
             return builder;
         }
 
-        var chatMemoryPlugin = new ChatMemoryPlugin(options, embeddingMemoryService);
+        var memoryPlugin = new MemoryPlugin(options, embeddingMemoryService);
 
         builder.Plugins
-            .AddFromObject(chatMemoryPlugin);
+            .AddFromObject(memoryPlugin, BuiltInPluginNames.MEMORY_PLUGIN);
 
         return builder;
     }
-    private static IKernelBuilder AddKnowledgePlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, ChatKnowledgePluginOptions options)
+    private static IKernelBuilder AddKnowledgePlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, KnowledgePluginOptions options)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -131,14 +135,14 @@ internal static class KernelBuilderExtensions
             return builder;
         }
 
-        var chatMemoryPlugin = new ChatKnowledgePlugin(options, embeddingKnowledgeService);
+        var knowledgePlugin = new KnowledgePlugin(options, embeddingKnowledgeService);
 
         builder.Plugins
-            .AddFromObject(chatMemoryPlugin);
+            .AddFromObject(knowledgePlugin, BuiltInPluginNames.KNOWLEDGE_PLUGIN);
 
         return builder;
     }
-    private static IKernelBuilder AddWebSearchPlugin(this IKernelBuilder builder, ChatWebSearchPluginOptions options = null)
+    private static IKernelBuilder AddWebSearchPlugin(this IKernelBuilder builder, WebSearchPluginOptions options = null)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -211,44 +215,5 @@ internal static class KernelBuilderExtensions
             .AddFromFunctions(BuiltInPluginNames.WEB_SEARCH_PLUGIN, webSearchFunctions);
 
         return builder;
-    }
-    private static void AddFromType(this IKernelBuilder kernelBuilder, Type type, IServiceProvider serviceProvider)
-    {
-        if (kernelBuilder == null) 
-            throw new ArgumentNullException(nameof(kernelBuilder));
-
-        if (type == null) 
-            throw new ArgumentNullException(nameof(type));
-
-        if (serviceProvider == null) 
-            throw new ArgumentNullException(nameof(serviceProvider));
-
-        if (!typeof(object).IsAssignableFrom(type))
-        {
-            throw new InvalidOperationException($"Plugin type {type.FullName} is invalid.");
-        }
-
-        var constructorInfo = type
-            .GetConstructors()
-            .OrderByDescending(x => x
-                .GetParameters().Length)
-            .FirstOrDefault();
-
-        if (constructorInfo == null)
-        {
-            throw new InvalidOperationException($"Plugin type {type.FullName} has no public constructor.");
-        }
-
-        var parameters = constructorInfo
-            .GetParameters()
-            .Select(x => serviceProvider
-                .GetService(x.ParameterType))
-            .ToArray();
-
-        var instance = constructorInfo
-            .Invoke(parameters);
-
-        kernelBuilder.Plugins
-            .AddFromObject(instance, type.Name);
     }
 }

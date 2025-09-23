@@ -1,4 +1,5 @@
-﻿using Microsoft.SemanticKernel;
+﻿using Azure.Core;
+using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Magentic;
 using Microsoft.SemanticKernel.Agents.Orchestration;
@@ -14,48 +15,78 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
+using Vivet.AI.Extensions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Requests.Agent;
 using Vivet.AI.Services.Requests.Agent.Enums;
+using Vivet.AI.Services.Requests.Agent.Models;
+using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses.Agent;
 
 namespace Vivet.AI.Services;
 
-// TODO: Does AgentId belong in ChatRequest?
+// TODO: 333: Consider Move Plugins to Ai.Plugins, and then enable/disable under Chat, Agent, etc.
+// TODO: Config agents
+
+// TODO: readme:
+// Change Request plugins to Types instead of objects
+// Emphasize the the build-in plugins must have context variables in request or an exception is thrown
+// Check if we still writing that plugin dependencies must be registered beforehand, that isn't necessary anymore. Remove it.
+// Same type of custom plugins is allowed, as long as they have different names. Mention the built-in plugin names (memory, knowledge, web_search)
+// Update Custom plugins options configuration to have Type + Name (see CustomPluginOptions)
+// a plugin name can contain only ASCII letters, digits, and underscores
+// Plugins must have seperate context variables even when they are re-used among several plugins
 
 /// <inheritdoc cref="IAgentService"/>
-public class AgentService(AgentOptions options, IKernelBuilder kernelBuilder)
-    : BaseService, IAgentService  
+public class AgentService(AgentOptions options, IServiceProvider serviceProvider, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings)
+    : BaseService, IAgentService
 {
-    private readonly InProcessRuntime agenticProcess = new();
+    private bool isAgenticProcessStarted;
+    private readonly SemaphoreSlim startLock = new(1, 1);
+    private readonly InProcessRuntime agenticProcess = new(); // TODO: Advamced Agent Process Runtime Features (States, Subscriptions, Change Agents, Singlenton DI)
 
     /// <inheritdoc />
     public virtual async Task<AgentResponse> InvokeAsync(AgentRequest request, CancellationToken cancellationToken = default)
     {
+        if (request == null) 
+            throw new ArgumentNullException(nameof(request));
+        
+        request
+            .Validate();
+
         var stopwatch = new Stopwatch();
         stopwatch
             .Start();
 
-        await this.agenticProcess // TODO: Inspect additional methods, what are they for? how are they used
-            .StartAsync(cancellationToken);
+        // TODO: Blobs
 
-        var kernel = kernelBuilder
-            .Build();
+        // TODO: Add context prompt (We can't use ChatHistory, so make make private extensoons used in GetPluginsContext for Chat
+        // We need to add this in context for the prompt / instructiions. How is that done???
+        // var context = @$"Context: 
+        //UserId={request.UserId}, 
+        //ScopeId={request.ScopeId}, 
+        //ThreadId={request.CurrentThreadId}, 
+        //TenantId={request.TenantId}, 
+        //SubTenantId={request.SubTenantId}";
 
-        var agentOrchestration = this.GetAgentOrchestration(request, kernel);
+        // TODO: Check inheritance of Kernel (Request, Agent) and maybe allow for override when same name and inherit of context variables
+        // maybe that latter doesn't make sense, 
+        // Evaluate this thoroughly
+        var kernel = this.GetKernel(request); 
 
-        // BUG: Structured Outputs, and more, Read this: https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/advanced-topics?pivots=programming-language-csharp
+        var executionSettings = this.GetPromptExecutionSettingsOverrridesOrDefault(request.ConfigOverrides);
+        var agents = this.GetAgents(kernel, executionSettings, request.Agents);
+        var agentOrchestration = this.GetAgentOrchestration(request, kernel, agents);
+
+        await this.StartAgentProcessAsync(cancellationToken);
 
         var orchestrationResult = await agentOrchestration
             .InvokeAsync(request.Input, this.agenticProcess, cancellationToken);
 
         var chatMessageContents = await orchestrationResult
             .GetValueAsync(options.Timeout, cancellationToken);
-
-        await this.agenticProcess
-            .RunUntilIdleAsync();
 
         var tokenUsage = chatMessageContents
             .Aggregate(new TokenUsage(), (current, x) => current + x.GetTokenUsage());
@@ -65,11 +96,20 @@ public class AgentService(AgentOptions options, IKernelBuilder kernelBuilder)
 
         return new AgentResponse
         {
-            // BUG: RESPONSE: Agent Response
+            // TODO: HISTORY: Agent Response
             ElapsedTime = stopwatch.Elapsed,
             TokenUsage = tokenUsage,
             //ErrorMessage = 
         };
+    }
+
+    /// <inheritdoc />
+    public virtual Task<AgentResponse> InvokeAsync<T>(AgentRequest request, CancellationToken cancellationToken = default)
+    {
+        // Structured Outputs, and more,
+        // https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/advanced-topics?pivots=programming-language-csharp
+        
+        throw new NotImplementedException();
     }
 
     /// <inheritdoc />
@@ -83,6 +123,9 @@ public class AgentService(AgentOptions options, IKernelBuilder kernelBuilder)
     {
         if (this.agenticProcess != null)
         {
+            this.agenticProcess
+                .StopAsync();
+
             return this.agenticProcess
                 .DisposeAsync();
         }
@@ -91,43 +134,127 @@ public class AgentService(AgentOptions options, IKernelBuilder kernelBuilder)
     }
 
 
-    private Agent[] GetAgents(Kernel kernel, params Agent2[] requestAgents)
+    private async Task StartAgentProcessAsync(CancellationToken cancellationToken = default)
+    {
+        await this.startLock
+            .WaitAsync(cancellationToken);
+
+        try
+        {
+            if (this.isAgenticProcessStarted)
+            {
+                return;
+            }
+
+            await this.agenticProcess
+                .StartAsync(cancellationToken);
+
+            this.isAgenticProcessStarted = true;
+        }
+        finally
+        {
+            this.startLock
+                .Release();
+        }
+    }
+    private Kernel GetKernel(AgentRequest request)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var kernel = kernelBuilder
+            .Build();
+
+        kernel.Plugins
+            .ValidateContext(request.Plugins.Context);
+
+        kernel
+            .AddPluginConfigOverridesOrDefault(request.ConfigOverrides)
+            .AddCustomPlugins(serviceProvider, request.Plugins.CustomPlugins);
+
+        return kernel;
+    }
+    private Kernel GetAgentKernelOrDefault(AgentDescriptor agent)
+    {
+        if (agent == null)
+            throw new ArgumentNullException(nameof(agent));
+
+        if (agent.ConfigOverrides?.Plugins == null)
+        {
+            return null;
+        }
+
+        var kernel = kernelBuilder
+            .Build();
+
+        kernel.Plugins
+            .ValidateContext(agent.Plugins.Context);
+
+        kernel
+            .AddPluginConfigOverridesOrDefault(agent.ConfigOverrides)
+            .AddCustomPlugins(serviceProvider, agent.Plugins.CustomPlugins);
+
+        return kernel;
+    }
+    private PromptExecutionSettings GetPromptExecutionSettingsOverrridesOrDefault(AgentConfigOverrides configOverrides)
+    {
+        if (configOverrides == null)
+        {
+            return promptExecutionSettings;
+        }
+
+        var executionSettings = promptExecutionSettings
+            .GetOverridePromptExecutionSettings(configOverrides.ModelParameters);
+
+        executionSettings.ModelId = configOverrides.ModelName;
+
+        return executionSettings;
+    }
+    private Agent[] GetAgents(Kernel kernel, PromptExecutionSettings executionSettings, IEnumerable<AgentDescriptor> requestAgents)
     {
         if (kernel == null) 
             throw new ArgumentNullException(nameof(kernel));
+        
+        if (promptExecutionSettings == null)
+            throw new ArgumentNullException(nameof(promptExecutionSettings));
 
-        // BUG: 111: Plugins: Should we use different Kernel, so Plugins can be different?
-        // Memory, Knowledge and Web Search plugins should they derive from Chat or how, otherwise we need duplicate settings for those under AgentOptions
-        // We could also move them to it's own section: Ai.Plugins, and then enable/disable under Chat, Agent, etc.
+        if (requestAgents == null)
+            throw new ArgumentNullException(nameof(requestAgents));
 
         var agents = requestAgents
-            .Select(x => new ChatCompletionAgent
+            .Select(x =>
             {
-                Id = x.Id,
-                Name = x.Name,
-                Description = x.Description,
-                Instructions = x.Instructions,
-                InstructionsRole = x.Role,
-                Kernel = kernel,
-                Arguments = null,
-                LoggerFactory = kernel.LoggerFactory,
-                HistoryReducer = null, // BUG: HISTORY: Figure out if we should use this. Also because we are using orchestrations.
-                Template = null, // BUG: Should we support this? https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-templates?pivots=programming-language-csharp#yaml-template
-                UseImmutableKernel = false
+                var agentKernel = this.GetAgentKernelOrDefault(x) ?? kernel;
+
+                return new ChatCompletionAgent
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Description = x.Description,
+                    Instructions = x.Instructions,
+                    InstructionsRole = x.Role,
+                    Kernel = agentKernel,
+                    Arguments = new KernelArguments(executionSettings),
+                    LoggerFactory = agentKernel.LoggerFactory,
+                    HistoryReducer = null, // TODO: HISTORY: Figure out if we should use this. Also because we are using orchestrations.
+                    Template = null,
+                    UseImmutableKernel = false
+                };
             })
             .ToArray<Agent>();
 
         return agents;
     }
-    private AgentOrchestration<string, ChatMessageContent[]> GetAgentOrchestration(AgentRequest request, Kernel kernel)
+    private AgentOrchestration<string, ChatMessageContent[]> GetAgentOrchestration(AgentRequest request, Kernel kernel, Agent[] agents)
     {
-        if (request == null) 
+        if (request == null)
             throw new ArgumentNullException(nameof(request));
-        
-        if (kernel == null)
+
+        if (kernel == null) 
             throw new ArgumentNullException(nameof(kernel));
-        
-        var agents = this.GetAgents(kernel, request.Agents.ToArray());
+
+        if (agents == null)
+            throw new ArgumentNullException(nameof(agents));
 
         AgentOrchestration<string, ChatMessageContent[]> agentOrchestration = request.OrchestrationType switch
         {
@@ -135,11 +262,11 @@ public class AgentService(AgentOptions options, IKernelBuilder kernelBuilder)
             {
                 Name = request.Name,
                 Description = request.Description,
-                ResultTransform = ResultTransform,
                 LoggerFactory = kernel.LoggerFactory,
+                ResultTransform = ResultTransform,
                 ResponseCallback = response =>
                 {
-                    // BUG: HISTORY: ResponseCallback
+                    // TODO: HISTORY: ResponseCallback
                     // Chat history: This is interesting, bceause we keep current conversation in memory, and I don't think I can look this up through embedding matching
                     // So maybe ChatService (or AgentService) should just keep an in memory (or persisted, having Id's from Memory vector store) and that way we can support agentic threads until user closes a thread?
                     // Then as chat-gpt says we probably need a way to summarize history entries when it gets big.
@@ -150,7 +277,7 @@ public class AgentService(AgentOptions options, IKernelBuilder kernelBuilder)
                     return ValueTask.CompletedTask;
                 }
             },
-            AgentOrchestrationType.Concurrent => new ConcurrentOrchestration<string, ChatMessageContent[]>(agents) 
+            AgentOrchestrationType.Concurrent => new ConcurrentOrchestration<string, ChatMessageContent[]>(agents)
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -173,7 +300,7 @@ public class AgentService(AgentOptions options, IKernelBuilder kernelBuilder)
                     return ValueTask.CompletedTask;
                 }
             },
-            AgentOrchestrationType.HandOff => new HandoffOrchestration<string, ChatMessageContent[]>(OrchestrationHandoffs.StartWith(agents.First()), agents) 
+            AgentOrchestrationType.HandOff => new HandoffOrchestration<string, ChatMessageContent[]>(OrchestrationHandoffs.StartWith(agents.First()), agents)
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -184,7 +311,7 @@ public class AgentService(AgentOptions options, IKernelBuilder kernelBuilder)
                     return ValueTask.CompletedTask;
                 },
             },
-            AgentOrchestrationType.Magnetic => new MagenticOrchestration<string, ChatMessageContent[]>(null, agents) 
+            AgentOrchestrationType.Magnetic => new MagenticOrchestration<string, ChatMessageContent[]>(null, agents)
             {
                 Name = request.Name,
                 Description = request.Description,

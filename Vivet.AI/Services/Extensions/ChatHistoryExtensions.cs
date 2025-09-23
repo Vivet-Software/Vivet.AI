@@ -6,8 +6,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Models;
-using Vivet.AI.Services.Requests.Chat;
+using Vivet.AI.Services.Models.Plugins;
 using Vivet.AI.Services.Responses;
 using Vivet.AI.Services.Responses.Metadata;
 
@@ -59,26 +60,55 @@ containing a meaningful error message, describing why the request could not be c
         return chatHistory;
     }
 
-    internal static ChatHistory AddChatPluginContextPrompt(this ChatHistory chatHistory, ChatRequest request)
+    internal static ChatHistory AddBuiltInPluginsContextPrompt<TMemory, TKnowledge, TWebSearch>(this ChatHistory chatHistory, BaseBuiltInPluginsContext<TMemory, TKnowledge, TWebSearch> pluginsContext)
+        where TMemory : class
+        where TKnowledge : class
+        where TWebSearch : class
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
 
-        if (request == null) 
-            throw new ArgumentNullException(nameof(request));
+        if (pluginsContext == null) 
+            throw new ArgumentNullException(nameof(pluginsContext));
 
         chatHistory
-            .AddSystemMessage(@$"Context: 
-UserId={request.UserId}, 
-ScopeId={request.ScopeId}, 
-AgentId={request.AgentId}, 
-ThreadId={request.CurrentThreadId}, 
-TenantId={request.TenantId}, 
-SubTenantId={request.SubTenantId}");
+            .AddSystemMessage("[PLUGIN CONTEXT]");
+
+        chatHistory
+            .AddBuiltInPluginContextPrompt(pluginsContext.Memory)
+            .AddBuiltInPluginContextPrompt(pluginsContext.Knowledge)
+            .AddBuiltInPluginContextPrompt(pluginsContext.WebSearch);
 
         return chatHistory;
     }
-    
+
+    internal static ChatHistory AddCustomPluginContextPrompt(this ChatHistory chatHistory, IEnumerable<CustomPlugin> customPlugins)
+    {
+        if (chatHistory == null)
+            throw new ArgumentNullException(nameof(chatHistory));
+
+        if (customPlugins == null) 
+            throw new ArgumentNullException(nameof(customPlugins));
+
+        foreach (var customPlugin in customPlugins)
+        {
+            if (!customPlugin.Context.Any())
+            {
+                continue;
+            }
+
+            var contextVariables = customPlugin.Context
+                .Select(x => $"{x.Key}={x.Value}");
+
+            var str = $"{customPlugin.Name} Plugin Context: {string.Join(", ", contextVariables)}";
+
+            chatHistory
+                .AddUserMessage(str);
+        }
+
+        return chatHistory;
+    }
+
     internal static ChatHistory AddChatUserPrompt(this ChatHistory chatHistory, string question, IEnumerable<KernelContent> blobContents)
     {
         if (chatHistory == null)
@@ -133,7 +163,7 @@ SubTenantId={request.SubTenantId}");
         {
             var properties = typeof(T)
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Select(p => p.Name)
+                .Select(x => x.Name)
                 .ToArray();
 
             if (properties.Any())
@@ -274,5 +304,50 @@ A: {answer}
 
         return stringBuilder
             .ToString();
+    }
+
+
+    private static ChatHistory AddBuiltInPluginContextPrompt<TContext>(this ChatHistory chatHistory, TContext context)
+        where TContext : class
+    {
+        if (chatHistory == null)
+            throw new ArgumentNullException(nameof(chatHistory));
+
+        if (context == null)
+        {
+            return chatHistory;
+        }
+
+        var memoryContext = GetContextStringOrDefault(context);
+
+        chatHistory
+            .AddUserMessage($"{BuiltInPluginNames.MEMORY_PLUGIN} Plugin Context: {string.Join(", ", memoryContext)}");
+
+        return chatHistory;
+    }
+    private static string GetContextStringOrDefault<TContext>(TContext memoryContext)
+        where TContext : class
+    {
+        if (memoryContext == null)
+        {
+            return null;
+        }
+
+        var values = typeof(TContext)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Select(x =>
+            {
+                var value = x.GetValue(memoryContext);
+
+                if (value == null)
+                {
+                    return null;
+                }
+
+                return $"{x.Name}={value}";
+            })
+            .Where(x => x != null);
+
+        return string.Join(", ", values);
     }
 }

@@ -17,8 +17,17 @@ public interface IAgentService : IAsyncDisposable
     /// </summary>
     /// <param name="request">The agent request containing the input, orchestration, agents and other context.</param>
     /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
-    /// <returns></returns>
+    /// <returns>The agent response.</returns>
     Task<AgentResponse> InvokeAsync(AgentRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Invokes a set of agents against a type of orchestration.
+    /// 
+    /// </summary>
+    /// <param name="request">The agent request containing the input, orchestration, agents and other context.</param>
+    /// <param name="cancellationToken">Optional cancellation token to cancel the operation.</param>
+    /// <returns>The typed agent response</returns>
+    Task<AgentResponse> InvokeAsync<T>(AgentRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Invokes a set of agents against a type of orchestration.

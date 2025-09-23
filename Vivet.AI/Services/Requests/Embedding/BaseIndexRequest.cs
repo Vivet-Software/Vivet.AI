@@ -7,8 +7,13 @@ namespace Vivet.AI.Services.Requests.Embedding;
 /// </summary>
 /// <typeparam name="TOverrides">The type of configuration overrides. Must inherit from <see cref="BaseConfigOverrides"/> and have a parameterless constructor.</typeparam>
 public abstract class BaseIndexRequest<TOverrides>
-    where TOverrides : BaseConfigOverrides, new()
+    where TOverrides : BaseConfigOverrides
 {
+    /// <summary>
+    /// Gets or sets the scope identifier.
+    /// </summary>
+    public virtual string ScopeId { get; set; }
+
     /// <summary>
     /// Gets or sets the language associated with the request.
     /// </summary>
@@ -17,5 +22,5 @@ public abstract class BaseIndexRequest<TOverrides>
     /// <summary>
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
-    public virtual TOverrides ConfigOverrides { get; set; } = new();
+    public virtual TOverrides ConfigOverrides { get; set; }
 }

@@ -22,6 +22,11 @@ public class KnowledgeCriteria : BaseCriteria<Data.Models.Knowledge>
     public virtual string SubTenantId { get; set; }
 
     /// <summary>
+    /// Gets or sets the user ID associated with this criteria.
+    /// </summary>
+    public virtual string UserId { get; set; }
+
+    /// <summary>
     /// The language of the knowledge entries to filter.
     /// </summary>
     public virtual string Language { get; set; }
@@ -47,6 +52,7 @@ public class KnowledgeCriteria : BaseCriteria<Data.Models.Knowledge>
             .AddExpressionEqual(nameof(Data.Models.Knowledge.TenantId), this.TenantId, ref body)
             .AddExpressionEqual(nameof(Data.Models.Knowledge.SubTenantId), this.SubTenantId, ref body)
             .AddExpressionEqual(nameof(Data.Models.Knowledge.ScopeId), this.ScopeId, ref body)
+            .AddExpressionEqual(nameof(Data.Models.Knowledge.UserId), this.UserId, ref body)
             .AddExpressionEqual(nameof(Data.Models.Knowledge.Language), this.Language, ref body)
             .AddExpressionContains(nameof(Data.Models.Knowledge.Tags), this.Tag, ref body)
             .AddExpressionSearchFor(this.SearchFor, ref body);

@@ -23,6 +23,7 @@ using Vivet.AI.Services.Requests.Embedding;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
 using Vivet.AI.Services.Requests.Embedding.Knowledge.Models;
 using Vivet.AI.Services.Requests.Metadata;
+using Vivet.AI.Services.Requests.Metadata.Models;
 using Vivet.AI.Services.Responses.Embeddings.Knowledge;
 using Vivet.AI.Services.Responses.Embeddings.Knowledge.Models;
 using Vivet.AI.Services.Responses.Metadata;
@@ -331,6 +332,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 TenantId = request.TenantId,
                 SubTenantId = request.SubTenantId,
                 ScopeId = request.ScopeId,
+                UserId = request.UserId,
                 Source = request.Source,
                 CreatedBy = request.CreatedBy,
                 Tags = request.Tags,
@@ -398,7 +400,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 .GetProperty(nameof(MetadataResponse<dynamic>.AdditionalMetadata))?
                 .SetValue(metadataResponse, requestAdditionalMetadata);
         }
-        else if (this.metadataService != null && ((request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval ?? false) || (this.knowledgeOptions.UseAutomaticMetadataRetrieval && request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval != false))) 
+        else if (this.metadataService != null && ((request.ConfigOverrides?.Metadata?.UseAutomaticMetadataRetrieval ?? false) || (this.knowledgeOptions.UseAutomaticMetadataRetrieval && request.ConfigOverrides?.Metadata?.UseAutomaticMetadataRetrieval != false))) 
         {
             var metadataMethod = this.metadataService
                 .GetType()
@@ -408,10 +410,10 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             var metadataRequest = new GetMetadataRequest
             {
                 Blob = request.Blob,
-                ConfigOverrides =
+                ConfigOverrides = new MetadataConfigOverrides
                 {
-                    SummaryMaxWords = request.ConfigOverrides.Metadata.SummaryMaxWords,
-                    DescriptionMaxWords = request.ConfigOverrides.Metadata.DescriptionMaxWords
+                    SummaryMaxWords = request.ConfigOverrides?.Metadata?.SummaryMaxWords,
+                    DescriptionMaxWords = request.ConfigOverrides?.Metadata?.DescriptionMaxWords
                 }
             };
 

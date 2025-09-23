@@ -3,9 +3,9 @@
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Chat Memory Plugin Options (nested class).
+/// Memory Plugin Options (nested class).
 /// </summary>
-public class ChatMemoryPluginOptions
+public class MemoryPluginOptions
 {
     /// <summary>
     /// How far back memories will be included in queries when chatting.

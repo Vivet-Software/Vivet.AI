@@ -13,19 +13,19 @@ using Vivet.AI.Services.Requests.Embedding.Knowledge;
 namespace Vivet.AI.Plugins;
 
 /// <summary>
-/// Chat Knowledge Plugin.
+/// Knowledge Plugin.
 /// </summary>
-public sealed class ChatKnowledgePlugin
+public sealed class KnowledgePlugin
 {
-    private readonly ChatKnowledgePluginOptions options;
+    private readonly KnowledgePluginOptions options;
     private readonly IEmbeddingKnowledgeService embeddingKnowledgeService;
 
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="options">The <see cref="ChatKnowledgePluginOptions"/>.</param>
+    /// <param name="options">The <see cref="KnowledgePluginOptions"/>.</param>
     /// <param name="embeddingKnowledgeService">The <see cref="IEmbeddingKnowledgeService"/>.</param>
-    public ChatKnowledgePlugin(ChatKnowledgePluginOptions options, IEmbeddingKnowledgeService embeddingKnowledgeService)
+    public KnowledgePlugin(KnowledgePluginOptions options, IEmbeddingKnowledgeService embeddingKnowledgeService)
     {
         this.options = options ?? throw new ArgumentNullException(nameof(options));
         this.embeddingKnowledgeService = embeddingKnowledgeService ?? throw new ArgumentNullException(nameof(embeddingKnowledgeService));
@@ -35,23 +35,25 @@ public sealed class ChatKnowledgePlugin
     /// Retrieve and inject relevant knowledge entries into the current chat history.
     /// </summary>
     /// <param name="question">The current user question or message.</param>
-    /// <param name="scopeId">The scope id.</param>
     /// <param name="tenantId">The tenant id.</param>
     /// <param name="subTenantId">The sub-tenant id.</param>
+    /// <param name="scopeId">The scope id.</param>
+    /// <param name="userId">The user id.</param>
     /// <returns>The knowledge chat prompt snippet.</returns>
     [KernelFunction("knowledge")] 
     [Description(@"Retrieve knowledge stored in private or scoped sources such as notes, documents, organizational records or similar. 
 Always use this function when the user’s request may relate to these sources, even if similar information exists in public knowledge.")]
-    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, string scopeId, string tenantId, string subTenantId)
+    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, string tenantId, string subTenantId, string scopeId, string userId)
     {
         if (string.IsNullOrEmpty(question))
         {
             return null;
         }
 
-        scopeId = string.IsNullOrEmpty(scopeId) ? null : scopeId;
         tenantId = string.IsNullOrEmpty(tenantId) ? null : tenantId;
         subTenantId = string.IsNullOrEmpty(subTenantId) ? null : subTenantId;
+        scopeId = string.IsNullOrEmpty(scopeId) ? null : scopeId;
+        userId = string.IsNullOrEmpty(userId) ? null : userId;
 
         var limit = this.options.UseQueryDeduplication
             ? this.options.ContextQueryLimit * 2
@@ -65,7 +67,8 @@ Always use this function when the user’s request may relate to these sources, 
                 {
                     TenantId = tenantId,
                     SubTenantId = subTenantId,
-                    ScopeId = scopeId
+                    ScopeId = scopeId,
+                    UserId = userId
                 },
                 Limit = limit
             })

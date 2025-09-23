@@ -1,27 +1,29 @@
-﻿using System;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Plugin options for chat model.
+/// Represents a custom plugin.
 /// </summary>
-public class ChatPluginsOptions
+public class CustomPluginOptions
 {
     /// <summary>
-    /// Built-in plugins that can be enabled for the chat model.
+    /// The name of the plugin.
+    /// <para>
+    /// If <c>null</c>, the type name will be used as the plugin name.
+    /// Ensure that the plugin name is unique and does not conflict with any 
+    /// enabled and configured built-in plugins: <b>Memory</b>, <b>Knowledge</b>, or <b>Web Search</b>.
+    /// </para>
     /// </summary>
-    [Required]
-    public virtual ChatBuiltInPluginsOptions BuiltInPlugins { get; set; } = new();
+    public virtual string Name { get; set; }
 
     /// <summary>
-    /// A collection of plugin type names to be added to the kernel from configuration.
+    /// The custom plugin type to be added to the kernel from configuration.
     /// <para>
-    /// Each string in this collection must represent a valid Semantic Kernel plugin type. 
+    /// The type must represent a valid Semantic Kernel plugin type. 
     /// A valid plugin type is a class containing at least one method annotated with 
     /// <see cref="KernelFunctionAttribute"/>. Methods can optionally include a 
     /// <see cref="DescriptionAttribute"/>, providing the LLM with detailed guidance about the 
@@ -31,10 +33,9 @@ public class ChatPluginsOptions
     /// <b>Requirements and best practices:</b>
     /// <list type="bullet">
     /// <item>
-    /// Register any dependencies required by a plugin in <see cref="IServiceCollection"/> 
-    /// <b>before</b> registering this library. Plugin types must also be registered beforehand. 
-    /// At runtime, plugin types are resolved to <see cref="Type"/> instances, and constructors 
-    /// are invoked with dependencies from the kernel's service provider. If a type cannot be found 
+    /// Register any dependencies required by a plugin in <see cref="IServiceCollection"/>.
+    /// At runtime, plugin types are resolved to <see cref="System.Type"/> instances, and constructors 
+    /// are invoked with dependencies from the application service provider. If a type cannot be found 
     /// or dependencies cannot be resolved, an exception will be thrown.
     /// </item>
     /// <item>
@@ -57,11 +58,16 @@ public class ChatPluginsOptions
     /// <code>
     /// {
     ///   "Plugins": [
-    ///     "MyNamespace.MyPlugin, MyAssembly"
+    ///     {
+    ///       "Name: "My Plugin)
+    ///       "Type": "MyNamespace.MyPlugin, MyAssembly"
+    ///     }
+    ///     
     ///   ]
     /// }
     /// </code>
     /// </para>
     /// </summary>
-    public virtual IEnumerable<string> CustomPlugins { get; set; } = [];
+    [Required]
+    public virtual string Type { get; set; }
 }

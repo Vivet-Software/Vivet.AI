@@ -12,11 +12,11 @@ public class MemoryConfigOverrides : EmbedingConfigOverrides
     /// Metadata retrieval overrides.
     /// </summary>
     [Required]
-    public virtual EmbeddingMetadataConfigOverrides Metadata { get; set; } = new();
+    public virtual EmbeddingMetadataConfigOverrides Metadata { get; set; }
 
     /// <summary>
     /// Summarization overrides.
     /// </summary>
     [Required] 
-    public virtual EmbeddingSummarizationConfigOverrides Summarization { get; set; } = new();
+    public virtual EmbeddingSummarizationConfigOverrides Summarization { get; set; }
 }

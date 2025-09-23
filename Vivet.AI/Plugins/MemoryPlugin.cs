@@ -16,17 +16,17 @@ namespace Vivet.AI.Plugins;
 /// <summary>
 /// Memory Plugin
 /// </summary>
-public sealed class ChatMemoryPlugin
+public sealed class MemoryPlugin
 {
-    private readonly ChatMemoryPluginOptions options;
+    private readonly MemoryPluginOptions options;
     private readonly IEmbeddingMemoryService embeddingMemoryService;
 
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="options">See <see cref="ChatMemoryPluginOptions"/>.</param>
+    /// <param name="options">See <see cref="MemoryPluginOptions"/>.</param>
     /// <param name="embeddingMemoryService">The <see cref="IEmbeddingMemoryService"/>.</param>
-    public ChatMemoryPlugin(ChatMemoryPluginOptions options, IEmbeddingMemoryService embeddingMemoryService)
+    public MemoryPlugin(MemoryPluginOptions options, IEmbeddingMemoryService embeddingMemoryService)
     {
         this.options = options ?? throw new ArgumentNullException(nameof(options));
         this.embeddingMemoryService = embeddingMemoryService ?? throw new ArgumentNullException(nameof(embeddingMemoryService));
@@ -39,12 +39,12 @@ public sealed class ChatMemoryPlugin
     /// <param name="userId">The user id.</param>
     /// <param name="scopeId">The scope id.</param>
     /// <param name="agentId">The agent id.</param>
-    /// <param name="threadId">The thread id.</param>
+    /// <param name="currentThreadId">The thread id of the current conversation.</param>
     /// <returns>The memory chat prompt snippet.</returns>
     [KernelFunction("Memory")]
     [Description(@"Retrieve relevant user-specific memories, including past questions, answers, notes, or uploaded content, 
 and inject them into the current chat context to support personalized and consistent responses.")]
-    public async Task<string> GetMemoriesAsync([Description("The current user question or message")]string question, string userId, string scopeId, string agentId, string threadId) 
+    public async Task<string> GetMemoriesAsync([Description("The current user question or message")]string question, string userId, string agentId, string scopeId, string currentThreadId) 
     {
         if (string.IsNullOrEmpty(question))
         {
@@ -58,7 +58,7 @@ and inject them into the current chat context to support personalized and consis
 
         scopeId = string.IsNullOrEmpty(scopeId) ? null : scopeId;
         agentId = string.IsNullOrEmpty(agentId) ? null : agentId;
-        threadId = string.IsNullOrEmpty(threadId) ? null : threadId;
+        currentThreadId = string.IsNullOrEmpty(currentThreadId) ? null : currentThreadId;
 
         var from = DateTimeOffset.UtcNow
             .AddDays(-this.options.RetentionInDays);
@@ -70,7 +70,7 @@ and inject them into the current chat context to support personalized and consis
         var request = new SearchMemoryRequest
         {
             Query = question,
-            CurrentThreadId = threadId,
+            CurrentThreadId = currentThreadId,
             Criteria = new MemoryCriteria
             {
                 UserId = userId,

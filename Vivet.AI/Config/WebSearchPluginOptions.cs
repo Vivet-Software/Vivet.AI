@@ -1,12 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Config.Enums;
+using Vivet.AI.Models.Enums;
 
 namespace Vivet.AI.Config;
 
 /// <summary>
 /// Chat Web Search Plugin Options.
 /// </summary>
-public class ChatWebSearchPluginOptions
+public class WebSearchPluginOptions
 {
     /// <summary>
     /// The provider for the plugin to use when searching the web.

@@ -3,9 +3,9 @@
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Knowledge Options (nested class).
+/// Knowledge Plugin Options (nested class).
 /// </summary>
-public class ChatKnowledgePluginOptions
+public class KnowledgePluginOptions
 {
     /// <summary>
     /// Specifies the maximum number of results to return when searching for embeddings.

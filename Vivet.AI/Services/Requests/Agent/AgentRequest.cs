@@ -1,8 +1,9 @@
-﻿using Microsoft.SemanticKernel.ChatCompletion;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Requests.Agent.Enums;
+using Vivet.AI.Services.Requests.Agent.Models;
+using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
+using Vivet.AI.Services.Requests.Agent.Models.Plugins;
 
 namespace Vivet.AI.Services.Requests.Agent;
 
@@ -19,8 +20,13 @@ public class AgentRequest
     public virtual string Name { get; set; }
 
     /// <summary>
-    /// The description of the agentic orchestration.
+    /// A description of the agentic orchestration.
+    /// <para>
+    /// This property is optional, but it cannot be <c>null</c>. 
+    /// By default, it is set to <c>string.Empty</c>.
+    /// </para>
     /// </summary>
+    [Required]
     public virtual string Description { get; set; } = string.Empty;
 
     /// <summary>
@@ -32,44 +38,23 @@ public class AgentRequest
     /// <summary>
     /// The type of orchestration to use for the agents.
     /// </summary>
+    [Required]
     public virtual AgentOrchestrationType OrchestrationType { get; set; } = AgentOrchestrationType.Sequential;
 
     /// <summary>
     /// The agents to invoke
     /// </summary>
-    public virtual IEnumerable<Agent2> Agents { get; set; } = [];
-}
+    [Required]
+    public virtual IEnumerable<AgentDescriptor> Agents { get; set; } = [];
 
-/// <summary>
-/// 
-/// </summary>
-public class Agent2
-{
     /// <summary>
-    /// 
+    /// Plugins and their associated context for both built-in and custom plugins.
     /// </summary>
     [Required]
-    public virtual string Id { get; set; } = Guid.NewGuid().ToString();
+    public virtual AgentPlugins Plugins { get; set; } = new();
 
     /// <summary>
-    /// 
+    /// Gets or sets the configuration overrides for the request.
     /// </summary>
-    [Required]
-    public virtual string Name { get; set; }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public virtual string Description { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The system message for the agent.
-    /// </summary>
-    [Required]
-    public virtual string Instructions { get; set; }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    public virtual AuthorRole Role { get; set; } = AuthorRole.Assistant;
+    public virtual AgentConfigOverrides ConfigOverrides { get; set; }
 }

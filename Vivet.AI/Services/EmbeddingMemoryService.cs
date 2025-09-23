@@ -20,7 +20,9 @@ using Vivet.AI.Services.Requests.Embedding;
 using Vivet.AI.Services.Requests.Embedding.Memory;
 using Vivet.AI.Services.Requests.Embedding.Memory.Models;
 using Vivet.AI.Services.Requests.Metadata;
+using Vivet.AI.Services.Requests.Metadata.Models;
 using Vivet.AI.Services.Requests.Summarization;
+using Vivet.AI.Services.Requests.Summarization.Models;
 using Vivet.AI.Services.Responses.Embeddings.Memory;
 using Vivet.AI.Services.Responses.Embeddings.Memory.Models;
 using Vivet.AI.Services.Responses.Metadata;
@@ -227,16 +229,13 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         if (answer == null)
             throw new ArgumentNullException(nameof(answer));
 
-        if (configOverrides == null)
-            throw new ArgumentNullException(nameof(configOverrides));
-
         var isSummarization =
             summarizationService != null && 
             (
-                (configOverrides.Summarization.UseAutomaticSummarization ?? false) || 
+                (configOverrides?.Summarization?.UseAutomaticSummarization ?? false) || 
                 (
                     this.memoryOptions.UseAutomaticSummarization &&
-                    configOverrides.Summarization.UseAutomaticSummarization != false
+                    configOverrides?.Summarization?.UseAutomaticSummarization != false
                 )
             );
 
@@ -249,9 +248,9 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     {
                         Question = question,
                         Answer = stringAnswer,
-                        ConfigOverrides =
+                        ConfigOverrides = new SummarizationConfigOverrides
                         {
-                            SummarizationDegree = configOverrides.Summarization.SummarizationDegree
+                            SummarizationDegree = configOverrides?.Summarization?.SummarizationDegree
                         }
                     }, cancellationToken)
                     .ConfigureAwait(false);
@@ -326,9 +325,11 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     Order = i,
                     Language = request.Language,
                     EmbeddingModel = this.options.Model.Name,
+                    UserId = request.UserId,
+                    AgentId = request.AgentId,
+                    ScopeId = request.ScopeId,
                     ThreadId = request.ThreadId,
                     QuestionAnswerId = questionAnswerId,
-                    UserId = request.UserId,
                     IsQuestion = isQuestion,
                     IsAnswer = !isQuestion
                 };
@@ -360,16 +361,16 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                         Metadata = x.Metadata
                     };
                 }
-                else if (this.metadataService != null && ((request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval ?? false) || (this.memoryOptions.UseAutomaticMetadataRetrieval && request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval != false)))
+                else if (this.metadataService != null && ((request.ConfigOverrides?.Metadata?.UseAutomaticMetadataRetrieval ?? false) || (this.memoryOptions.UseAutomaticMetadataRetrieval && request.ConfigOverrides?.Metadata?.UseAutomaticMetadataRetrieval != false)))
                 {
                     metadataResponse = await this.metadataService
                         .GetAsync(new GetMetadataRequest
                         {
                             Blob = x,
-                            ConfigOverrides =
+                            ConfigOverrides = new MetadataConfigOverrides 
                             {
-                                SummaryMaxWords = request.ConfigOverrides.Metadata.SummaryMaxWords,
-                                DescriptionMaxWords = request.ConfigOverrides.Metadata.DescriptionMaxWords
+                                SummaryMaxWords = request.ConfigOverrides?.Metadata?.SummaryMaxWords,
+                                DescriptionMaxWords = request.ConfigOverrides?.Metadata?.DescriptionMaxWords
                             }
                         }, cancellationToken)
                         .ConfigureAwait(false);
@@ -403,9 +404,11 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     Order = 0,
                     Language = request.Language,
                     EmbeddingModel = this.options.Model.Name,
+                    UserId = request.UserId,
+                    AgentId = request.AgentId,
+                    ScopeId = request.ScopeId,
                     ThreadId = request.ThreadId,
                     QuestionAnswerId = questionAnswerId,
-                    UserId = request.UserId,
                     IsQuestion = true,
                     BlobBase64 = blobData.Base64,
                     BlobMimeType = blobData.MimeType

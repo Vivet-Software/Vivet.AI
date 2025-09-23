@@ -1,14 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Vivet.AI.Services.Extensions;
+using Vivet.AI.Services.Models.Plugins;
 
 namespace UnitTests.Vivet.AI.Services.Extensions;
 
 [TestClass]
 public class ChatHistoryExtensionsTests
 {
+    private sealed class TestBuiltInPluginsContext : BaseBuiltInPluginsContext<object, object, object>;
+
     [TestMethod]
     public void AddChatSystemPromptTest()
     {
@@ -23,6 +27,60 @@ public class ChatHistoryExtensionsTests
 
         // ReSharper disable ExpressionIsAlwaysNull
         Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddChatSystemPrompt<string>(SYSTEM_MESSAGE));
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+
+    [TestMethod]
+    public void AddBuiltInPluginsContextPromptTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void AddBuiltInPluginsContextPromptWhenChatHistoryIsNullThrowsArgumentNullExceptionTest()
+    {
+        ChatHistory chatHistory = null;
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddBuiltInPluginsContextPrompt(new TestBuiltInPluginsContext()));
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void AddBuiltInPluginsContextPromptWhenPluginsContextIsNullThrowsArgumentNullExceptionTest()
+    {
+        var chatHistory = new ChatHistory();
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddBuiltInPluginsContextPrompt<object, object, object>(null));
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+
+    [TestMethod]
+    public void AddCustomPluginContextPromptTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void AddCustomPluginContextPromptWhenChatHistoryIsNullThrowsArgumentNullExceptionTest()
+    {
+        ChatHistory chatHistory = null;
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddCustomPluginContextPrompt(new List<CustomPlugin>()));
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void AddCustomPluginContextPromptWhenCustomPluginsIsNullThrowsArgumentNullExceptionTest()
+    {
+        var chatHistory = new ChatHistory();
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(() => chatHistory.AddCustomPluginContextPrompt(null));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

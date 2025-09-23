@@ -1,5 +1,5 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.MimeTypes;

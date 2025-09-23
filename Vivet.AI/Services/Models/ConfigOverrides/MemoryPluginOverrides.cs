@@ -1,15 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Services.Models.ConfigOverrides;
 
-namespace Vivet.AI.Services.Requests.Chat.Models;
+namespace Vivet.AI.Services.Models.ConfigOverrides;
 
 /// <summary>
 /// Represents configuration overrides specific to memory in chat operations.
 /// </summary>
-public class ChatMemoryOverrides
+public class MemoryPluginOverrides
 {
     /// <summary>
-    /// Skips the memory context in the prompt for this request.
+    /// Skips the memory invocaton and context in the prompt for this request.
     /// </summary>
     public virtual bool SkipMemoryContext { get; set; } = false;
 

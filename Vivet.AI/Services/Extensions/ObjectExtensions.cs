@@ -49,7 +49,13 @@ internal static class ObjectExtensions
 
         foreach (var property in properties)
         {
-            var value = property.GetValue(@object);
+            if (property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+            {
+                continue;
+            }
+
+            var value = property
+                .GetValue(@object);
 
             switch (value)
             {
@@ -82,10 +88,14 @@ internal static class ObjectExtensions
     }
     private static bool ShouldRecurse(Type type)
     {
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+        
         return !type.IsPrimitive &&
                !type.IsEnum &&
                type != typeof(string) &&
-               !type.IsValueType;
+               !type.IsValueType &&
+               type != typeof(Type);
     }
     private sealed class ReferenceEqualityComparer : IEqualityComparer<object>
     {

@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Config.Enums;
+﻿namespace Vivet.AI.Models.Enums;
 
 /// <summary>
 /// The type of web search provider.

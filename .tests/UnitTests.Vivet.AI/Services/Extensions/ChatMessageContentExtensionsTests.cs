@@ -11,6 +11,75 @@ namespace UnitTests.Vivet.AI.Services.Extensions;
 public class ChatMessageContentExtensionsTests
 {
     [TestMethod]
+    public void GetExternalIdTest()
+    {
+        const string EXPECTED = "id";
+
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["Id"] = EXPECTED
+            }
+        };
+
+        var result = content.GetExternalId();
+        Assert.AreEqual(EXPECTED, result);
+    }
+
+    [TestMethod]
+    public void GetExternalIdThrowsArgumentNullExceptionTest()
+    {
+        ChatMessageContent content = null;
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(content.GetExternalId);
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void GetExternalIdWhenMetadataIsNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = null
+        };
+
+        var result = content.GetExternalId();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetExternalIdWhenUsageKeyIsMissingTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>()
+        };
+
+        var result = content.GetExternalId();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetExternalIdWhenWhenNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["Id"] = null
+            }
+        };
+
+        var result = content.GetExternalId();
+
+        Assert.IsNull(result);
+    }
+
+
+    [TestMethod]
     public void GetTokenUsageTest()
     {
         // Arrange: use ExpandoObject so dynamic binding works

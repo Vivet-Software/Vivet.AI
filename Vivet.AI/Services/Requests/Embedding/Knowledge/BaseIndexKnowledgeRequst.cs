@@ -21,9 +21,9 @@ public abstract class BaseIndexKnowledgeRequst<TOverrides> : BaseIndexRequest<TO
     public virtual string SubTenantId { get; set; }
 
     /// <summary>
-    /// Gets or sets the scope identifier.
+    /// Gets or sets the user identifier.
     /// </summary>
-    public virtual string ScopeId { get; set; }
+    public virtual string UserId { get; set; }
 
     /// <summary>
     /// Gets or sets the source of the knowledge content.

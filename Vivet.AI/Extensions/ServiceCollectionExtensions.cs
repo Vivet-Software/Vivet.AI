@@ -105,7 +105,7 @@ internal static class ServiceCollectionExtensions
                 var embeddingMemoryService = x
                     .GetService<IEmbeddingMemoryService>();
 
-                return new ChatService(chatOptions, chatCompletionService, kernelBuilder, promptExecutionSettings, embeddingMemoryService);
+                return new ChatService(chatOptions, chatCompletionService, kernelBuilder, x, promptExecutionSettings, embeddingMemoryService);
             });
 
         services
