@@ -38,6 +38,7 @@ namespace Vivet.AI.Services;
 // Update Custom plugins options configuration to have Type + Name (see CustomPluginOptions)
 // a plugin name can contain only ASCII letters, digits, and underscores
 // Plugins must have seperate context variables even when they are re-used among several plugins
+// update web search plugin, config etc. (Limit removed from config)
 
 /// <inheritdoc cref="IAgentService"/>
 public class AgentService(AgentOptions options, IServiceProvider serviceProvider, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings)
@@ -166,10 +167,10 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
             .Build();
 
         kernel.Plugins
-            .ValidateContext(request.Plugins.Context);
+            .ValidateContext(request.Plugins.Context, request.ConfigOverrides.Plugins);
 
         kernel
-            .AddPluginConfigOverridesOrDefault(request.ConfigOverrides)
+            .AddPluginConfigOverrides(request.ConfigOverrides)
             .AddCustomPlugins(serviceProvider, request.Plugins.CustomPlugins);
 
         return kernel;
@@ -188,10 +189,10 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
             .Build();
 
         kernel.Plugins
-            .ValidateContext(agent.Plugins.Context);
+            .ValidateContext(agent.Plugins.Context, agent.ConfigOverrides.Plugins);
 
         kernel
-            .AddPluginConfigOverridesOrDefault(agent.ConfigOverrides)
+            .AddPluginConfigOverrides(agent.ConfigOverrides)
             .AddCustomPlugins(serviceProvider, agent.Plugins.CustomPlugins);
 
         return kernel;

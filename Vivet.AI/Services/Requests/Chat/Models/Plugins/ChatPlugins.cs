@@ -18,7 +18,7 @@ public class ChatPlugins
     /// </para>
     /// </summary>
     [Required]
-    public virtual ChatBuiltInPluginsContext Context { get; set; } = new();
+    public virtual ChatBuiltInPluginsContext Context { get; } = new();
 
     /// <summary>
     /// A collection of custom plugins and their associated context 

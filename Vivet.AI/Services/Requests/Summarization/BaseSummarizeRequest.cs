@@ -11,5 +11,6 @@ public abstract class BaseSummarizeRequest
     /// <summary>
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
-    public virtual SummarizationConfigOverrides ConfigOverrides { get; set; }
+    [Required]
+    public virtual SummarizationConfigOverrides ConfigOverrides { get; } = new();
 }

@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
 using Vivet.AI.Services;
@@ -311,8 +311,42 @@ public class ChatServiceTests : BaseTests
     [TestMethod]
     public async Task ChatWhenWebSearchPluginTest()
     {
-        await Task.CompletedTask;
-        Assert.Inconclusive();
+        const string QUESTION = "What's the latest with .NET?";
+
+        var response = await this.ChatService
+            .ChatAsync(new ChatRequest
+            {
+                Question = QUESTION,
+                ConfigOverrides =
+                {
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            SkipMemoryContext = true 
+                        }
+                    }
+                },
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryPluginContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid().ToString()
+                        },
+                        WebSearch = new WebSearchPluginContext
+                        {
+                            Site = "microsoft.com",
+                            Limit = 3
+                        }
+                    }
+                }
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsTrue(response.InputPrompt.Contains(".NET"));
     }
 
     [TestMethod]

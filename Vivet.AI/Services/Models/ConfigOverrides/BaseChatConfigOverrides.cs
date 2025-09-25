@@ -1,4 +1,5 @@
-﻿using Vivet.AI.Models;
+﻿using System.ComponentModel.DataAnnotations;
+using Vivet.AI.Models;
 
 namespace Vivet.AI.Services.Models.ConfigOverrides;
 
@@ -21,5 +22,6 @@ public abstract class BaseChatConfigOverrides : BaseConfigOverrides
     /// <summary>
     /// Plugin config overrides.
     /// </summary>
-    public virtual BuiltInPluginsOverrides Plugins { get; set; }
+    [Required]
+    public virtual BuiltInPluginsConfigOverrides Plugins { get; } = new();
 }

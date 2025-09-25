@@ -4,13 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using Vivet.AI.Plugins.Consts;
+using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
 
 namespace Vivet.AI.Services.Extensions;
 
 internal static class KernelPluginCollectionExtensions
 {
-    internal static void ValidateContext<TMemory, TKnowledge, TWebSearch>(this KernelPluginCollection kernelPluginCollection, BaseBuiltInPluginsContext<TMemory, TKnowledge, TWebSearch> pluginsContext)
+    internal static void ValidateContext<TMemory, TKnowledge, TWebSearch>(this KernelPluginCollection kernelPluginCollection, BaseBuiltInPluginsContext<TMemory, TKnowledge, TWebSearch> pluginsContext, BuiltInPluginsConfigOverrides configOverrides)
         where TMemory : class
         where TKnowledge : class
         where TWebSearch : class
@@ -21,24 +22,36 @@ internal static class KernelPluginCollectionExtensions
         if (pluginsContext == null) 
             throw new ArgumentNullException(nameof(pluginsContext));
 
+        if (configOverrides == null) 
+            throw new ArgumentNullException(nameof(configOverrides));
+
         foreach (var kernelPlugin in kernelPluginCollection)
         {
             switch (kernelPlugin.Name)
             {
                 case BuiltInPluginNames.MEMORY_PLUGIN:
-                    ValidateContext<TMemory>(pluginsContext.Memory, kernelPlugin.Name);
+                    if (!configOverrides.Memory.SkipMemoryContext)
+                    {
+                        ValidateContext<TMemory>(pluginsContext.Memory, kernelPlugin.Name);
+                    }
                     break;
 
                 case BuiltInPluginNames.KNOWLEDGE_PLUGIN:
-                    ValidateContext<TKnowledge>(pluginsContext.Knowledge, kernelPlugin.Name);
+                    if (!configOverrides.Knowledge.SkipKnowledgeContext)
+                    {
+                        ValidateContext<TKnowledge>(pluginsContext.Knowledge, kernelPlugin.Name);
+                    }
                     break;
 
                 case BuiltInPluginNames.WEB_SEARCH_PLUGIN:
-                    ValidateContext<TWebSearch>(pluginsContext.WebSearch, kernelPlugin.Name);
+                    if (!configOverrides.WebSearch.SkipWebSearchContext)
+                    {
+                        ValidateContext<TWebSearch>(pluginsContext.WebSearch, kernelPlugin.Name);
+                    }
                     break;
 
                 default:
-                    continue;    
+                    continue; 
             }
         }
     }

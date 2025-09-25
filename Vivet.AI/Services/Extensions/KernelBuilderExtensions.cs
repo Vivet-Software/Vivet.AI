@@ -30,17 +30,15 @@ internal static class KernelBuilderExtensions
         return kernel;
     }
 
-    internal static Kernel AddPluginConfigOverridesOrDefault(this Kernel kernel, BaseChatConfigOverrides configOverrides)
+    internal static Kernel AddPluginConfigOverrides(this Kernel kernel, BaseChatConfigOverrides configOverrides)
     {
         if (kernel == null)
             throw new ArgumentNullException(nameof(kernel));
 
-        if (configOverrides?.Plugins == null)
-        {
-            return kernel;
-        }
+        if (configOverrides == null) 
+            throw new ArgumentNullException(nameof(configOverrides));
 
-        if (configOverrides.Plugins.Memory is { SkipMemoryContext: true })
+        if (configOverrides.Plugins.Memory.SkipMemoryContext)
         {
             var memoryPlugin = kernel.Plugins
                 .FirstOrDefault(x => x.Name == nameof(MemoryPlugin));
@@ -52,7 +50,7 @@ internal static class KernelBuilderExtensions
             }
         }
 
-        if (configOverrides.Plugins.Knowledge is { SkipKnowledgeContext: true })
+        if (configOverrides.Plugins.Knowledge.SkipKnowledgeContext)
         {
             var knowledgePlugin = kernel.Plugins
                 .FirstOrDefault(x => x.Name == nameof(KnowledgePlugin));
@@ -64,7 +62,7 @@ internal static class KernelBuilderExtensions
             }
         }
 
-        if (configOverrides.Plugins.WebSearch is { SkipWebSearchContext: true })
+        if (configOverrides.Plugins.WebSearch.SkipWebSearchContext)
         {
             var knowledgePlugin = kernel.Plugins
                 .FirstOrDefault(x => x.Name == nameof(KnowledgePlugin));

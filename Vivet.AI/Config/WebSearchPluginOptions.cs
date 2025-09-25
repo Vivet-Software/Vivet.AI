@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Config.Enums;
 using Vivet.AI.Models.Enums;
 
 namespace Vivet.AI.Config;
@@ -32,9 +31,4 @@ public class WebSearchPluginOptions
     /// </summary>
     [Required]
     public virtual string ApiKey { get; set; }
-
-    /// <summary>
-    /// Number of search results to return for the web search.
-    /// </summary>
-    public virtual int Limit { get; init; } = 5;
 }

@@ -18,6 +18,7 @@ using Vivet.AI.Extensions.Embeddings.Postgres;
 using Vivet.AI.Extensions.Embeddings.Qdrant;
 using Vivet.AI.Extensions.Embeddings.Weaviate;
 using Vivet.AI.Models;
+using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
 using Vivet.AI.Services.Interfaces;
 using ChatOptions = Vivet.AI.Config.ChatOptions;
@@ -36,6 +37,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+
     internal static IServiceCollection AddConfigOptions(this IServiceCollection services, out AiOptions options)
     {
         if (services == null)
@@ -82,11 +84,12 @@ internal static class ServiceCollectionExtensions
 
                 builder
                     .AddChatPluginsFromConfiguration(x);
-                
+
                 return builder;
             });
 
         services
+            .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Chat.Plugins.BuiltInPlugins.WebSearch)
             .AddPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
             .AddScoped<IChatService>(x =>
             {
@@ -115,6 +118,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+    
     internal static IServiceCollection AddEmbeddingServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
@@ -193,6 +197,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+    
     internal static IServiceCollection AddMetadataServices<T>(this IServiceCollection services, AiOptions options)
         where T : PromptExecutionSettings, new()
     {
@@ -239,6 +244,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+    
     internal static IServiceCollection AddSummarizationServices<T>(this IServiceCollection services, AiOptions options)
         where T : PromptExecutionSettings, new()
     {
@@ -314,7 +320,34 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    internal static IServiceCollection AddPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
+
+
+    private static IServiceCollection AddTextSearch(this IServiceCollection services, string serviceId, WebSearchPluginOptions webSearchPluginOptions = null)
+    {
+        if (webSearchPluginOptions == null)
+        {
+            return services;
+        }
+
+        switch (webSearchPluginOptions.Provider)
+        {
+            case WebSearchProvider.Google:
+                services
+                    .AddGoogleTextSearch(webSearchPluginOptions.Id, webSearchPluginOptions.ApiKey, serviceId: serviceId);
+                break;
+
+            case WebSearchProvider.Bing:
+                services
+                    .AddBingTextSearch(webSearchPluginOptions.ApiKey, serviceId: serviceId);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(webSearchPluginOptions.Provider), webSearchPluginOptions.Provider, $"The provider '{webSearchPluginOptions.Provider}' is not suppoprted.");
+        }
+
+        return services;
+    }
+    private static IServiceCollection AddPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
         where T : PromptExecutionSettings, new()
     {
         if (services == null) 
@@ -337,7 +370,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    internal static IServiceCollection AddHealthCheckPromptExecutionSettings<T>(this IServiceCollection services, string serviceId)
+    private static IServiceCollection AddHealthCheckPromptExecutionSettings<T>(this IServiceCollection services, string serviceId)
         where T : PromptExecutionSettings, new()
     {
         if (services == null)
@@ -359,8 +392,6 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-
-
     private static IServiceCollection AddMemoryVectorStore(this IServiceCollection services, EmbeddingOptions.MemoryOptions options)
     {
         if (services == null)
@@ -501,6 +532,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+    
     private static void EnsureCreated<TCollection>(this IServiceCollection services)
         where TCollection : BaseEmbedding
     {

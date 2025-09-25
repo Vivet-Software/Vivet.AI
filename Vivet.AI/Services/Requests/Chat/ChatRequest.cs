@@ -39,5 +39,6 @@ public class ChatRequest
     /// <summary>
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
-    public virtual ChatConfigOverrides ConfigOverrides { get; set; }
+    [Required]
+    public virtual ChatConfigOverrides ConfigOverrides { get; } = new();
 }

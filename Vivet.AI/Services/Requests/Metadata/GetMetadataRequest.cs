@@ -18,5 +18,6 @@ public class GetMetadataRequest
     /// <summary>
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
-    public virtual MetadataConfigOverrides ConfigOverrides { get; set; }
+    [Required]
+    public virtual MetadataConfigOverrides ConfigOverrides { get; } = new();
 }

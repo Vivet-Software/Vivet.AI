@@ -12,5 +12,5 @@ public class KnowledgeBlobConfigOverrides : KnowledgeConfigOverrides
     /// Metadata overrides.
     /// </summary>
     [Required]
-    public virtual EmbeddingMetadataConfigOverrides Metadata { get; set; }
+    public virtual EmbeddingMetadataConfigOverrides Metadata { get; } = new();
 }

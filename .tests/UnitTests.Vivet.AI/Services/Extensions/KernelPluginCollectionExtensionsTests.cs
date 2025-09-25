@@ -32,7 +32,7 @@ public class KernelPluginCollectionExtensionsTests
     [TestMethod]
     public void ValidateContextWhenPluginsContextIsNullThrowsArgumentNullExceptionTest()
     {
-        KernelPluginCollection kernelPluginCollection = new KernelPluginCollection();
+        var kernelPluginCollection = new KernelPluginCollection();
         TestBuiltInPluginsContext pluginsContext = null;
 
         // ReSharper disable ExpressionIsAlwaysNull

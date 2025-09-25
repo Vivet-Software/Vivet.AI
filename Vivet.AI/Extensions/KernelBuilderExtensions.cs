@@ -1,15 +1,11 @@
-﻿using Google.Apis.Services;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Data;
-using Microsoft.SemanticKernel.Plugins.Web.Bing;
-using Microsoft.SemanticKernel.Plugins.Web.Google;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Vivet.AI.Config;
-using Vivet.AI.Models.Enums;
+using Vivet.AI.Extensions.Consts;
 using Vivet.AI.Plugins;
 using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Interfaces;
@@ -32,7 +28,7 @@ internal static class KernelBuilderExtensions
         builder
             .AddMemoryPlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.Memory)
             .AddKnowledgePlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.Knowledge)
-            .AddWebSearchPlugin(chatOptions.Plugins.BuiltInPlugins.WebSearch);
+            .AddWebSearchPlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.WebSearch);
 
         var typeAndNames = chatOptions.Plugins.CustomPlugins
             .Select(x => new
@@ -92,7 +88,7 @@ internal static class KernelBuilderExtensions
     }
 
 
-    private static IKernelBuilder AddMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, MemoryPluginOptions options)
+    private static IKernelBuilder AddMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, MemoryPluginOptions options = null)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -117,7 +113,7 @@ internal static class KernelBuilderExtensions
 
         return builder;
     }
-    private static IKernelBuilder AddKnowledgePlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, KnowledgePluginOptions options)
+    private static IKernelBuilder AddKnowledgePlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, KnowledgePluginOptions options = null)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -142,7 +138,7 @@ internal static class KernelBuilderExtensions
 
         return builder;
     }
-    private static IKernelBuilder AddWebSearchPlugin(this IKernelBuilder builder, WebSearchPluginOptions options = null)
+    private static IKernelBuilder AddWebSearchPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, WebSearchPluginOptions options = null)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -152,67 +148,18 @@ internal static class KernelBuilderExtensions
             return null;
         }
 
-        var textSearchOptions = new TextSearchOptions
+        var textSearch = serviceProvider
+            .GetKeyedService<ITextSearch>(ServiceIds.CHAT_SERVICE_ID);
+        
+        if (textSearch == null)
         {
-            Top = options.Limit
-        };
-
-        List<KernelFunction> webSearchFunctions;
-
-        switch (options.Provider)
-        {
-            case WebSearchProvider.Bing:
-                var bingTextSearch = new BingTextSearch(options.ApiKey);
-
-                var bingSearchFunc = bingTextSearch
-                    .CreateSearch(searchOptions: textSearchOptions);
-
-                var bingGetResultsFunc = bingTextSearch
-                    .CreateGetSearchResults(searchOptions: textSearchOptions);
-
-                var bingGetTextResultsFunc = bingTextSearch
-                    .CreateGetTextSearchResults(searchOptions: textSearchOptions);
-
-                webSearchFunctions =
-                [
-                    bingSearchFunc,
-                    bingGetResultsFunc,
-                    bingGetTextResultsFunc
-                ];
-
-                break;
-
-            case WebSearchProvider.Google:
-                var initializer = new BaseClientService.Initializer
-                {
-                    ApiKey = options.ApiKey
-                };
-                var googleTextSearch = new GoogleTextSearch(initializer, options.Id);
-
-                var googleSearchFunc = googleTextSearch
-                    .CreateSearch(searchOptions: textSearchOptions);
-
-                var googleGetResultsFunc = googleTextSearch
-                    .CreateGetSearchResults(searchOptions: textSearchOptions);
-
-                var googleGetTextResultsFunc = googleTextSearch
-                    .CreateGetTextSearchResults(searchOptions: textSearchOptions);
-
-                webSearchFunctions =
-                [
-                    googleSearchFunc,
-                    googleGetResultsFunc,
-                    googleGetTextResultsFunc
-                ];
-
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException(nameof(options.Provider));
+            return null;
         }
 
+        var webSearchPlugin = new WebSearchPlugin(textSearch, options.Provider);
+
         builder.Plugins
-            .AddFromFunctions(BuiltInPluginNames.WEB_SEARCH_PLUGIN, webSearchFunctions);
+            .AddFromObject(webSearchPlugin);
 
         return builder;
     }

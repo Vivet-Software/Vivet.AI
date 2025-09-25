@@ -75,9 +75,9 @@ containing a meaningful error message, describing why the request could not be c
             .AddSystemMessage("[PLUGIN CONTEXT]");
 
         chatHistory
-            .AddBuiltInPluginContextPrompt(pluginsContext.Memory)
-            .AddBuiltInPluginContextPrompt(pluginsContext.Knowledge)
-            .AddBuiltInPluginContextPrompt(pluginsContext.WebSearch);
+            .AddBuiltInPluginContextPrompt(pluginsContext.Memory, BuiltInPluginNames.MEMORY_PLUGIN)
+            .AddBuiltInPluginContextPrompt(pluginsContext.Knowledge, BuiltInPluginNames.KNOWLEDGE_PLUGIN)
+            .AddBuiltInPluginContextPrompt(pluginsContext.WebSearch, BuiltInPluginNames.WEB_SEARCH_PLUGIN);
 
         return chatHistory;
     }
@@ -307,7 +307,7 @@ A: {answer}
     }
 
 
-    private static ChatHistory AddBuiltInPluginContextPrompt<TContext>(this ChatHistory chatHistory, TContext context)
+    private static ChatHistory AddBuiltInPluginContextPrompt<TContext>(this ChatHistory chatHistory, TContext context, string pluginName)
         where TContext : class
     {
         if (chatHistory == null)
@@ -321,14 +321,14 @@ A: {answer}
         var memoryContext = GetContextStringOrDefault(context);
 
         chatHistory
-            .AddUserMessage($"{BuiltInPluginNames.MEMORY_PLUGIN} Plugin Context: {string.Join(", ", memoryContext)}");
+            .AddUserMessage($"{pluginName} Plugin Context: {string.Join(", ", memoryContext)}");
 
         return chatHistory;
     }
-    private static string GetContextStringOrDefault<TContext>(TContext memoryContext)
+    private static string GetContextStringOrDefault<TContext>(TContext context)
         where TContext : class
     {
-        if (memoryContext == null)
+        if (context == null)
         {
             return null;
         }
@@ -337,7 +337,7 @@ A: {answer}
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(x =>
             {
-                var value = x.GetValue(memoryContext);
+                var value = x.GetValue(context);
 
                 if (value == null)
                 {

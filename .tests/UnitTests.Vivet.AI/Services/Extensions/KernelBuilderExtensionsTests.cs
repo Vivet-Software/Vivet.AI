@@ -74,7 +74,7 @@ public class KernelBuilderExtensionsTests
         var configOverrides = new TestChatConfigOverrides();
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => kernel.AddPluginConfigOverridesOrDefault(configOverrides));
+        Assert.ThrowsException<ArgumentNullException>(() => kernel.AddPluginConfigOverrides(configOverrides));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

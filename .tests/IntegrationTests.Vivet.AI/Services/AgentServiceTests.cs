@@ -46,7 +46,7 @@ public class AgentServiceTests : BaseTests
             new()
             {
                 Name = "ChemistryExpert"
-            },
+            }
         };
 
         var response = await agentService

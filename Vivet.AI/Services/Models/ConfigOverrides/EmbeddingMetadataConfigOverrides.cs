@@ -15,11 +15,11 @@ public class EmbeddingMetadataConfigOverrides
     /// The max word count for the metadata summary.
     /// The summary is vectorized and later used for searching blobs in the vector store.
     /// </summary>
-    public virtual int SummaryMaxWords { get; set; } = 30;
+    public virtual int? SummaryMaxWords { get; set; }
 
     /// <summary>
     /// The max word count for the metadata description.
     /// The description is later passed to the chat model when the found by searching the vector store.
     /// </summary>
-    public virtual int DescriptionMaxWords { get; set; } = 90;
+    public virtual int? DescriptionMaxWords { get; set; }
 }

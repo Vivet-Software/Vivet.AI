@@ -18,7 +18,6 @@ using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Chat.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
-using Vivet.AI.Services.Requests.Embedding.Memory.Models;
 using Vivet.AI.Services.Responses.Chat;
 using Vivet.AI.Services.Serialization;
 
@@ -71,7 +70,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var chatHistory = await BuildChatHistory<T>(request, cancellationToken)
             .ConfigureAwait(false);
 
-        var executionSettings = this.GetPromptExecutionSettingsOrDefault(request.ConfigOverrides);
+        var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
         var chatMessageContent = await this.chatCompletionService
             .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
@@ -137,7 +136,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var chatHistory = await BuildChatHistory<string>(request, cancellationToken)
             .ConfigureAwait(false);
 
-        var executionSettings = this.GetPromptExecutionSettingsOrDefault(request.ConfigOverrides);
+        var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
         var streamingChatMessageContents = this.chatCompletionService
             .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
@@ -211,11 +210,11 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return chatHistory;
     }
-    private PromptExecutionSettings GetPromptExecutionSettingsOrDefault(ChatConfigOverrides configOverrides)
+    private PromptExecutionSettings GetPromptExecutionSettings(ChatConfigOverrides configOverrides)
     {
         if (configOverrides == null)
         {
-            return this.promptExecutionSettings;
+            throw new NullReferenceException(nameof(configOverrides));
         }
 
         var executionSettings = this.promptExecutionSettings
@@ -234,10 +233,10 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             .Build();
 
         kernel.Plugins
-            .ValidateContext(request.Plugins.Context);
+            .ValidateContext(request.Plugins.Context, request.ConfigOverrides.Plugins);
 
         kernel
-            .AddPluginConfigOverridesOrDefault(request.ConfigOverrides)
+            .AddPluginConfigOverrides(request.ConfigOverrides)
             .AddCustomPlugins(serviceProvider, request.Plugins.CustomPlugins);
 
         return kernel;
@@ -330,7 +329,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             return Task.CompletedTask;
         }
 
-        if (request.ConfigOverrides?.Plugins?.Memory is { SkipMemoryContext: true })
+        if (request.ConfigOverrides.Plugins.Memory is { SkipMemoryContext: true })
         {
             return Task.CompletedTask;
         }
@@ -350,10 +349,10 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
                         ScopeId = request.Plugins.Context.Memory.ScopeId,
                         Language = response.Language,
                         Blobs = request.Blobs,
-                        ConfigOverrides = new MemoryConfigOverrides
+                        ConfigOverrides =
                         {
-                            Metadata = request.ConfigOverrides?.Plugins?.Memory?.Metadata,
-                            Summarization = request.ConfigOverrides?.Plugins?.Memory?.Summarization
+                            Metadata = request.ConfigOverrides.Plugins.Memory?.Metadata,
+                            Summarization = request.ConfigOverrides.Plugins.Memory?.Summarization
                         }
                     }, cancellationToken)
                     .ConfigureAwait(false);

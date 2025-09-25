@@ -61,16 +61,16 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         var blobContent = await request.Blob
             .GetBinaryContent(cancellationToken);
 
-        var maxWordsSummary = request.ConfigOverrides?.SummaryMaxWords ?? this.metadataOptions.SummaryMaxWords;
-        var maxWordsDescription = request.ConfigOverrides?.DescriptionMaxWords ?? this.metadataOptions.DescriptionMaxWords;
+        var maxWordsSummary = request.ConfigOverrides.SummaryMaxWords ?? this.metadataOptions.SummaryMaxWords;
+        var maxWordsDescription = request.ConfigOverrides.DescriptionMaxWords ?? this.metadataOptions.DescriptionMaxWords;
 
         chatHistory
             .AddMetadataPrompt<T>(blobContent, maxWordsSummary, maxWordsDescription);
 
         var executionSettings = this.promptExecutionSettings
-            .GetOverridePromptExecutionSettings(request.ConfigOverrides?.ModelParameters);
+            .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
 
-        executionSettings.ModelId = request.ConfigOverrides?.ModelName;
+        executionSettings.ModelId = request.ConfigOverrides.ModelName;
 
         var kernel = kernelBuilder
             .Build();
