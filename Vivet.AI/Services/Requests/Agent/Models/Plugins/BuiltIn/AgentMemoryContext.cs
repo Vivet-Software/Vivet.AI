@@ -1,17 +1,23 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.Plugins.BuiltIn;
 
-namespace Vivet.AI.Services.Requests.Chat.Models.Plugins.BuiltIn;
+namespace Vivet.AI.Services.Requests.Agent.Models.Plugins.BuiltIn;
 
 /// <summary>
 /// Represents the context for the built-in memory plugin.
 /// </summary>
-public class ChatMemoryPluginContext : BaseMemoryPluginContext
+public class AgentMemoryContext : BaseMemoryContext
 {
+    /// <summary>
+    /// Identifier of the agent processing the request.
+    /// Used for memory retrieval and context matching.
+    /// </summary>
+    [Required]
+    public virtual string AgentId { get; set; }
+
     /// <summary>
     /// Identifier of the user making the request.
     /// Used for personalizing memory lookups.
     /// </summary>
-    [Required]
     public virtual string UserId { get; set; }
 }

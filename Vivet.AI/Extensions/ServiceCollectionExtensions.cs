@@ -71,7 +71,7 @@ internal static class ServiceCollectionExtensions
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddLoggerFactory(services);
+                    .AddLoggerFactory(x);
 
                 // TODO: Exception Handling (Function Invocation Filter, e.g. Logging)
                 // TODO: Prompt Caching (Prompt Render Filter - https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Caching/SemanticCachingWithFilters.cs)
@@ -208,12 +208,12 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Metadata);
 
         services
-            .AddKeyedSingleton(ServiceIds.METADATA_SERVICE_ID, (_, _) =>
+            .AddKeyedSingleton(ServiceIds.METADATA_SERVICE_ID, (x, _) =>
             {
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddLoggerFactory(services);
+                    .AddLoggerFactory(x);
 
                 return builder;
             });
@@ -258,12 +258,12 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Summarization);
 
         services
-            .AddKeyedSingleton(ServiceIds.SUMMARIZATION_SERVICE_ID, (_, _) =>
+            .AddKeyedSingleton(ServiceIds.SUMMARIZATION_SERVICE_ID, (x, _) =>
             {
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddLoggerFactory(services);
+                    .AddLoggerFactory(x);
 
                 return builder;
             });

@@ -34,7 +34,11 @@ public class BaseTests
 
         this.services
             .AddSingleton<IConfiguration>(configuration)
-            .AddLogging(x => x.AddConsole());
+            .AddLogging(x =>
+            {
+                x.SetMinimumLevel(LogLevel.Trace);
+                x.AddConsole();
+            });
 
         this.services
             .AddVivetAzureOpenAi();

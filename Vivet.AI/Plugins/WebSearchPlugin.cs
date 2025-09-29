@@ -34,9 +34,14 @@ public sealed class WebSearchPlugin
     /// </summary>
     [KernelFunction("web_search")]
     [Description("Perform a web search. Always use this function when external or public knowledge is needed.")]
-    public async Task<IEnumerable<string>> SearchAsync(string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<string>> SearchAsync([Description("The current user question or message")]string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
     {
-        var filter = new TextSearchFilter();
+        if (query == null)
+        {
+            return null;
+        }
+            
+        var filter = this.GetTextSearchFilter(site);
 
         var options = new TextSearchOptions
         {
@@ -60,9 +65,14 @@ public sealed class WebSearchPlugin
     /// </summary>
     [KernelFunction("web_search_get_results")]
     [Description("Retrieve detailed search results including URLs and snippets.")]
-    public async Task<IEnumerable<object>> GetSearchResultsAsync(string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<object>> GetSearchResultsAsync([Description("The current user question or message")]string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
     {
-        var filter = new TextSearchFilter();
+        if (query == null)
+        {
+            return null;
+        }
+
+        var filter = this.GetTextSearchFilter(site);
 
         var options = new TextSearchOptions
         {
@@ -86,8 +96,13 @@ public sealed class WebSearchPlugin
     /// </summary>
     [KernelFunction("web_search_get_text_results")]
     [Description("Retrieve text-only search results for chat or summarization.")]
-    public async Task<IReadOnlyList<TextSearchResult>> GetTextSearchResultsAsync(string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TextSearchResult>> GetTextSearchResultsAsync([Description("The current user question or message")]string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
     {
+        if (query == null)
+        {
+            return null;
+        }
+
         var filter = this.GetTextSearchFilter(site);
 
         var options = new TextSearchOptions

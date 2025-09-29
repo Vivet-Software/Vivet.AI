@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Requests.Agent.Enums;
 using Vivet.AI.Services.Requests.Agent.Models;
 using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
@@ -26,11 +27,12 @@ public class AgentRequest
     /// By default, it is set to <c>string.Empty</c>.
     /// </para>
     /// </summary>
-    [Required]
     public virtual string Description { get; set; } = string.Empty;
 
     /// <summary>
     /// The input to pass to the agents.
+    /// The orchestration takes your input and routes it through the selected agents in sequence, parallel. etc.,
+    /// depending on the <see cref="OrchestrationType"/>.
     /// </summary>
     [Required]
     public virtual string Input { get; set; }
@@ -42,19 +44,28 @@ public class AgentRequest
     public virtual AgentOrchestrationType OrchestrationType { get; set; } = AgentOrchestrationType.Sequential;
 
     /// <summary>
-    /// The agents to invoke
+    /// Collection of optional blobs associated with the request.
+    /// These may provide additional context for answering the question.
     /// </summary>
     [Required]
+    public virtual IEnumerable<BaseBlobMetadata> Blobs { get; set; } = [];
+
+    /// <summary>
+    /// The agents to invoke.
+    /// </summary>
+    [Required]
+    [MinLength(1)]
     public virtual IEnumerable<AgentDescriptor> Agents { get; set; } = [];
 
     /// <summary>
     /// Plugins and their associated context for both built-in and custom plugins.
     /// </summary>
     [Required]
-    public virtual AgentPlugins Plugins { get; set; } = new();
+    public virtual AgentPlugins Plugins { get; } = new();
 
     /// <summary>
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
-    public virtual AgentConfigOverrides ConfigOverrides { get; set; }
+    [Required]
+    public virtual AgentConfigOverrides ConfigOverrides { get; } = new(); 
 }

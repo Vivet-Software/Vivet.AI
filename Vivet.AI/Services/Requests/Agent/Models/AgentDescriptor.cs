@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Microsoft.SemanticKernel.ChatCompletion;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.SemanticKernel.ChatCompletion;
 using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Agent.Models.Plugins;
 
@@ -12,21 +11,19 @@ namespace Vivet.AI.Services.Requests.Agent.Models;
 public class AgentDescriptor
 {
     /// <summary>
-    /// A unique identifier for the agent. Defaults to a new GUID if not provided.
+    /// Gets the unique identifier for the agent.
+    /// <para>
+    /// This identifier is used to distinguish the agent during orchestration execution
+    /// and when storing or retrieving the agent’s memories. 
+    /// Each agent must have a unique identifier to avoid conflicts.
+    /// </para>
     /// </summary>
     [Required]
-    public virtual string Id { get; set; } = Guid.NewGuid().ToString();
-
-    /// <summary>
-    /// The display name of the agent.
-    /// </summary>
-    [Required]
-    public virtual string Name { get; set; }
+    public virtual string Id { get; set; }
 
     /// <summary>
     /// A brief description of the agent's purpose or role.
     /// </summary>
-    [Required]
     public virtual string Description { get; set; } = string.Empty;
 
     /// <summary>
@@ -40,19 +37,24 @@ public class AgentDescriptor
     /// The role of the agent when participating in a conversation.
     /// Defaults to <see cref="AuthorRole.Assistant"/>.
     /// </summary>
-    public virtual AuthorRole Role { get; set; } = AuthorRole.Assistant;
+    public virtual AuthorRole Role { get; set; } = AuthorRole.System;
 
     /// <summary>
     /// Represents plugins and their associated context, including both built-in and custom plugins.
-    /// Setting this property overrides the plugins defined on the parent request or kernel.
+    /// <para>
+    /// Setting this property overrides the plugins defined on the parent request.
+    /// </para>
     /// </summary>
     [Required]
-    public virtual AgentPlugins Plugins { get; set; }
+    public virtual AgentPlugins Plugins { get; } = new();
 
     /// <summary>
     /// Allows overriding default configuration for the agent, such as model-specific settings
-    /// or behavior adjustments. This works in conjunction with the kernel and plugins.
+    /// or behavior adjustments..
+    /// <para>
+    /// Setting this property overrides the plugins defined on the parent request.
+    /// </para>
     /// </summary>
     [Required]
-    public virtual AgentConfigOverrides ConfigOverrides { get; set; }
+    public virtual AgentConfigOverrides ConfigOverrides { get; } = new();
 }

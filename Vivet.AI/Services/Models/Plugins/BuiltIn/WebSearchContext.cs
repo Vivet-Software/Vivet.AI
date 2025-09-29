@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the context for the built-in web search plugin.
 /// </summary>
-public class WebSearchPluginContext
+public class WebSearchContext
 {
     /// <summary>
     /// Number of search results to return for the web search.

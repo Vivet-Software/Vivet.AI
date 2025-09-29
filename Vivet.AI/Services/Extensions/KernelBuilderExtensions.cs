@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Vivet.AI.Plugins;
+using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
 
@@ -23,57 +23,65 @@ internal static class KernelBuilderExtensions
 
         foreach (var requestPlguin in plugins)
         {
-            kernel.Plugins
-                .AddFromType(requestPlguin, serviceProvider);
+            var kernelPlugin = kernel.Plugins
+                .FirstOrDefault(x => x.Name == requestPlguin.Name);
+
+            if (kernelPlugin == null)
+            {
+                kernel.Plugins
+                    .AddFromType(requestPlguin, serviceProvider);
+            }
         }
 
         return kernel;
     }
 
-    internal static Kernel AddPluginConfigOverrides(this Kernel kernel, BaseChatConfigOverrides configOverrides)
+    internal static Kernel AddBuiltInPluginConfigOverrides(this Kernel kernel, BuiltInPluginsConfigOverrides configOverrides, BuiltInPluginsConfigOverrides parentConfigOverrides = null)
     {
         if (kernel == null)
             throw new ArgumentNullException(nameof(kernel));
 
-        if (configOverrides == null) 
-            throw new ArgumentNullException(nameof(configOverrides));
 
-        if (configOverrides.Plugins.Memory.SkipMemoryContext)
+        var skipMemoryContext = configOverrides.Memory?.SkipMemoryContext ?? parentConfigOverrides?.Memory?.SkipMemoryContext ?? false;
+        if (skipMemoryContext)
         {
-            var memoryPlugin = kernel.Plugins
-                .FirstOrDefault(x => x.Name == nameof(MemoryPlugin));
-
-            if (memoryPlugin != null)
-            {
-                kernel.Plugins
-                    .Remove(memoryPlugin);
-            }
+            kernel
+                .RemovePlugin(BuiltInPluginNames.MEMORY_PLUGIN);
         }
 
-        if (configOverrides.Plugins.Knowledge.SkipKnowledgeContext)
+        var skipKnowledgeContext = configOverrides.Knowledge?.SkipKnowledgeContext ?? parentConfigOverrides?.Knowledge?.SkipKnowledgeContext ?? false;
+        if (skipKnowledgeContext)
         {
-            var knowledgePlugin = kernel.Plugins
-                .FirstOrDefault(x => x.Name == nameof(KnowledgePlugin));
-
-            if (knowledgePlugin != null)
-            {
-                kernel.Plugins
-                    .Remove(knowledgePlugin);
-            }
+            kernel
+                .RemovePlugin(BuiltInPluginNames.KNOWLEDGE_PLUGIN);
         }
 
-        if (configOverrides.Plugins.WebSearch.SkipWebSearchContext)
+        var skipWebSearchContext = configOverrides.WebSearch?.SkipWebSearchContext ?? parentConfigOverrides?.WebSearch?.SkipWebSearchContext ?? false;
+        if (skipWebSearchContext)
         {
-            var knowledgePlugin = kernel.Plugins
-                .FirstOrDefault(x => x.Name == nameof(KnowledgePlugin));
-
-            if (knowledgePlugin != null)
-            {
-                kernel.Plugins
-                    .Remove(knowledgePlugin);
-            }
+            kernel
+                .RemovePlugin(BuiltInPluginNames.WEB_SEARCH_PLUGIN);
         }
 
         return kernel;
+    }
+
+
+    private static void RemovePlugin(this Kernel kernel, string name)
+    {
+        if (kernel == null) 
+            throw new ArgumentNullException(nameof(kernel));
+        
+        if (name == null) 
+            throw new ArgumentNullException(nameof(name));
+        
+        var webSearchPlugin = kernel.Plugins
+            .FirstOrDefault(x => x.Name == name);
+
+        if (webSearchPlugin != null)
+        {
+            kernel.Plugins
+                .Remove(webSearchPlugin);
+        }
     }
 }

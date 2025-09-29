@@ -13,12 +13,11 @@ public class AgentPlugins
     /// Provides the execution context required by built-in plugins.
     /// <para>
     /// If a built-in plugin is enabled and configured, the corresponding 
-    /// context variables must be set on the request. Otherwise, the plugin's 
-    /// behavior is not guaranteed.
+    /// context variables must be set on the request.
     /// </para>
     /// </summary>
     [Required]
-    public virtual AgentBuiltInPluginsContext Context { get; set; } = new();
+    public virtual AgentBuiltInContext Context { get; } = new();
 
     /// <summary>
     /// A collection of custom plugins and their associated context 

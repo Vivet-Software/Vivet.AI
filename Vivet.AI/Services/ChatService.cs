@@ -15,6 +15,7 @@ using Vivet.AI.Extensions;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Chat.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
@@ -75,45 +76,14 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var chatMessageContent = await this.chatCompletionService
             .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
             .ConfigureAwait(false);
- 
-        if (chatMessageContent.Content == null)
-        {
-            return null;
-        }
-
-        var answer = chatMessageContent.Content
-            .GetChatResponseAnswer();
-
-        var response = ChatService.GetResponseOrDefault<T>(answer);
-
-        if (response == null)
-        {
-            return null;
-        }
-
-        var thinking = chatMessageContent.Content
-            .GetChatResponseThinking();
-
-        var inputPrompt = chatHistory
-            .GetPromptAsText();
-
-        var tokenUsage = chatMessageContent
-            .GetTokenUsage();
-
-        var externalId = chatMessageContent
-            .GetExternalId();
 
         stopwatch
             .Stop();
 
-        response.Thinking = thinking;
-        response.RawResponse = chatMessageContent.Content;
-        response.InputPrompt = inputPrompt;
-        response.TokenUsage = tokenUsage;
-        response.ExternalId = externalId;
-        response.ElapsedTime = stopwatch.Elapsed;
+        var response = ChatService.GetResponse<T>(chatMessageContent, chatHistory, stopwatch.Elapsed);
 
-        _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken);
+        _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
+            .ConfigureAwait(false);
 
         return response;
     }
@@ -141,42 +111,22 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var streamingChatMessageContents = this.chatCompletionService
             .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
 
-        var contentString = new StringBuilder();
+        var content = new StringBuilder();
         await foreach (var streamingChatMessageContent in streamingChatMessageContents.ConfigureAwait(false))
         {
             if (!string.IsNullOrEmpty(streamingChatMessageContent.Content))
             {
-                contentString
-                    .Append(streamingChatMessageContent.Content);
+                content
+                    .Append(streamingChatMessageContent.Content); 
 
                 yield return streamingChatMessageContent.Content;
             }
         }
 
-        var rawContent = contentString
-            .ToString();
-
-        var answer = rawContent
-            .GetChatResponseAnswer();
-
-        var response = ChatService.GetResponseOrDefault(answer);
-
-        var thinking = rawContent
-            .GetChatResponseThinking();
-
-        var inputPrompt = chatHistory
-            .GetPromptAsText();
-
         stopwatch
             .Stop();
 
-        response.Thinking = thinking;
-        response.RawResponse = rawContent;
-        response.InputPrompt = inputPrompt;
-        response.ElapsedTime = stopwatch.Elapsed;
-        // TODO: Chat Streaming Token Usage / External Id (not possible through SK yet)
-        response.TokenUsage = null; 
-        response.ExternalId = null;
+        var response = ChatService.GetResponse(content.ToString(), chatHistory, stopwatch.Elapsed);
 
         _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
             .ConfigureAwait(false);
@@ -189,41 +139,6 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
     }
 
 
-    private static async Task<ChatHistory> BuildChatHistory<T>(ChatRequest request, CancellationToken cancellationToken = default)
-    {
-        if (request == null)
-            throw new ArgumentNullException(nameof(request));
-
-        var chatHistory = new ChatHistory();
-        chatHistory
-            .AddChatSystemPrompt<T>(request.SystemMessage)
-            .AddBuiltInPluginsContextPrompt(request.Plugins.Context)
-            .AddCustomPluginContextPrompt(request.Plugins.CustomPlugins);
-
-        var binaryContents = await Task.WhenAll(request.Blobs
-                .Select(x => x
-                    .GetBinaryContent(cancellationToken)))
-            .ConfigureAwait(false);
-
-        chatHistory
-            .AddChatUserPrompt(request.Question, binaryContents);
-
-        return chatHistory;
-    }
-    private PromptExecutionSettings GetPromptExecutionSettings(ChatConfigOverrides configOverrides)
-    {
-        if (configOverrides == null)
-        {
-            throw new NullReferenceException(nameof(configOverrides));
-        }
-
-        var executionSettings = this.promptExecutionSettings
-            .GetOverridePromptExecutionSettings(configOverrides.ModelParameters);
-
-        executionSettings.ModelId = configOverrides.ModelName;
-
-        return executionSettings;
-    }
     private Kernel GetKernel(ChatRequest request)
     {
         if (request == null)
@@ -232,17 +147,125 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var kernel = kernelBuilder
             .Build();
 
-        kernel.Plugins
-            .ValidateContext(request.Plugins.Context, request.ConfigOverrides.Plugins);
-
         kernel
-            .AddPluginConfigOverrides(request.ConfigOverrides)
+            .AddBuiltInPluginConfigOverrides(request.ConfigOverrides.Plugins)
             .AddCustomPlugins(serviceProvider, request.Plugins.CustomPlugins);
+
+        kernel.Plugins
+            .ValidateContext(request.Plugins.Context);
 
         return kernel;
     }
-    private static ChatResponse GetResponseOrDefault(string answer)
+    private PromptExecutionSettings GetPromptExecutionSettings(ChatConfigOverrides configOverrides)
     {
+        if (configOverrides == null)
+            throw new NullReferenceException(nameof(configOverrides));
+
+        var executionSettings = this.promptExecutionSettings
+            .GetOverridePromptExecutionSettings(configOverrides.ModelParameters);
+
+        executionSettings.ModelId = configOverrides.ModelName;
+
+        return executionSettings;
+    }
+    private Task SaveMemory<T>(ChatRequest request, ChatResponse<T> response, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+        where T : class
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        if (response == null)
+            throw new ArgumentNullException(nameof(response));
+
+        if (embeddingMemoryService == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (request.ConfigOverrides.Plugins?.Memory is { SkipMemoryContext: true })
+        {
+            return Task.CompletedTask;
+        }
+
+        return Task.Run(async () =>
+        {
+            ChatIndexMemoryResponse chatIndexMemoryResponse;
+            try
+            {
+                var indexMemoryResponse = await embeddingMemoryService
+                    .IndexAsync(new IndexMemoryRequest<T>
+                    {
+                        Question = request.Question,
+                        Answer = response.Answer,
+                        UserId = request.Plugins.Context.Memory.UserId,
+                        ThreadId = request.Plugins.Context.Memory.CurrentThreadId,
+                        ScopeId = request.Plugins.Context.Memory.ScopeId,
+                        Language = response.Language,
+                        Blobs = request.Blobs,
+                        ConfigOverrides =
+                        {
+                            Metadata = request.ConfigOverrides.Plugins.Memory?.Metadata ?? new EmbeddingMetadataConfigOverrides(),
+                            Summarization = request.ConfigOverrides.Plugins.Memory?.Summarization ?? new EmbeddingSummarizationConfigOverrides()
+                        }
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                chatIndexMemoryResponse = new ChatIndexMemoryResponse
+                {
+                    Result = indexMemoryResponse
+                };
+            }
+            catch (Exception ex)
+            {
+                chatIndexMemoryResponse = new ChatIndexMemoryResponse
+                {
+                    Exception = ex
+                };
+            }
+
+            if (onMemoryIndexed != null)
+            {
+                await onMemoryIndexed(chatIndexMemoryResponse)
+                    .ConfigureAwait(false);
+            }
+        }, cancellationToken);
+    }
+
+    private static async Task<ChatHistory> BuildChatHistory<T>(ChatRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var chatHistory = new ChatHistory();
+
+        var binaryContents = await Task.WhenAll(request.Blobs
+                .Select(x => x
+                    .GetBinaryContent(cancellationToken)))
+            .ConfigureAwait(false);
+
+        chatHistory
+            .AddChatSystemPrompt<T>(request.SystemMessage)
+            .AddChatPluginsContextPrompt(request.Plugins)
+            .AddChatUserPrompt(request.Question, binaryContents);
+
+        return chatHistory;
+    }
+    private static ChatResponse GetResponse(string rawContent, ChatHistory chatHistory, TimeSpan elapsedTime)
+    {
+        if (rawContent == null) 
+            throw new ArgumentNullException(nameof(rawContent));
+
+        if (chatHistory == null) 
+            throw new ArgumentNullException(nameof(chatHistory));
+
+        if (string.IsNullOrEmpty(rawContent))
+        {
+            throw new AiException("No Content returned by the request.");
+        }
+
+        var answer = rawContent
+            .GetChatResponseAnswer();
+
         if (answer == null)
         {
             return null;
@@ -255,17 +278,39 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             throw new AiException(response.ErrorMessage);
         }
 
+        var thinking = rawContent
+            .GetChatResponseThinking();
+
+        var inputPrompt = chatHistory
+            .GetPromptAsText();
+
         response.Answer = answer;
+        response.Thinking = thinking;
+        response.RawResponse = rawContent;
+        response.InputPrompt = inputPrompt;
+        response.ElapsedTime = elapsedTime;
+        // TODO: Chat Streaming Token Usage / External Id (not possible through SK yet)
+        response.TokenUsage = null;
+        response.ExternalId = null;
 
         return response;
     }
-    private static ChatResponse<T> GetResponseOrDefault<T>(string answer)
+    private static ChatResponse<T> GetResponse<T>(ChatMessageContent chatMessageContent, ChatHistory chatHistory, TimeSpan elapsedTime)
         where T : class
     {
-        if (answer == null)
+        if (chatMessageContent == null)
+            throw new ArgumentNullException(nameof(chatMessageContent));
+
+        if (chatHistory == null) 
+            throw new ArgumentNullException(nameof(chatHistory));
+
+        if (string.IsNullOrEmpty(chatMessageContent.Content))
         {
-            return null;
+            throw new AiException("No Content returned by the request.");
         }
+
+        var answer = chatMessageContent.Content
+            .GetChatResponseAnswer();
 
         var response = JsonConvert.DeserializeObject<ChatResponse<T>>(answer, Settings.ResponseSerializerSettings);
 
@@ -313,68 +358,25 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             }
         }
 
+        var thinking = chatMessageContent.Content
+            .GetChatResponseThinking();
+
+        var inputPrompt = chatHistory
+            .GetPromptAsText();
+
+        var tokenUsage = chatMessageContent
+            .GetTokenUsage();
+
+        var externalId = chatMessageContent
+            .GetExternalId();
+
+        response.Thinking = thinking;
+        response.RawResponse = chatMessageContent.Content;
+        response.InputPrompt = inputPrompt;
+        response.TokenUsage = tokenUsage;
+        response.ExternalId = externalId;
+        response.ElapsedTime = elapsedTime;
+
         return response;
-    }
-    private Task SaveMemory<T>(ChatRequest request, ChatResponse<T> response, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
-        where T : class
-    {
-        if (request == null) 
-            throw new ArgumentNullException(nameof(request));
-        
-        if (response == null) 
-            throw new ArgumentNullException(nameof(response));
-        
-        if (embeddingMemoryService == null)
-        {
-            return Task.CompletedTask;
-        }
-
-        if (request.ConfigOverrides.Plugins.Memory is { SkipMemoryContext: true })
-        {
-            return Task.CompletedTask;
-        }
-
-        return Task.Run(async () =>
-        {
-            ChatIndexMemoryResponse chatIndexMemoryResponse;
-            try
-            {
-                var indexMemoryResponse = await embeddingMemoryService
-                    .IndexAsync(new IndexMemoryRequest<T>
-                    {
-                        Question = request.Question,
-                        Answer = response.Answer,
-                        UserId = request.Plugins.Context.Memory.UserId,
-                        ThreadId = request.Plugins.Context.Memory.CurrentThreadId,
-                        ScopeId = request.Plugins.Context.Memory.ScopeId,
-                        Language = response.Language,
-                        Blobs = request.Blobs,
-                        ConfigOverrides =
-                        {
-                            Metadata = request.ConfigOverrides.Plugins.Memory?.Metadata,
-                            Summarization = request.ConfigOverrides.Plugins.Memory?.Summarization
-                        }
-                    }, cancellationToken)
-                    .ConfigureAwait(false);
-
-                chatIndexMemoryResponse = new ChatIndexMemoryResponse
-                {
-                    Result = indexMemoryResponse
-                };
-            }
-            catch (Exception ex)
-            {
-                chatIndexMemoryResponse = new ChatIndexMemoryResponse
-                {
-                    Exception = ex
-                };
-            }
-
-            if (onMemoryIndexed != null)
-            {
-                await onMemoryIndexed(chatIndexMemoryResponse)
-                    .ConfigureAwait(false);
-            }
-        }, cancellationToken);
     }
 }

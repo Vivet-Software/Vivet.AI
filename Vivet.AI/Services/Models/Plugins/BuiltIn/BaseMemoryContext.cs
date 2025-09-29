@@ -6,7 +6,7 @@ namespace Vivet.AI.Services.Models.Plugins.BuiltIn;
 /// <summary>
 /// base class for memory plugin context.
 /// </summary>
-public abstract class BaseMemoryPluginContext
+public abstract class BaseMemoryContext
 {
     /// <summary>
     /// Scope identifier for the request.

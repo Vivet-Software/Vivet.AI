@@ -10,7 +10,7 @@ namespace UnitTests.Vivet.AI.Services.Extensions;
 [TestClass]
 public class KernelPluginCollectionExtensionsTests
 {
-    private sealed class TestBuiltInPluginsContext : BaseBuiltInPluginsContext<object, object, object>;
+    private sealed class TestBuiltInPluginsContext : BaseBuiltInContext<object, object, object>;
 
     [TestMethod]
     public void ValidateContextTest()

@@ -12,8 +12,6 @@ namespace UnitTests.Vivet.AI.Services.Extensions;
 [TestClass]
 public class KernelBuilderExtensionsTests
 {
-    private sealed class TestChatConfigOverrides : BaseChatConfigOverrides;
-
     [TestMethod]
     public void AddCustomPluginsTest()
     {
@@ -71,10 +69,10 @@ public class KernelBuilderExtensionsTests
     public void AddPluginConfigOverridesWhenKernelIsNullThrowsArgumentNullExceptionTest()
     {
         Kernel kernel = null;
-        var configOverrides = new TestChatConfigOverrides();
+        var configOverrides = new BuiltInPluginsConfigOverrides();
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => kernel.AddPluginConfigOverrides(configOverrides));
+        Assert.ThrowsException<ArgumentNullException>(() => kernel.AddBuiltInPluginConfigOverrides(configOverrides));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

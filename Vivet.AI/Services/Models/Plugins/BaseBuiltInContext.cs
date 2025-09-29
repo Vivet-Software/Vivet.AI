@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the base contexts for built-in plugins.
 /// </summary>
-public abstract class BaseBuiltInPluginsContext<TMemory, TKnowledge, TWebSearch>
+public abstract class BaseBuiltInContext<TMemory, TKnowledge, TWebSearch>
     where TMemory : class
     where TKnowledge : class
     where TWebSearch : class

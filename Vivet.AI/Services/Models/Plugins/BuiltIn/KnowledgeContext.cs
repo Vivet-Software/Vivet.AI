@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the context for the built-in knowledge plugin.
 /// </summary>
-public class KnowledgePluginContext
+public class KnowledgeContext
 {
     /// <summary>
     /// Identifier of the tenant associated with this request.

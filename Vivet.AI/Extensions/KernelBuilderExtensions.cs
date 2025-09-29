@@ -67,21 +67,21 @@ internal static class KernelBuilderExtensions
         return builder;
     }
     
-    internal static IKernelBuilder AddLoggerFactory(this IKernelBuilder builder, IServiceCollection services)
+    internal static IKernelBuilder AddLoggerFactory(this IKernelBuilder builder, IServiceProvider serviceProvider)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
 
-        if (services == null)
-            throw new ArgumentNullException(nameof(services));
+        if (serviceProvider == null)
+            throw new ArgumentNullException(nameof(serviceProvider));
 
-        var serviceDescriptor = services
-            .FirstOrDefault(x => x.ServiceType == typeof(ILoggerFactory));
-        
-        if (serviceDescriptor != null)
+        var loggerFactory = serviceProvider
+            .GetService<ILoggerFactory>();
+
+        if (loggerFactory != null)
         {
             builder.Services
-                .Add(serviceDescriptor);
+                .AddSingleton(loggerFactory);
         }
 
         return builder;
@@ -159,7 +159,7 @@ internal static class KernelBuilderExtensions
         var webSearchPlugin = new WebSearchPlugin(textSearch, options.Provider);
 
         builder.Plugins
-            .AddFromObject(webSearchPlugin);
+            .AddFromObject(webSearchPlugin, BuiltInPluginNames.WEB_SEARCH_PLUGIN);
 
         return builder;
     }

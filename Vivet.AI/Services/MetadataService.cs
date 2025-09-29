@@ -79,14 +79,34 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
             .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
             .ConfigureAwait(false);
 
+        stopwatch
+            .Stop();
+
+        var response = MetadataService.GetResponse<T>(chatMessageContent, stopwatch.Elapsed);
+
+        return response;
+    }
+
+
+    private static MetadataResponse<T> GetResponse<T>(ChatMessageContent chatMessageContent, TimeSpan elapsedTime)
+        where T : class, new()
+    {
+        if (chatMessageContent == null) 
+            throw new ArgumentNullException(nameof(chatMessageContent));
+
+        if (string.IsNullOrEmpty(chatMessageContent.Content))
+        {
+            throw new AiException("No Content returned by the request.");
+        }
+
         var answer = chatMessageContent.Content
             .GetChatResponseAnswer();
 
-        var response = MetadataService.GetResponseOrDefault<T>(answer);
+        var response = JsonConvert.DeserializeObject<MetadataResponse<T>>(answer, Settings.ResponseSerializerSettings);
 
-        if (response == null)
+        if (response.ErrorMessage != null)
         {
-            return null;
+            throw new AiException(response.ErrorMessage);
         }
 
         var tokenUsage = chatMessageContent
@@ -95,31 +115,9 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         var externalId = chatMessageContent
             .GetExternalId();
 
-        stopwatch
-            .Stop();
-
         response.TokenUsage = tokenUsage;
         response.ExternalId = externalId;
-        response.ElapsedTime = stopwatch.Elapsed;
-
-        return response;
-    }
-
-
-    private static MetadataResponse<T> GetResponseOrDefault<T>(string content)
-        where T : class, new()
-    {
-        if (content == null)
-        {
-            return null;
-        }
-
-        var response = JsonConvert.DeserializeObject<MetadataResponse<T>>(content, Settings.ResponseSerializerSettings);
-
-        if (response.ErrorMessage != null)
-        {
-            throw new AiException(response.ErrorMessage);
-        }
+        response.ElapsedTime = elapsedTime;
 
         return response;
     }
