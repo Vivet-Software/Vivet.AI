@@ -11,6 +11,7 @@ using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Metadata;
+using Vivet.AI.Services.Requests.Metadata.Models;
 using Vivet.AI.Services.Responses.Metadata;
 using Vivet.AI.Services.Serialization;
 
@@ -33,13 +34,7 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         var response = await this.GetAsync<dynamic>(request, cancellationToken)
             .ConfigureAwait(false);
 
-        return new MetadataResponse
-        {
-            Metadata = response.Metadata,
-            ElapsedTime = response.ElapsedTime,
-            TokenUsage = response.TokenUsage,
-            ErrorMessage = response.ErrorMessage
-        };
+        return response;
     }
 
     /// <inheritdoc />
@@ -56,24 +51,11 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         request
             .Validate();
 
-        var chatHistory = new ChatHistory();
+        var kernel = this.GetKernel();
+        var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
-        var blobContent = await request.Blob
-            .GetBinaryContent(cancellationToken);
-
-        var maxWordsSummary = request.ConfigOverrides.SummaryMaxWords ?? this.metadataOptions.SummaryMaxWords;
-        var maxWordsDescription = request.ConfigOverrides.DescriptionMaxWords ?? this.metadataOptions.DescriptionMaxWords;
-
-        chatHistory
-            .AddMetadataPrompt<T>(blobContent, maxWordsSummary, maxWordsDescription);
-
-        var executionSettings = this.promptExecutionSettings
-            .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
-
-        executionSettings.ModelId = request.ConfigOverrides.ModelName;
-
-        var kernel = kernelBuilder
-            .Build();
+        var chatHistory = await this.BuildChatHistory<T>(request, cancellationToken)
+            .ConfigureAwait(false);
 
         var chatMessageContent = await this.chatCompletionService
             .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
@@ -87,6 +69,49 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         return response;
     }
 
+    private Kernel GetKernel()
+    {
+        var kernel = kernelBuilder
+            .Build();
+
+        kernel
+            .AddFilters<IFunctionInvocationFilter>()
+            .AddFilters<IAutoFunctionInvocationFilter>()
+            .AddFilters<IPromptRenderFilter>();
+
+        return kernel;
+    }
+    private PromptExecutionSettings GetPromptExecutionSettings(MetadataConfigOverrides configOverrides)
+    {
+        if (configOverrides == null)
+            throw new NullReferenceException(nameof(configOverrides));
+
+        var executionSettings = this.promptExecutionSettings
+            .GetOverridePromptExecutionSettings(configOverrides.ModelParameters);
+
+        executionSettings.ModelId = configOverrides.ModelName;
+
+        return executionSettings;
+    }
+    private async Task<ChatHistory> BuildChatHistory<T>(GetMetadataRequest request, CancellationToken cancellationToken = default) 
+        where T : class, new()
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var chatHistory = new ChatHistory();
+
+        var blobContent = await request.Blob
+            .GetBinaryContent(cancellationToken);
+
+        var maxWordsSummary = request.ConfigOverrides.SummaryMaxWords ?? this.metadataOptions.SummaryMaxWords;
+        var maxWordsDescription = request.ConfigOverrides.DescriptionMaxWords ?? this.metadataOptions.DescriptionMaxWords;
+
+        chatHistory
+            .AddMetadataPrompt<T>(blobContent, maxWordsSummary, maxWordsDescription);
+
+        return chatHistory;
+    }
 
     private static MetadataResponse<T> GetResponse<T>(ChatMessageContent chatMessageContent, TimeSpan elapsedTime)
         where T : class, new()

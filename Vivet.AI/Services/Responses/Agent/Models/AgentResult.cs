@@ -13,7 +13,7 @@ public class AgentResult : AgentResult<string>;
 /// Represents an agent response.
 /// </summary>
 /// <typeparam name="T">The type of the answer returned by the model.</typeparam>
-public class AgentResult<T> // BUG: 111: Can we use T ??? problem is for sequential for example, maybe it's the final result we want as type T, but not the intermediate.
+public class AgentResult<T> // BUG: 444: Can we use T ??? problem is for sequential for example, maybe it's the final result we want as type T, but not the intermediate.
     where T : class
 {
     /// <summary>
@@ -43,6 +43,14 @@ public class AgentResult<T> // BUG: 111: Can we use T ??? problem is for sequent
     /// </summary>
     public virtual string RawResponse { get; set; }
 
+    /// <summary>
+    /// An approximation of the instrcution prompt generated for the agent.
+    /// It won’t be exactly what SK sends to the backend,
+    /// because the Semantic Kernel connector may do additional formatting
+    /// (e.g., JSON serialization, role tags, or system messages merged differently).
+    /// </summary>
+    public virtual string InstructionsPrompt { get; set; }
+    
     /// <summary>
     /// The language detected of the input prompt.
     /// </summary>

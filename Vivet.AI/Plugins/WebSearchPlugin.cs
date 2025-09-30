@@ -32,8 +32,8 @@ public sealed class WebSearchPlugin
     /// <summary>
     /// Perform a web search with optional limit and site filtering.
     /// </summary>
-    [KernelFunction("web_search")]
-    [Description("Perform a web search. Always use this function when external or public knowledge is needed.")]
+    [KernelFunction("simple")]
+    [Description("Perform a web search and return simple text results.")]
     public async Task<IEnumerable<string>> SearchAsync([Description("The current user question or message")]string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
     {
         if (query == null)
@@ -63,8 +63,8 @@ public sealed class WebSearchPlugin
     /// <summary>
     /// Retrieve detailed search results (with URLs, snippets, etc.).
     /// </summary>
-    [KernelFunction("web_search_get_results")]
-    [Description("Retrieve detailed search results including URLs and snippets.")]
+    [KernelFunction("detailed")]
+    [Description("Perform a web search and return structured results with titles, URLs, and snippets.")]
     public async Task<IEnumerable<object>> GetSearchResultsAsync([Description("The current user question or message")]string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
     {
         if (query == null)
@@ -94,8 +94,8 @@ public sealed class WebSearchPlugin
     /// <summary>
     /// Retrieve text-only search results.
     /// </summary>
-    [KernelFunction("web_search_get_text_results")]
-    [Description("Retrieve text-only search results for chat or summarization.")]
+    [KernelFunction("text")]
+    [Description("Perform a web search and return text-focused results, such as titles and snippets.")]
     public async Task<IReadOnlyList<TextSearchResult>> GetTextSearchResultsAsync([Description("The current user question or message")]string query, int limit = 5, string site = null, CancellationToken cancellationToken = default)
     {
         if (query == null)
@@ -115,9 +115,11 @@ public sealed class WebSearchPlugin
             .GetTextSearchResultsAsync(query, options, cancellationToken)
             .ConfigureAwait(false);
 
-        return await response.Results
+        var results = await response.Results
             .ToArrayAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        return results;
     }
 
     private TextSearchFilter GetTextSearchFilter(string site = null)

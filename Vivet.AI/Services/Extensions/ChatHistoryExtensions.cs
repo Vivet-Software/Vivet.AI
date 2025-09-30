@@ -327,9 +327,6 @@ A: {answer}
                 stringBuilder
                     .AppendLine(value);
             }
-
-            stringBuilder
-                .AppendLine();
         }
 
         return stringBuilder

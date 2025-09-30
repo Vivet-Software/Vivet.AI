@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
+using Vivet.AI.Filters;
+using Vivet.AI.Filters.Models;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
@@ -66,12 +68,13 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         request
             .Validate();
 
+        FunctionCallCollectorContext.Current.Value = new FunctionCallCollector();
+
         var kernel = this.GetKernel(request);
-
-        var chatHistory = await BuildChatHistory<T>(request, cancellationToken)
-            .ConfigureAwait(false);
-
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
+
+        var chatHistory = await this.GetChatHistory<T>(request, cancellationToken)
+            .ConfigureAwait(false);
 
         var chatMessageContent = await this.chatCompletionService
             .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
@@ -101,12 +104,13 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         stopwatch
             .Start();
 
+        FunctionCallCollectorContext.Current.Value = new FunctionCallCollector();
+
         var kernel = this.GetKernel(request);
-
-        var chatHistory = await BuildChatHistory<string>(request, cancellationToken)
-            .ConfigureAwait(false);
-
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
+
+        var chatHistory = await GetChatHistory<string>(request, cancellationToken)
+            .ConfigureAwait(false);
 
         var streamingChatMessageContents = this.chatCompletionService
             .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
@@ -148,6 +152,11 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             .Build();
 
         kernel
+            .AddFilters<IFunctionInvocationFilter>()
+            .AddFilters<IAutoFunctionInvocationFilter>()
+            .AddFilters<IPromptRenderFilter>();
+
+        kernel
             .AddBuiltInPluginConfigOverrides(request.ConfigOverrides.Plugins)
             .AddCustomPlugins(serviceProvider, request.Plugins.CustomPlugins);
 
@@ -168,6 +177,26 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return executionSettings;
     }
+    private async Task<ChatHistory> GetChatHistory<T>(ChatRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var chatHistory = new ChatHistory();
+
+        var binaryContents = await Task.WhenAll(request.Blobs
+                .Select(x => x
+                    .GetBinaryContent(cancellationToken)))
+            .ConfigureAwait(false);
+
+        chatHistory
+            .AddChatSystemPrompt<T>(request.SystemMessage)
+            .AddChatPluginsContextPrompt(request.Plugins)
+            .AddChatUserPrompt(request.Question, binaryContents);
+
+        return chatHistory;
+    }
+    
     private Task SaveMemory<T>(ChatRequest request, ChatResponse<T> response, Func<ChatIndexMemoryResponse, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
         where T : class
     {
@@ -231,25 +260,6 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         }, cancellationToken);
     }
 
-    private static async Task<ChatHistory> BuildChatHistory<T>(ChatRequest request, CancellationToken cancellationToken = default)
-    {
-        if (request == null)
-            throw new ArgumentNullException(nameof(request));
-
-        var chatHistory = new ChatHistory();
-
-        var binaryContents = await Task.WhenAll(request.Blobs
-                .Select(x => x
-                    .GetBinaryContent(cancellationToken)))
-            .ConfigureAwait(false);
-
-        chatHistory
-            .AddChatSystemPrompt<T>(request.SystemMessage)
-            .AddChatPluginsContextPrompt(request.Plugins)
-            .AddChatUserPrompt(request.Question, binaryContents);
-
-        return chatHistory;
-    }
     private static ChatResponse GetResponse(string rawContent, ChatHistory chatHistory, TimeSpan elapsedTime)
     {
         if (rawContent == null) 

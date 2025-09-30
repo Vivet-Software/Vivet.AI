@@ -11,6 +11,7 @@ using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Summarization;
+using Vivet.AI.Services.Requests.Summarization.Models;
 using Vivet.AI.Services.Responses;
 using Vivet.AI.Services.Responses.Summarization;
 
@@ -39,21 +40,11 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
 
         var summarizationDegree = request.ConfigOverrides.SummarizationDegree ?? this.summarizationOptions.SummarizationDegree;
 
-        SummarizationMemoryResponse response;
         if (summarizationDegree > 0)
         {
-            var chatHistory = new ChatHistory();
-
-            chatHistory
-                .AddSummarizationMemoryPrompt(request.Question, request.Answer, summarizationDegree);
-
-            var executionSettings = this.promptExecutionSettings
-                .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
-
-            executionSettings.ModelId = request.ConfigOverrides.ModelName;
-
-            var kernel = kernelBuilder
-                .Build();
+            var kernel = this.GetKernel();
+            var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
+            var chatHistory = this.GetChatHistory(request);
 
             var chatMessageContent = await this.chatCompletionService
                 .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
@@ -62,22 +53,60 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
             stopwatch
                 .Stop();
 
-            response = SummarizationService.GetResponse(chatMessageContent, stopwatch.Elapsed);
+            return SummarizationService.GetResponse(chatMessageContent, stopwatch.Elapsed);
         }
         else
         {
             stopwatch
                 .Stop();
 
-            response = new SummarizationMemoryResponse
+            return new SummarizationMemoryResponse
             {
                 QuestionSummarized = request.Question,
                 AnswerSummarized = request.Answer,
                 ElapsedTime = stopwatch.Elapsed
             };
         }
+    }
 
-        return response;
+
+    private Kernel GetKernel()
+    {
+        var kernel = kernelBuilder
+            .Build();
+
+        kernel
+            .AddFilters<IFunctionInvocationFilter>()
+            .AddFilters<IAutoFunctionInvocationFilter>()
+            .AddFilters<IPromptRenderFilter>();
+
+        return kernel;
+    }
+    private PromptExecutionSettings GetPromptExecutionSettings(SummarizationConfigOverrides configOverrides)
+    {
+        if (configOverrides == null)
+            throw new NullReferenceException(nameof(configOverrides));
+
+        var executionSettings = this.promptExecutionSettings
+            .GetOverridePromptExecutionSettings(configOverrides.ModelParameters);
+
+        executionSettings.ModelId = configOverrides.ModelName;
+
+        return executionSettings;
+    }
+    private ChatHistory GetChatHistory(SummarizeMemoryRequest request)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var chatHistory = new ChatHistory();
+
+        var summarizationDegree = request.ConfigOverrides.SummarizationDegree ?? this.summarizationOptions.SummarizationDegree;
+
+        chatHistory
+            .AddSummarizationMemoryPrompt(request.Question, request.Answer, summarizationDegree);
+
+        return chatHistory;
     }
 
     private static SummarizationMemoryResponse GetResponse(ChatMessageContent chatMessageContent, TimeSpan elapsedTime)

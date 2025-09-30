@@ -2,6 +2,8 @@
 
 namespace Vivet.AI.Services.Responses.Chat;
 
+// BUG: 555: Add tools list, using FunctionCallCollectorContext
+
 /// <summary>
 /// Represents a chat response from the model with a default generic type of <see cref="string"/>.
 /// </summary>

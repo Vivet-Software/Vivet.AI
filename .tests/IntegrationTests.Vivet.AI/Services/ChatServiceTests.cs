@@ -15,6 +15,7 @@ using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.Blobs.Data;
+using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.MimeTypes;
 using Vivet.AI.Services.Models.Plugins.BuiltIn;
 using Vivet.AI.Services.Requests.Chat;
@@ -607,11 +608,11 @@ public class ChatServiceTests : BaseTests
                 {
                     Plugins =
                     {
-                        Memory =
+                        Memory = new MemoryPluginOverrides
                         {
                             SkipMemoryContext = true
                         },
-                        Knowledge =
+                        Knowledge = new KnowledgePluginOverrides
                         {
                             SkipKnowledgeContext = true
                         }

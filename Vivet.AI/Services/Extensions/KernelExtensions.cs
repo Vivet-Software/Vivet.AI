@@ -2,14 +2,47 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
 
 namespace Vivet.AI.Services.Extensions;
 
-internal static class KernelBuilderExtensions
+internal static class KernelExtensions
 {
+    internal static Kernel AddFilters<T>(this Kernel kernel)
+        where T : class
+    {
+        var services = kernel.Services.GetServices<T>();
+
+        foreach (var filter in services)
+        {
+            switch (filter)
+            {
+                case IFunctionInvocationFilter functionInvocationFilter:
+                    kernel.FunctionInvocationFilters
+                        .Add(functionInvocationFilter);
+                    break;
+
+                case IAutoFunctionInvocationFilter autoFunctionInvocationFilter:
+                    kernel.AutoFunctionInvocationFilters
+                        .Add(autoFunctionInvocationFilter);
+                    break;
+
+                case IPromptRenderFilter promptRenderFilter:
+                    kernel.PromptRenderFilters
+                        .Add(promptRenderFilter);
+                    break;
+
+                default:
+                    throw new InvalidOperationException($"Unknown filter type: {typeof(T)}");
+            }
+        }
+
+        return kernel;
+    }
+
     internal static Kernel AddCustomPlugins(this Kernel kernel, IServiceProvider serviceProvider, IEnumerable<CustomPlugin> plugins)
     {
         if (kernel == null)
@@ -21,15 +54,15 @@ internal static class KernelBuilderExtensions
         if (plugins == null)
             throw new ArgumentNullException(nameof(plugins));
 
-        foreach (var requestPlguin in plugins)
+        foreach (var requestPlugin in plugins)
         {
             var kernelPlugin = kernel.Plugins
-                .FirstOrDefault(x => x.Name == requestPlguin.Name);
+                .FirstOrDefault(x => x.Name == requestPlugin.Name);
 
             if (kernelPlugin == null)
             {
                 kernel.Plugins
-                    .AddFromType(requestPlguin, serviceProvider);
+                    .AddFromType(requestPlugin, serviceProvider);
             }
         }
 
@@ -41,6 +74,8 @@ internal static class KernelBuilderExtensions
         if (kernel == null)
             throw new ArgumentNullException(nameof(kernel));
 
+        if (configOverrides == null) 
+            throw new ArgumentNullException(nameof(configOverrides));
 
         var skipMemoryContext = configOverrides.Memory?.SkipMemoryContext ?? parentConfigOverrides?.Memory?.SkipMemoryContext ?? false;
         if (skipMemoryContext)

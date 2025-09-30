@@ -9,9 +9,10 @@ namespace Vivet.AI.Services.Responses.Agent;
 public class AgentResponse : BaseResponse
 {
     /// <summary>
-    /// An approximation of the chat prompt generated.
+    /// An approximation of the agent input prompt generated. The user role message.
     /// It won’t be exactly what SK sends to the backend,
-    /// because the Semantic Kernel connector may do additional formatting (e.g., JSON serialization, role tags, or system messages merged differently).
+    /// because the Semantic Kernel connector may do additional formatting
+    /// (e.g., JSON serialization, role tags, or system messages merged differently).
     /// </summary>
     public virtual string InputPrompt { get; set; }
 

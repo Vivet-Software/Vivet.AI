@@ -10,8 +10,25 @@ using Vivet.AI.Services.Models.Plugins;
 namespace UnitTests.Vivet.AI.Services.Extensions;
 
 [TestClass]
-public class KernelBuilderExtensionsTests
+public class KernelExtensionsTests
 {
+    [TestMethod]
+    public void AddFiltersTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void AddFiltersWhenKernelIsNullThrowsArgumentNullExceptionTest()
+    {
+        Kernel kernel = null;
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(() => kernel.AddFilters<object>());
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+
     [TestMethod]
     public void AddCustomPluginsTest()
     {

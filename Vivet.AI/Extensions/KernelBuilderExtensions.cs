@@ -14,59 +14,6 @@ namespace Vivet.AI.Extensions;
 
 internal static class KernelBuilderExtensions
 {
-    internal static IKernelBuilder AddChatPluginsFromConfiguration(this IKernelBuilder builder, IServiceProvider serviceProvider)
-    {
-        if (builder == null)
-            throw new ArgumentNullException(nameof(builder));
-
-        if (serviceProvider == null) 
-            throw new ArgumentNullException(nameof(serviceProvider));
-
-        var chatOptions = serviceProvider
-            .GetRequiredService<ChatOptions>();
-
-        builder
-            .AddMemoryPlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.Memory)
-            .AddKnowledgePlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.Knowledge)
-            .AddWebSearchPlugin(serviceProvider, chatOptions.Plugins.BuiltInPlugins.WebSearch);
-
-        var typeAndNames = chatOptions.Plugins.CustomPlugins
-            .Select(x => new
-            {
-                x.Name,
-                Type = Type.GetType(x.Type, true)
-            }); 
-
-        foreach (var typeAndName in typeAndNames)
-        {
-            builder.Plugins
-                .AddFromType(serviceProvider, typeAndName.Type, typeAndName.Name);
-        }
-
-        return builder;
-    }
-    
-    internal static IKernelBuilder AddFilters<TFilter>(this IKernelBuilder builder, IServiceCollection services)
-        where TFilter : class
-    {
-        if (builder == null) 
-            throw new ArgumentNullException(nameof(builder));
-        
-        if (services == null) 
-            throw new ArgumentNullException(nameof(services));
-        
-        var filterDescriptors = services
-            .Where(sd => sd.ServiceType == typeof(TFilter));
-
-        foreach (var filterDescriptor in filterDescriptors)
-        {
-            builder.Services
-                .Add(filterDescriptor);
-        }
-
-        return builder;
-    }
-    
     internal static IKernelBuilder AddLoggerFactory(this IKernelBuilder builder, IServiceProvider serviceProvider)
     {
         if (builder == null)
@@ -82,6 +29,75 @@ internal static class KernelBuilderExtensions
         {
             builder.Services
                 .AddSingleton(loggerFactory);
+        }
+
+        return builder;
+    }
+
+    internal static IKernelBuilder AddFilters<T>(this IKernelBuilder builder, IServiceProvider serviceProvider)
+        where T : class
+    {
+        if (builder == null) 
+            throw new ArgumentNullException(nameof(builder));
+        
+        var filters = serviceProvider
+            .GetServices<T>();
+
+        foreach (var filter in filters)
+        {
+            builder.Services
+                .AddSingleton(filter);
+        }
+
+        var types = AppDomain.CurrentDomain
+            .GetAssemblies()
+            .Select(x => x
+                .GetTypes()
+                .Where(y => !y.IsAbstract && y.IsClass && typeof(T).IsAssignableFrom(y)))
+            .SelectMany(x => x);
+
+        foreach (var type in types)
+        {
+            var service = serviceProvider
+                .GetService(type);
+
+            if (service is T instance)
+            {
+                builder.Services
+                    .AddSingleton(instance);
+            }
+        }
+
+        return builder;
+    }
+
+    internal static IKernelBuilder AddPlugins(this IKernelBuilder builder, IServiceProvider serviceProvider, PluginsOptions pluginsOptions)
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        if (serviceProvider == null)
+            throw new ArgumentNullException(nameof(serviceProvider));
+
+        if (pluginsOptions == null)
+            throw new ArgumentNullException(nameof(pluginsOptions));
+
+        builder
+            .AddMemoryPlugin(serviceProvider, pluginsOptions.BuiltInPlugins.Memory)
+            .AddKnowledgePlugin(serviceProvider, pluginsOptions.BuiltInPlugins.Knowledge)
+            .AddWebSearchPlugin(serviceProvider, pluginsOptions.BuiltInPlugins.WebSearch);
+
+        var typeAndNames = pluginsOptions.CustomPlugins
+            .Select(x => new
+            {
+                x.Name,
+                Type = Type.GetType(x.Type, true)
+            });
+
+        foreach (var typeAndName in typeAndNames)
+        {
+            builder.Plugins
+                .AddFromType(serviceProvider, typeAndName.Type, typeAndName.Name);
         }
 
         return builder;

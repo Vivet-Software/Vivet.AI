@@ -40,6 +40,9 @@ public class BaseTests
                 x.AddConsole();
             });
 
+        services
+            .AddSingleton<FunctionCallCollectorFilter>();
+
         this.services
             .AddVivetAzureOpenAi();
             //.AddVivetAzureAiInference();
