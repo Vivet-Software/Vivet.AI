@@ -15,7 +15,7 @@ public class AgentResult : AgentResult<string>;
 /// Represents an agent response.
 /// </summary>
 /// <typeparam name="T">The type of the answer returned by the model.</typeparam>
-public class AgentResult<T> // BUG: 444: Can we use T ??? problem is for sequential for example, maybe it's the final result we want as type T, but not the intermediate.
+public class AgentResult<T> // BUG: 111: Can we use T ??? problem is for sequential for example, maybe it's the final result we want as type T, but not the intermediate.
     where T : class
 {
     /// <summary>

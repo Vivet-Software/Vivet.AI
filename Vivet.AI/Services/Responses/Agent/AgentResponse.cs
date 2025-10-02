@@ -21,6 +21,10 @@ public class AgentResponse : BaseResponse
     /// </summary>
     public virtual IEnumerable<AgentResult> Results { get; set; } = [];
 
-    // BUG: 444: Maybe the aggregated result from the agents, for sequential it would be the last, for concurrent it would be all.
+    // BUG: 000: TESTS: Update all chat tests (exception handling has changed)
+    // Add tests for AgentService so we can test different orchestrations and determine if we want "aggregated result" on AgentResponse
+    // Add/Implement missing tests (especially extensions)
+
+    // BUG: 111: Maybe the aggregated result from the agents, for sequential it would be the last, for concurrent it would be all.
     // maybe map what the other orchestrations returns
 }

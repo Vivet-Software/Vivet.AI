@@ -37,28 +37,8 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// TODO: Update all chat tests (exception handling has changed)
-
-// TODO: I still don't like the plugin context validation, isn't there a better way
+// BUG: 222: I still don't like the plugin context validation, isn't there a better way
 // Also the whole plugins and context seems confusing - final check of config/overerrides/etc.
-
-// TODO: 111: Consider Move Plugins to Ai.Plugins, and then enable/disable under Chat, Agent, etc.
-// TODO: 111: Config agents
-// TODO: 111: readme:
-// Change Request plugins to Types instead of objects
-// Emphasize the the build-in plugins must have context variables in request or an exception is thrown
-// Check if we still writing that plugin dependencies must be registered beforehand, that isn't necessary anymore. Remove it.
-// Same type of custom plugins is allowed, as long as they have different names. Mention the built-in plugin names (memory, knowledge, web_search)
-// Update Custom plugins options configuration to have Type + Name (see CustomPluginOptions)
-// a plugin name can contain only ASCII letters, digits, and underscores
-// Plugins must have seperate context variables even when they are re-used among several plugins
-// update web search plugin, config etc. (Limit removed from config)
-// Check documentation for Response.ErrorMessage, we actual throw and Exception and the property is internal. 
-// Document adding filters, and that they will be orderded by name. Filters are added for all kernels.
-// Error handling: An exception is now set on BaseResponse if an error happens. For AgentService that is also on each agent. 
-// - AIException means and error from the model.
-
-// TODO: Add missing tests (especially extensions)
 
 /// <inheritdoc cref="IAgentService"/>
 public class AgentService(AgentOptions options, IServiceProvider serviceProvider, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings)
@@ -106,7 +86,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
 
             var response = AgentService.GetResponse(inputPrompt, agents, stopwatch.Elapsed);
 
-            // TODO: HISTORY: Save memory, SkipSaveMemory
+            // BUG: 333: HISTORY: Save memory, SkipSaveMemory
             // Consider that AgentId here should be the AgentDescriptor.Name, if we want memory across agent executions.
 
             return response;
@@ -265,7 +245,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
                     Kernel = kernel,
                     Arguments = new KernelArguments(executionSettings),
                     LoggerFactory = kernel.LoggerFactory,
-                    // TODO: HISTORY: setting? ChatHistoryTruncationReducer / ChatHistorySummarizationReducer / LastMessage / None
+                    // BUG: 333: HISTORY: setting? ChatHistoryTruncationReducer / ChatHistorySummarizationReducer / LastMessage / None
                     // make seetting to only pass the latest agent messagage along
                     HistoryReducer = null, // HISTORY: 000: What is AgentChat => DOC: The reducer is automatically applied to the history before invoking the agent, only when using an <see cref="AgentChat"/>. It must be explicitly applied via <see cref="ReduceAsync"/>. 
                     Template = null,
@@ -309,7 +289,8 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
                 ResultTransform = ResultTransform,
                 ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, stopWatch)
             },
-            AgentOrchestrationType.GroupChat => new GroupChatOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Group chat Orchestration. Manager Override. https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/group-chat?pivots=programming-language-csharp#customize-the-group-chat-manager
+            // TODO: Group chat Orchestration. Manager Override. https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/group-chat?pivots=programming-language-csharp#customize-the-group-chat-manager
+            AgentOrchestrationType.GroupChat => new GroupChatOrchestration<string, ChatMessageContent[]>(null, agents) 
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -327,7 +308,8 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
                 ResultTransform = ResultTransform,
                 ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, stopWatch)
             },
-            AgentOrchestrationType.Magnetic => new MagenticOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Magnetic Orchestration
+            // TODO: Magnetic Orchestration
+            AgentOrchestrationType.Magnetic => new MagenticOrchestration<string, ChatMessageContent[]>(null, agents)
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -445,7 +427,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         result.Thinking = thinking;
         result.RawResponse = chatMessageContent.Content;
         result.InstructionsPrompt = instructionsPrompt;
-        result.ElapsedTime = elapsedTime; // TODO: Test that this isn't cumulattive in sequential orchestrations
+        result.ElapsedTime = elapsedTime; // BUG: 000: TESTS: that this isn't cumulattive for e.g. sequential orchestrations
         result.TokenUsage = tokenUsage;
         result.ExternalId = externalId;
         result.FunctionCalls = functionCalls;
