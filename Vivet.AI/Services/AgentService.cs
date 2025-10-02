@@ -83,31 +83,38 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
 
         AgentCollectorContext.Initialize();
 
-        var executionSettings = this.GetPromptExecutionSettingsOverrrides(request.ConfigOverrides);
-        var agents = this.GetAgents(request, executionSettings);
-        var inputPrompt = await this.GetInputPrompt(request, cancellationToken);
-        var agentOrchestration = this.GetAgentOrchestration(request, inputPrompt, agents, stopwatch);
+        try
+        {
+            var executionSettings = this.GetPromptExecutionSettingsOverrrides(request.ConfigOverrides);
+            var agents = this.GetAgents(request, executionSettings);
+            var inputPrompt = await this.GetInputPrompt(request, cancellationToken);
+            var agentOrchestration = this.GetAgentOrchestration(request, inputPrompt, agents, stopwatch);
 
-        var inputPromptAsText = inputPrompt
-            .GetPromptAsText(true);
+            var inputPromptAsText = inputPrompt
+                .GetPromptAsText(true);
 
-        await this.StartAgentProcessAsync(cancellationToken);
+            await this.StartAgentProcessAsync(cancellationToken);
 
-        var orchestrationResult = await agentOrchestration
-            .InvokeAsync(inputPromptAsText, this.agenticProcess, cancellationToken);
+            var orchestrationResult = await agentOrchestration
+                .InvokeAsync(inputPromptAsText, this.agenticProcess, cancellationToken);
 
-        await orchestrationResult
-            .GetValueAsync(options.Timeout, cancellationToken);
+            await orchestrationResult
+                .GetValueAsync(options.Timeout, cancellationToken);
 
-        stopwatch
-            .Stop();
+            stopwatch
+                .Stop();
 
-        var response = AgentService.GetResponse(inputPrompt, agents, stopwatch.Elapsed);
+            var response = AgentService.GetResponse(inputPrompt, agents, stopwatch.Elapsed);
 
-        // TODO: HISTORY: Save memory, SkipSaveMemory
-        // Consider that AgentId here should be the AgentDescriptor.Name, if we want memory across agent executions.
+            // TODO: HISTORY: Save memory, SkipSaveMemory
+            // Consider that AgentId here should be the AgentDescriptor.Name, if we want memory across agent executions.
 
-        return response;
+            return response;
+        }
+        finally
+        {
+            AgentCollectorContext.Dispose();
+        }
     }
 
     /// <inheritdoc />
@@ -182,15 +189,9 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         kernel.Data
             .Add(KernelData.AGENT_ID, agent.Id);
 
-        // BUG: 333: Filter
         kernel.FunctionInvocationFilters
             .Add(new FunctionCallCollectorFilter());
         
-        //kernel
-        //    .AddFilters<IFunctionInvocationFilter>()
-        //    .AddFilters<IAutoFunctionInvocationFilter>()
-        //    .AddFilters<IPromptRenderFilter>();
-
         kernel
             .AddBuiltInPluginConfigOverrides(agent.ConfigOverrides.Plugins, parentConfigOverrides)
             .AddCustomPlugins(serviceProvider, agent.Plugins.CustomPlugins);
@@ -470,23 +471,26 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         }
         else
         {
-            if (finishReason == "toolcalls")
+            switch (finishReason)
             {
-                var kernelContent = chatMessageContent.Items
-                    .FirstOrDefault();
-
-                if (kernelContent is FunctionCallContent functionCallContent)
+                case "toolcalls":
                 {
-                    AgentCollectorContext.Functions
-                        .AddOrUpdate(chatMessageContent, functionCallContent);
+                    var kernelContent = chatMessageContent.Items
+                        .FirstOrDefault();
+
+                    if (kernelContent is FunctionCallContent functionCallContent)
+                    {
+                        AgentCollectorContext.Functions
+                            .AddOrUpdate(chatMessageContent, functionCallContent);
+                    }
+
+                    chatMessageContent.Content ??= $"[{nameof(FunctionCallContent)}]";
+                    break;
                 }
 
-                chatMessageContent.Content ??= $"[{nameof(FunctionCallContent)}]";
-            }
-
-            if (finishReason == null && chatMessageContent.Role == AuthorRole.Tool)
-            {
-                chatMessageContent.Content += $"{Environment.NewLine}{nameof(FunctionResultContent)}";
+                case null when chatMessageContent.Role == AuthorRole.Tool:
+                    chatMessageContent.Content += $"{Environment.NewLine}{nameof(FunctionResultContent)}";
+                    break;
             }
 
             AgentCollectorContext.Instructions

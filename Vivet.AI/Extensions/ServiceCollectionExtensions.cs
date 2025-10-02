@@ -76,12 +76,6 @@ internal static class ServiceCollectionExtensions
                 builder
                     .AddLoggerFactory(x);
 
-                // BUG: 333: Filters
-                //builder
-                //    .AddFilters<IFunctionInvocationFilter>(x)
-                //    .AddFilters<IAutoFunctionInvocationFilter>(x)
-                //    .AddFilters<IPromptRenderFilter>(x);
-
                 // TODO: Exception Handling (Function Invocation Filter, e.g. Logging)
                 // TODO: Prompt Caching (Prompt Render Filter - https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Caching/SemanticCachingWithFilters.cs)
                 // TODO: PII Identification (Prompt Render Filter - http://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Filtering/PIIDetection.cs)

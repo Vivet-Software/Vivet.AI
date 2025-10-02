@@ -54,18 +54,16 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
 
             return SummarizationService.GetResponse(chatMessageContent, stopwatch.Elapsed);
         }
-        else
-        {
-            stopwatch
-                .Stop();
 
-            return new SummarizationMemoryResponse
-            {
-                QuestionSummarized = request.Question,
-                AnswerSummarized = request.Answer,
-                ElapsedTime = stopwatch.Elapsed
-            };
-        }
+        stopwatch
+            .Stop();
+
+        return new SummarizationMemoryResponse
+        {
+            QuestionSummarized = request.Question,
+            AnswerSummarized = request.Answer,
+            ElapsedTime = stopwatch.Elapsed
+        };
     }
 
 
@@ -73,11 +71,6 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
     {
         var kernel = kernelBuilder
             .Build();
-
-        kernel
-            .AddFilters<IFunctionInvocationFilter>()
-            .AddFilters<IAutoFunctionInvocationFilter>()
-            .AddFilters<IPromptRenderFilter>();
 
         return kernel;
     }

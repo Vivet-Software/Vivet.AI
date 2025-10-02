@@ -14,6 +14,7 @@ using Vivet.AI.Config;
 using Vivet.AI.Extensions;
 using Vivet.AI.Services.Collectors;
 using Vivet.AI.Services.Extensions;
+using Vivet.AI.Services.Filters;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Chat;
@@ -68,25 +69,32 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         ChatCollectorContext.Initialize();
 
-        var kernel = this.GetKernel(request);
-        var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
+        try
+        {
+            var kernel = this.GetKernel(request);
+            var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
-        var chatHistory = await this.GetChatHistory<T>(request, cancellationToken)
-            .ConfigureAwait(false);
+            var chatHistory = await this.GetChatHistory<T>(request, cancellationToken)
+                .ConfigureAwait(false);
 
-        var chatMessageContent = await this.chatCompletionService
-            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
-            .ConfigureAwait(false);
+            var chatMessageContent = await this.chatCompletionService
+                .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
+                .ConfigureAwait(false);
 
-        stopwatch
-            .Stop();
+            stopwatch
+                .Stop();
 
-        var response = ChatService.GetResponse<T>(chatMessageContent, chatHistory, stopwatch.Elapsed);
+            var response = ChatService.GetResponse<T>(chatMessageContent, chatHistory, stopwatch.Elapsed);
 
-        _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
-            .ConfigureAwait(false);
+            _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
+                .ConfigureAwait(false);
 
-        return response;
+            return response;
+        }
+        finally
+        {
+            ChatCollectorContext.Dispose();
+        }
     }
 
     /// <inheritdoc />
@@ -104,39 +112,46 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         ChatCollectorContext.Initialize();
 
-        var kernel = this.GetKernel(request);
-        var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
-
-        var chatHistory = await GetChatHistory<string>(request, cancellationToken)
-            .ConfigureAwait(false);
-
-        var streamingChatMessageContents = this.chatCompletionService
-            .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
-
-        var content = new StringBuilder();
-        await foreach (var streamingChatMessageContent in streamingChatMessageContents.ConfigureAwait(false))
+        try
         {
-            if (!string.IsNullOrEmpty(streamingChatMessageContent.Content))
-            {
-                content
-                    .Append(streamingChatMessageContent.Content); 
+            var kernel = this.GetKernel(request);
+            var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
-                yield return streamingChatMessageContent.Content;
+            var chatHistory = await GetChatHistory<string>(request, cancellationToken)
+                .ConfigureAwait(false);
+
+            var streamingChatMessageContents = this.chatCompletionService
+                .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
+
+            var content = new StringBuilder();
+            await foreach (var streamingChatMessageContent in streamingChatMessageContents.ConfigureAwait(false))
+            {
+                if (!string.IsNullOrEmpty(streamingChatMessageContent.Content))
+                {
+                    content
+                        .Append(streamingChatMessageContent.Content);
+
+                    yield return streamingChatMessageContent.Content;
+                }
+            }
+
+            stopwatch
+                .Stop();
+
+            var response = ChatService.GetResponse(content.ToString(), chatHistory, stopwatch.Elapsed);
+
+            _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (onChatStreamingComplete != null)
+            {
+                _ = Task.Run(() => onChatStreamingComplete
+                    .Invoke(response), cancellationToken);
             }
         }
-
-        stopwatch
-            .Stop();
-
-        var response = ChatService.GetResponse(content.ToString(), chatHistory, stopwatch.Elapsed);
-
-        _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (onChatStreamingComplete != null)
+        finally
         {
-            _ = Task.Run(() => onChatStreamingComplete
-                .Invoke(response), cancellationToken);
+            ChatCollectorContext.Dispose();
         }
     }
 
@@ -149,10 +164,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var kernel = kernelBuilder
             .Build();
 
-        kernel
-            .AddFilters<IFunctionInvocationFilter>()
-            .AddFilters<IAutoFunctionInvocationFilter>()
-            .AddFilters<IPromptRenderFilter>();
+        kernel.FunctionInvocationFilters
+            .Add(new FunctionCallCollectorFilter());
 
         kernel
             .AddBuiltInPluginConfigOverrides(request.ConfigOverrides.Plugins)
@@ -257,7 +270,6 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             }
         }, cancellationToken);
     }
-
 
     private static ChatResponse GetResponse(string rawContent, ChatHistory chatHistory, TimeSpan elapsedTime)
     {

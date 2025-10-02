@@ -16,4 +16,11 @@ internal static class AgentCollectorContext
         AgentInstructionsCollectorContext.Initialize();
         ResponseCallbackCollectorContext.Initialize();
     }
+
+    internal static void Dispose()
+    {
+        FunctionsCollectorContext.Dispose();
+        AgentInstructionsCollectorContext.Dispose();
+        ResponseCallbackCollectorContext.Dispose();
+    }
 }

@@ -135,11 +135,11 @@ public class ChatHistoryExtensionsTests
     public void AddChatUserPromptWhenblobContentsIsNullThrowsArgumentNullExceptionTest()
     {
         var chatHistory = new ChatHistory();
-        string question = "question";
+        const string QUESTION = "question";
         KernelContent[] blobContents = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsExactly<ArgumentNullException>(() => chatHistory.AddChatUserPrompt(question, blobContents));
+        Assert.ThrowsExactly<ArgumentNullException>(() => chatHistory.AddChatUserPrompt(QUESTION, blobContents));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

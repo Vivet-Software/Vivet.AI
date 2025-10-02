@@ -10,4 +10,9 @@ internal static class ChatCollectorContext
     {
         FunctionsCollectorContext.Initialize();
     }
+
+    internal static void Dispose()
+    {
+        FunctionsCollectorContext.Dispose();
+    }
 }

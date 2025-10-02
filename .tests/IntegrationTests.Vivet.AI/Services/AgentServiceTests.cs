@@ -3,7 +3,6 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Vivet.AI.Config;
@@ -52,7 +51,7 @@ public class AgentServiceTests : BaseTests
             {
                 Name = "PhysicsExpert",
                 Instructions = "You are an expert in physics, and anwer all questions from a physics perspective."
-            },
+            }
         };
 
         var response = await agentService
@@ -81,7 +80,6 @@ public class AgentServiceTests : BaseTests
         //    Console.WriteLine(message.Content);
         //}
     }
-
 
 
     [TestMethod]
@@ -124,7 +122,7 @@ public class AgentServiceTests : BaseTests
                 Name = "ChemistryExpert",
                 Instructions = "You are a helpful assistant."
                 //Instructions = "You are an expert in chemist, and anwer all questions from a chemistry perspective."
-            },
+            }
             //new()
             //{
             //    Id = "PhysicsExpert",
@@ -159,5 +157,4 @@ public class AgentServiceTests : BaseTests
         //    Console.WriteLine(message.Content);
         //}
     }
-
 }

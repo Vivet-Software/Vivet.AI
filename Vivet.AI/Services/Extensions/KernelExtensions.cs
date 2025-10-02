@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
 using Vivet.AI.Services.Plugins.Consts;
@@ -11,42 +10,6 @@ namespace Vivet.AI.Services.Extensions;
 
 internal static class KernelExtensions
 {
-    internal static Kernel AddFilters<T>(this Kernel kernel)
-        where T : class
-    {
-        if (kernel == null) 
-            throw new ArgumentNullException(nameof(kernel));
-        
-        var services = kernel.Services
-            .GetServices<T>();
-
-        foreach (var filter in services)
-        {
-            switch (filter)
-            {
-                case IFunctionInvocationFilter functionInvocationFilter:
-                    kernel.FunctionInvocationFilters
-                        .Add(functionInvocationFilter);
-                    break;
-
-                case IAutoFunctionInvocationFilter autoFunctionInvocationFilter:
-                    kernel.AutoFunctionInvocationFilters
-                        .Add(autoFunctionInvocationFilter);
-                    break;
-
-                case IPromptRenderFilter promptRenderFilter:
-                    kernel.PromptRenderFilters
-                        .Add(promptRenderFilter);
-                    break;
-
-                default:
-                    throw new InvalidOperationException($"Unknown filter type: {typeof(T)}");
-            }
-        }
-
-        return kernel;
-    }
-
     internal static Kernel AddCustomPlugins(this Kernel kernel, IServiceProvider serviceProvider, IEnumerable<CustomPlugin> plugins)
     {
         if (kernel == null)

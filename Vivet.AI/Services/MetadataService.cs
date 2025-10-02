@@ -73,11 +73,6 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         var kernel = kernelBuilder
             .Build();
 
-        kernel
-            .AddFilters<IFunctionInvocationFilter>()
-            .AddFilters<IAutoFunctionInvocationFilter>()
-            .AddFilters<IPromptRenderFilter>();
-
         return kernel;
     }
     private PromptExecutionSettings GetPromptExecutionSettings(MetadataConfigOverrides configOverrides)
