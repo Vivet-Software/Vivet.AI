@@ -379,7 +379,12 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
                 if (metadataResponse == null)
                 {
-                    throw new AiException("No metadata available. Either include metadata in the request, or enable automatic metadata retrieval in the configuration or for this request.");
+                    throw new InvalidOperationException("No metadata available. Either include metadata in the request, or enable automatic metadata retrieval in the configuration or for this request.");
+                }
+
+                if (metadataResponse.Exception != null)
+                {
+                    throw metadataResponse.Exception;
                 }
 
                 var blobData = await x

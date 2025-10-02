@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
-using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Summarization;
@@ -114,9 +113,23 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
         if (chatMessageContent == null) 
             throw new ArgumentNullException(nameof(chatMessageContent));
 
+        var tokenUsage = chatMessageContent
+            .GetTokenUsage();
+
+        var externalId = chatMessageContent
+            .GetExternalId();
+
         if (string.IsNullOrEmpty(chatMessageContent.Content))
         {
-            throw new AiException("No Content returned by the request.");
+            var noContentException = BaseService.GetResponseExceptionOrDefault("No Content returned by the request.");
+
+            return new SummarizationMemoryResponse
+            {
+                ElapsedTime = elapsedTime,
+                TokenUsage = tokenUsage,
+                ExternalId = externalId,
+                Exception = noContentException
+            };
         }
 
         var answer = chatMessageContent.Content
@@ -125,20 +138,10 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
         var jObject = JObject.Parse(answer);
 
         var errorMessage = jObject[nameof(BaseResponse.ErrorMessage)]?.ToString();
-
-        if (errorMessage != null)
-        {
-            throw new AiException(errorMessage);
-        }
-
         var questionSummarized = jObject[nameof(SummarizationMemoryResponse.QuestionSummarized)]?.ToString();
         var answerSummarized = jObject[nameof(SummarizationMemoryResponse.AnswerSummarized)]?.ToString();
 
-        var tokenUsage = chatMessageContent
-            .GetTokenUsage();
-
-        var externalId = chatMessageContent
-            .GetExternalId();
+        var exception = BaseService.GetResponseExceptionOrDefault(errorMessage);
 
         return new SummarizationMemoryResponse
         {
@@ -146,7 +149,8 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
             AnswerSummarized = answerSummarized,
             TokenUsage = tokenUsage,
             ExternalId = externalId,
-            ElapsedTime = elapsedTime
+            ElapsedTime = elapsedTime,
+            Exception = exception
         };
     }
 }

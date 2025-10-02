@@ -1,4 +1,5 @@
-﻿using Microsoft.SemanticKernel.ChatCompletion;
+﻿using System;
+using Microsoft.SemanticKernel.ChatCompletion;
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Agent.Models.Plugins;
@@ -19,7 +20,13 @@ public class AgentDescriptor
     /// </para>
     /// </summary>
     [Required]
-    public virtual string Id { get; set; }
+    public virtual string Id { get; } = Guid.NewGuid().ToString();
+
+    /// <summary>
+    /// The name of the agent.
+    /// Cannot contain spaces.
+    /// </summary>
+    public virtual string Name { get; set; }
 
     /// <summary>
     /// A brief description of the agent's purpose or role.

@@ -7,6 +7,38 @@ namespace Vivet.AI.Services.Extensions;
 
 internal static class ChatMessageContentExtensions
 {
+    internal static string GetAgentId(this ChatMessageContent chatMessageContent)
+    {
+        if (chatMessageContent == null)
+            throw new ArgumentNullException(nameof(chatMessageContent));
+
+        if (string.IsNullOrEmpty(chatMessageContent.AuthorName))
+        {
+            return null;
+        }
+
+        var indexOfBracketStart = chatMessageContent.AuthorName
+            .LastIndexOf('[');
+
+        if (indexOfBracketStart >= 0)
+        {
+            var indexOfBracketEnd = chatMessageContent.AuthorName
+                .LastIndexOf(']');
+
+            if (indexOfBracketEnd >= 0)
+            {
+                var len = indexOfBracketEnd - indexOfBracketStart - 1;
+
+                if (len > 0)
+                {
+                    return chatMessageContent.AuthorName.Substring(indexOfBracketStart + 1, len);
+                }
+            }
+        }
+
+        return null;
+    }
+
     internal static string GetExternalId(this ChatMessageContent chatMessageContent)
     {
         if (chatMessageContent == null)

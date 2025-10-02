@@ -1,17 +1,16 @@
-﻿using System;
+﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.VectorData;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.AI;
-using Microsoft.Extensions.VectorData;
-using Newtonsoft.Json;
 using Vivet.AI.Config;
 using Vivet.AI.Data.Models;
 using Vivet.AI.Data.Stores;
-using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Helpers;
 using Vivet.AI.Services.Helpers.Models;
@@ -382,7 +381,6 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             ? typeof(object)
             : additionalMetadataType ?? typeof(object);
 
-
         dynamic metadataResponse = null;
         if (requestMetadata != null && (requestAdditionalMetadata != null || additionalMetadataType == typeof(object)))
         {
@@ -452,7 +450,12 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
 
         if (metadataResponse == null)
         {
-            throw new AiException("No metadata available. Either include metadata in the request, or enable automatic metadata retrieval in the configuration or for this request."); 
+            throw new InvalidOperationException("No metadata available. Either include metadata in the request, or enable automatic metadata retrieval in the configuration or for this request.");
+        }
+
+        if (metadataResponse.Exception != null)
+        {
+            throw metadataResponse.Exception;
         }
 
         return metadataResponse;

@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Vivet.AI.Services.Models;
+using Vivet.AI.Services.Plugins.Consts;
 using Vivet.AI.Services.Requests.Agent.Models.Plugins;
 using Vivet.AI.Services.Requests.Chat.Models.Plugins;
 using Vivet.AI.Services.Responses;
@@ -74,9 +75,9 @@ containing a meaningful error message, describing why the request could not be c
         var stringBuilder = new StringBuilder();
 
         stringBuilder
-            .AppendBuiltInPluginContext(plugins.Context.Memory)
-            .AppendBuiltInPluginContext(plugins.Context.Knowledge)
-            .AppendBuiltInPluginContext(plugins.Context.WebSearch)
+            .AppendBuiltInPluginContext(plugins.Context.Memory, BuiltInPluginNames.MEMORY_PLUGIN)
+            .AppendBuiltInPluginContext(plugins.Context.Knowledge, BuiltInPluginNames.KNOWLEDGE_PLUGIN)
+            .AppendBuiltInPluginContext(plugins.Context.WebSearch, BuiltInPluginNames.WEB_SEARCH_PLUGIN)
             .AppendCustomPluginsContext(plugins.CustomPlugins);
 
         var content = stringBuilder
@@ -112,9 +113,9 @@ containing a meaningful error message, describing why the request could not be c
         var contextWebSearch = plugins.Context.WebSearch ?? parentPlugins.Context?.WebSearch;
 
         stringBuilder
-            .AppendBuiltInPluginContext(contextMemory)
-            .AppendBuiltInPluginContext(contextKnowledge)
-            .AppendBuiltInPluginContext(contextWebSearch);
+            .AppendBuiltInPluginContext(contextMemory, BuiltInPluginNames.MEMORY_PLUGIN)
+            .AppendBuiltInPluginContext(contextKnowledge, BuiltInPluginNames.KNOWLEDGE_PLUGIN)
+            .AppendBuiltInPluginContext(contextWebSearch, BuiltInPluginNames.WEB_SEARCH_PLUGIN);
 
         var customPlugins = plugins.CustomPlugins
             .Concat(parentPlugins.CustomPlugins)

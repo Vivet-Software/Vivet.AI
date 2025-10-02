@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
-using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Metadata;
@@ -119,9 +118,23 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         if (chatMessageContent == null) 
             throw new ArgumentNullException(nameof(chatMessageContent));
 
+        var tokenUsage = chatMessageContent
+            .GetTokenUsage();
+
+        var externalId = chatMessageContent
+            .GetExternalId();
+
         if (string.IsNullOrEmpty(chatMessageContent.Content))
         {
-            throw new AiException("No Content returned by the request.");
+            var noContentException = BaseService.GetResponseExceptionOrDefault("No Content returned by the request.");
+
+            return new MetadataResponse<T>
+            {
+                ElapsedTime = elapsedTime,
+                TokenUsage = tokenUsage,
+                ExternalId = externalId,
+                Exception = noContentException
+            };
         }
 
         var answer = chatMessageContent.Content
@@ -129,20 +142,12 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
 
         var response = JsonConvert.DeserializeObject<MetadataResponse<T>>(answer, Settings.ResponseSerializerSettings);
 
-        if (response.ErrorMessage != null)
-        {
-            throw new AiException(response.ErrorMessage);
-        }
-
-        var tokenUsage = chatMessageContent
-            .GetTokenUsage();
-
-        var externalId = chatMessageContent
-            .GetExternalId();
+        var exception = BaseService.GetResponseExceptionOrDefault(response.ErrorMessage);
 
         response.TokenUsage = tokenUsage;
         response.ExternalId = externalId;
         response.ElapsedTime = elapsedTime;
+        response.Exception = exception;
 
         return response;
     }

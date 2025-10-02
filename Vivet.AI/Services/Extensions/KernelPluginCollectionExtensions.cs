@@ -3,8 +3,8 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
-using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Models.Plugins;
+using Vivet.AI.Services.Plugins.Consts;
 
 namespace Vivet.AI.Services.Extensions;
 

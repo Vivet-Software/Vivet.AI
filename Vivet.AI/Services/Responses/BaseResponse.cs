@@ -22,6 +22,11 @@ public class BaseResponse
     public virtual TokenUsage TokenUsage { get; set; }
 
     /// <summary>
+    /// An exception describing the failure, if one occurred.
+    /// </summary>
+    public virtual Exception Exception { get; set; }
+
+    /// <summary>
     /// An error message describing the failure, if one occurred.
     /// Intended for internal use only.
     /// </summary>

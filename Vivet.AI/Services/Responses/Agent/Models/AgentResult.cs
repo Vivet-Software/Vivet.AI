@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using Vivet.AI.Services.Collectors.Models;
 using Vivet.AI.Services.Models;
 
 namespace Vivet.AI.Services.Responses.Agent.Models;
@@ -42,7 +44,7 @@ public class AgentResult<T> // BUG: 444: Can we use T ??? problem is for sequent
     /// The raw, unprocessed response returned by the model.
     /// </summary>
     public virtual string RawResponse { get; set; }
-
+    
     /// <summary>
     /// An approximation of the instrcution prompt generated for the agent.
     /// It won’t be exactly what SK sends to the backend,
@@ -72,6 +74,16 @@ public class AgentResult<T> // BUG: 444: Can we use T ??? problem is for sequent
     /// The total time elapsed while processing the agent.
     /// </summary>
     public virtual TimeSpan ElapsedTime { get; set; }
+
+    /// <summary>
+    /// The function calls invoked during the request.
+    /// </summary>
+    public virtual IEnumerable<FunctionCall> FunctionCalls { get; set; } = [];
+
+    /// <summary>
+    /// An exception describing the failure, if one occurred.
+    /// </summary>
+    public virtual Exception Exception { get; set; }
 
     /// <summary>
     /// An error message describing the failure, if one occurred.

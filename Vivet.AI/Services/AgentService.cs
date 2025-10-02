@@ -12,16 +12,18 @@ using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
-using Vivet.AI.Services.Exceptions;
+using Vivet.AI.Services.Collectors;
+using Vivet.AI.Services.Consts;
 using Vivet.AI.Services.Extensions;
+using Vivet.AI.Services.Filters;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Models.ConfigOverrides;
@@ -34,6 +36,8 @@ using Vivet.AI.Services.Responses.Agent.Models;
 using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
+
+// TODO: Update all chat tests (exception handling has changed)
 
 // TODO: I still don't like the plugin context validation, isn't there a better way
 // Also the whole plugins and context seems confusing - final check of config/overerrides/etc.
@@ -50,7 +54,9 @@ namespace Vivet.AI.Services;
 // Plugins must have seperate context variables even when they are re-used among several plugins
 // update web search plugin, config etc. (Limit removed from config)
 // Check documentation for Response.ErrorMessage, we actual throw and Exception and the property is internal. 
-// Document adding filters, and that the order matters. They just need to be added to the IServiceCollection. Filters are added for all kernels.
+// Document adding filters, and that they will be orderded by name. Filters are added for all kernels.
+// Error handling: An exception is now set on BaseResponse if an error happens. For AgentService that is also on each agent. 
+// - AIException means and error from the model.
 
 // TODO: Add missing tests (especially extensions)
 
@@ -75,12 +81,12 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         request
             .Validate();
 
-        var agentResponses = new ConcurrentBag<AgentResult>();
+        AgentCollectorContext.Initialize();
 
         var executionSettings = this.GetPromptExecutionSettingsOverrrides(request.ConfigOverrides);
         var agents = this.GetAgents(request, executionSettings);
         var inputPrompt = await this.GetInputPrompt(request, cancellationToken);
-        var agentOrchestration = this.GetAgentOrchestration(request, inputPrompt, agents, stopwatch, agentResponses);
+        var agentOrchestration = this.GetAgentOrchestration(request, inputPrompt, agents, stopwatch);
 
         var inputPromptAsText = inputPrompt
             .GetPromptAsText(true);
@@ -96,10 +102,10 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         stopwatch
             .Stop();
 
-        var response = AgentService.GetResponse(inputPrompt, agentResponses, stopwatch.Elapsed);
+        var response = AgentService.GetResponse(inputPrompt, agents, stopwatch.Elapsed);
 
         // TODO: HISTORY: Save memory, SkipSaveMemory
-        // Use Agent.Id for the orchestration, or the individual agents
+        // Consider that AgentId here should be the AgentDescriptor.Name, if we want memory across agent executions.
 
         return response;
     }
@@ -173,10 +179,17 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         var kernel = kernelBuilder
             .Build();
 
-        kernel
-            .AddFilters<IFunctionInvocationFilter>()
-            .AddFilters<IAutoFunctionInvocationFilter>()
-            .AddFilters<IPromptRenderFilter>();
+        kernel.Data
+            .Add(KernelData.AGENT_ID, agent.Id);
+
+        // BUG: 333: Filter
+        kernel.FunctionInvocationFilters
+            .Add(new FunctionCallCollectorFilter());
+        
+        //kernel
+        //    .AddFilters<IFunctionInvocationFilter>()
+        //    .AddFilters<IAutoFunctionInvocationFilter>()
+        //    .AddFilters<IPromptRenderFilter>();
 
         kernel
             .AddBuiltInPluginConfigOverrides(agent.ConfigOverrides.Plugins, parentConfigOverrides)
@@ -238,11 +251,13 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
             var instructions = chatHistory
                 .GetPromptAsText(true);
 
+            var name = $"{agentDescriptor.Name.Replace(" ", "-")}[{agentDescriptor.Id}]";
+
             agents
                 .Add(new ChatCompletionAgent
                 {
                     Id = agentDescriptor.Id,
-                    Name = agentDescriptor.Id,
+                    Name = name,
                     Description = agentDescriptor.Description,
                     Instructions = instructions,
                     InstructionsRole = agentDescriptor.Role,
@@ -260,7 +275,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         return agents
             .ToArray();
     }
-    private AgentOrchestration<string, ChatMessageContent[]> GetAgentOrchestration(AgentRequest request, ChatHistory inputPrompt, Agent[] agents, Stopwatch stopWatch, ConcurrentBag<AgentResult> agentResponses)
+    private AgentOrchestration<string, ChatMessageContent[]> GetAgentOrchestration(AgentRequest request, ChatHistory inputPrompt, Agent[] agents, Stopwatch stopWatch)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -270,9 +285,6 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
 
         if (stopWatch == null) 
             throw new ArgumentNullException(nameof(stopWatch));
-
-        if (agentResponses == null) 
-            throw new ArgumentNullException(nameof(agentResponses));
 
         var loggerFactory = agents.FirstOrDefault()?.LoggerFactory ?? serviceProvider.GetService<ILoggerFactory>();
 
@@ -285,7 +297,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
                 LoggerFactory = loggerFactory,
                 InputTransform = (_, _) => InputTransform(inputPrompt),
                 ResultTransform = ResultTransform,
-                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents, stopWatch, agentResponses)
+                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, stopWatch)
             },
             AgentOrchestrationType.Concurrent => new ConcurrentOrchestration<string, ChatMessageContent[]>(agents)
             {
@@ -294,7 +306,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
                 LoggerFactory = loggerFactory,
                 InputTransform = (_, _) => InputTransform(inputPrompt),
                 ResultTransform = ResultTransform,
-                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents, stopWatch, agentResponses)
+                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, stopWatch)
             },
             AgentOrchestrationType.GroupChat => new GroupChatOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Group chat Orchestration. Manager Override. https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/group-chat?pivots=programming-language-csharp#customize-the-group-chat-manager
             {
@@ -303,7 +315,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
                 LoggerFactory = loggerFactory,
                 InputTransform = (_, _) => InputTransform(inputPrompt),
                 ResultTransform = ResultTransform,
-                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents, stopWatch, agentResponses)
+                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, stopWatch)
             },
             AgentOrchestrationType.HandOff => new HandoffOrchestration<string, ChatMessageContent[]>(OrchestrationHandoffs.StartWith(agents.First()), agents)
             {
@@ -312,7 +324,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
                 LoggerFactory = loggerFactory,
                 InputTransform = (_, _) => InputTransform(inputPrompt),
                 ResultTransform = ResultTransform,
-                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents, stopWatch, agentResponses)
+                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, stopWatch)
             },
             AgentOrchestrationType.Magnetic => new MagenticOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Magnetic Orchestration
             {
@@ -321,7 +333,7 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
                 LoggerFactory = loggerFactory,
                 InputTransform = (_, _) => InputTransform(inputPrompt),
                 ResultTransform = ResultTransform,
-                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents, stopWatch, agentResponses)
+                ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, stopWatch)
             },
             _ => throw new ArgumentOutOfRangeException(nameof(request.OrchestrationType), request.OrchestrationType, $"Orchestration type {request.OrchestrationType} not supported")
         };
@@ -329,60 +341,70 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         return agentOrchestration;
     }
 
-    private static AgentResponse GetResponse(ChatHistory inputPrompt, ConcurrentBag<AgentResult> agentResponses, TimeSpan elapsedTime)
+    private static AgentResponse GetResponse(ChatHistory inputPrompt, Agent[] agents, TimeSpan elapsedTime)
     {
         if (inputPrompt == null) 
             throw new ArgumentNullException(nameof(inputPrompt));
-        
-        if (agentResponses == null) 
-            throw new ArgumentNullException(nameof(agentResponses));
+
+        if (agents == null)
+            throw new ArgumentNullException(nameof(agents));
+
+        var responseCallbacks = AgentCollectorContext.ResponseCallbacks
+            .GetAll();
+
+        var results = responseCallbacks
+            .Select(x =>
+            {
+                var agentId = x.ChatMessageContent
+                    .GetAgentId();
+
+                var agent = agents
+                    .First(y => y.Id == agentId);
+
+                return AgentService.GetAgentResult(x.ChatMessageContent, agent, x.ElapsedTime);
+            })
+            .ToArray();
 
         var inputPromptAsText = inputPrompt
             .GetPromptAsText();
 
-        var agentResults = agentResponses
-            .ToArray();
-
-        var tokenUsage = agentResponses
+        var tokenUsage = results
             .Select(x => x.TokenUsage)
             .Aggregate(new TokenUsage(), (current, x) => current + x);
 
         return new AgentResponse
         {
             InputPrompt = inputPromptAsText,
-            Results = agentResults,
+            Results = results,
             TokenUsage = tokenUsage,
             ElapsedTime = elapsedTime
         };
     }
-    private static AgentResult GetAgentResult(ChatMessageContent chatMessageContent, Agent[] agents, TimeSpan elapsedTime)
+    private static AgentResult GetAgentResult(ChatMessageContent chatMessageContent, Agent agent, TimeSpan elapsedTime)
     {
         if (chatMessageContent == null)
             throw new ArgumentNullException(nameof(chatMessageContent));
 
-        if (agents == null) 
-            throw new ArgumentNullException(nameof(agents));
+        if (agent == null) 
+            throw new ArgumentNullException(nameof(agent));
 
-        if (string.IsNullOrEmpty(chatMessageContent.Content))
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        var agentInstructions = AgentCollectorContext.Instructions
+            .GetByAgent(agentId);
+
+        var stringBuilder = new StringBuilder(agent.Instructions);
+
+        foreach (var instruction in agentInstructions)
         {
-            throw new AiException("No Content returned by the request.");
+            stringBuilder
+                .AppendLine(instruction.Role)
+                .AppendLine(instruction.Input);
         }
 
-        var answer = chatMessageContent.Content
-            .GetChatResponseAnswer();
-
-        var response = JsonConvert.DeserializeObject<AgentResult>(answer, Settings.ResponseSerializerSettings);
-
-        if (response.ErrorMessage != null)
-        {
-            throw new AiException(response.ErrorMessage);
-        }
-
-        var thinking = chatMessageContent.Content
-            .GetChatResponseThinking();
-
-        var agent = agents
-            .First(x => x.Id == chatMessageContent.AuthorName);
+        var instructionsPrompt = stringBuilder
+            .ToString();
 
         var tokenUsage = chatMessageContent
             .GetTokenUsage();
@@ -390,37 +412,86 @@ public class AgentService(AgentOptions options, IServiceProvider serviceProvider
         var externalId = chatMessageContent
             .GetExternalId();
 
-        response.AgentId = chatMessageContent.AuthorName;
-        response.Thinking = thinking;
-        response.RawResponse = chatMessageContent.Content;
-        response.InstructionsPrompt = agent.Instructions;
-        response.TokenUsage = tokenUsage;
-        response.ExternalId = externalId;
-        response.ElapsedTime = elapsedTime;
+        if (string.IsNullOrEmpty(chatMessageContent.Content))
+        {
+            var noContentException = BaseService.GetResponseExceptionOrDefault("No Content returned by the request.");
 
-        return response;
+            return new AgentResult
+            {
+                AgentId = agentId,
+                InstructionsPrompt = instructionsPrompt,
+                ElapsedTime = elapsedTime,
+                TokenUsage = tokenUsage,
+                ExternalId = externalId,
+                Exception = noContentException
+            };
+        }
+
+        var answer = chatMessageContent.Content
+            .GetChatResponseAnswer();
+
+        var result = JsonConvert.DeserializeObject<AgentResult>(answer, Settings.ResponseSerializerSettings);
+
+        var thinking = chatMessageContent.Content
+            .GetChatResponseThinking();
+
+        var functionCalls = AgentCollectorContext.Functions
+            .GetByAgentId(agentId);
+
+        var exception = BaseService.GetResponseExceptionOrDefault(result.ErrorMessage);
+
+        result.AgentId = agentId;
+        result.Thinking = thinking;
+        result.RawResponse = chatMessageContent.Content;
+        result.InstructionsPrompt = instructionsPrompt;
+        result.ElapsedTime = elapsedTime; // TODO: Test that this isn't cumulattive in sequential orchestrations
+        result.TokenUsage = tokenUsage;
+        result.ExternalId = externalId;
+        result.FunctionCalls = functionCalls;
+        result.Exception = exception;
+
+        return result;
     }
 
-    private static ValueTask ResponseCallback(ChatMessageContent chatMessageContent, Agent[] agents, Stopwatch stopwatch, ConcurrentBag<AgentResult> agentResponses)
+    private static ValueTask ResponseCallback(ChatMessageContent chatMessageContent, Stopwatch stopwatch)
     {
         if (chatMessageContent == null) 
             throw new ArgumentNullException(nameof(chatMessageContent));
 
-        if (agents == null) 
-            throw new ArgumentNullException(nameof(agents));
-
-        if (agentResponses == null) 
-            throw new ArgumentNullException(nameof(agentResponses));
-
         if (stopwatch == null) 
             throw new ArgumentNullException(nameof(stopwatch));
 
-        // BUG: 000: If exception is thrown here (e.g. in GetAgentResult) it hangs
+        var finishReason = chatMessageContent.Metadata?["FinishReason"].ToString()?.ToLower();
 
-        var response = AgentService.GetAgentResult(chatMessageContent, agents, stopwatch.Elapsed);
+        if (finishReason == "stop")
+        {
+            AgentCollectorContext.ResponseCallbacks
+                .AddResponseCallback(chatMessageContent, stopwatch.Elapsed);
+        }
+        else
+        {
+            if (finishReason == "toolcalls")
+            {
+                var kernelContent = chatMessageContent.Items
+                    .FirstOrDefault();
 
-        agentResponses
-            .Add(response);
+                if (kernelContent is FunctionCallContent functionCallContent)
+                {
+                    AgentCollectorContext.Functions
+                        .AddOrUpdate(chatMessageContent, functionCallContent);
+                }
+
+                chatMessageContent.Content ??= $"[{nameof(FunctionCallContent)}]";
+            }
+
+            if (finishReason == null && chatMessageContent.Role == AuthorRole.Tool)
+            {
+                chatMessageContent.Content += $"{Environment.NewLine}{nameof(FunctionResultContent)}";
+            }
+
+            AgentCollectorContext.Instructions
+                .Add(chatMessageContent);
+        }
 
         return ValueTask.CompletedTask;
     }

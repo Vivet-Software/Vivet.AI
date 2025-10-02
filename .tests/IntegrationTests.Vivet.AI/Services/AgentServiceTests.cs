@@ -45,12 +45,12 @@ public class AgentServiceTests : BaseTests
         {
             new()
             {
-                Id = "ChemistryExpert",
+                Name = "ChemistryExpert",
                 Instructions = "You are an expert in chemist, and anwer all questions from a chemistry perspective."
             },
             new()
             {
-                Id = "PhysicsExpert",
+                Name = "PhysicsExpert",
                 Instructions = "You are an expert in physics, and anwer all questions from a physics perspective."
             },
         };
@@ -121,7 +121,7 @@ public class AgentServiceTests : BaseTests
         {
             new()
             {
-                Id = "ChemistryExpert",
+                Name = "ChemistryExpert",
                 Instructions = "You are a helpful assistant."
                 //Instructions = "You are an expert in chemist, and anwer all questions from a chemistry perspective."
             },

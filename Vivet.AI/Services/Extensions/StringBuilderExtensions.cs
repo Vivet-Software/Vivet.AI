@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Models.Plugins;
 
 namespace Vivet.AI.Services.Extensions;
@@ -13,18 +12,21 @@ namespace Vivet.AI.Services.Extensions;
 /// </summary>
 internal static class StringBuilderExtensions
 {
-    internal static StringBuilder AppendBuiltInPluginContext<TContext>(this StringBuilder stringBuilder, TContext context)
+    internal static StringBuilder AppendBuiltInPluginContext<TContext>(this StringBuilder stringBuilder, TContext context, string name)
         where TContext : class
     {
         if (stringBuilder == null) 
             throw new ArgumentNullException(nameof(stringBuilder));
+
+        if (name == null) 
+            throw new ArgumentNullException(nameof(name));
 
         if (context == null)
         {
             return stringBuilder;
         }
 
-        var contextPrompt = GetBuiltInPluginContext(context, BuiltInPluginNames.MEMORY_PLUGIN);
+        var contextPrompt = StringBuilderExtensions.GetBuiltInPluginContext(context, name);
 
         if (contextPrompt != null)
         {

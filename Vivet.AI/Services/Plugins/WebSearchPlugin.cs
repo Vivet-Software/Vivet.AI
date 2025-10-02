@@ -1,14 +1,14 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Data;
 using Vivet.AI.Models.Enums;
 
-namespace Vivet.AI.Plugins;
+namespace Vivet.AI.Services.Plugins;
 
 /// <summary>
 /// Web Search Plugin.
@@ -40,24 +40,31 @@ public sealed class WebSearchPlugin
         {
             return null;
         }
-            
-        var filter = this.GetTextSearchFilter(site);
 
-        var options = new TextSearchOptions
+        try
         {
-            Top = limit,
-            Filter = filter
-        };
+            var filter = this.GetTextSearchFilter(site);
 
-        var response = await this.textSearchService
-            .SearchAsync(query, options, cancellationToken)
-            .ConfigureAwait(false);
+            var options = new TextSearchOptions
+            {
+                Top = limit,
+                Filter = filter
+            };
 
-        var results = await response.Results
-            .ToArrayAsync(cancellationToken)
-            .ConfigureAwait(false);
+            var response = await this.textSearchService
+                .SearchAsync(query, options, cancellationToken)
+                .ConfigureAwait(false);
 
-        return results;
+            var results = await response.Results
+                .ToArrayAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            return [$"An error occurred. {ex.Message}"];
+        }
     }
 
     /// <summary>
@@ -72,23 +79,30 @@ public sealed class WebSearchPlugin
             return null;
         }
 
-        var filter = this.GetTextSearchFilter(site);
-
-        var options = new TextSearchOptions
+        try
         {
-            Top = limit,
-            Filter = filter
-        };
+            var filter = this.GetTextSearchFilter(site);
 
-        var response = await this.textSearchService
-            .GetSearchResultsAsync(query, options, cancellationToken)
-            .ConfigureAwait(false);
+            var options = new TextSearchOptions
+            {
+                Top = limit,
+                Filter = filter
+            };
 
-        var results = await response.Results
-            .ToArrayAsync(cancellationToken)
-            .ConfigureAwait(false);
+            var response = await this.textSearchService
+                .GetSearchResultsAsync(query, options, cancellationToken)
+                .ConfigureAwait(false);
 
-        return results;
+            var results = await response.Results
+                .ToArrayAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            return [$"An error occurred. {ex.Message}"];
+        }
     }
 
     /// <summary>
@@ -103,23 +117,30 @@ public sealed class WebSearchPlugin
             return null;
         }
 
-        var filter = this.GetTextSearchFilter(site);
-
-        var options = new TextSearchOptions
+        try
         {
-            Top = limit,
-            Filter = filter
-        };
+            var filter = this.GetTextSearchFilter(site);
 
-        var response = await this.textSearchService
-            .GetTextSearchResultsAsync(query, options, cancellationToken)
-            .ConfigureAwait(false);
+            var options = new TextSearchOptions
+            {
+                Top = limit,
+                Filter = filter
+            };
 
-        var results = await response.Results
-            .ToArrayAsync(cancellationToken)
-            .ConfigureAwait(false);
+            var response = await this.textSearchService
+                .GetTextSearchResultsAsync(query, options, cancellationToken)
+                .ConfigureAwait(false);
 
-        return results;
+            var results = await response.Results
+                .ToArrayAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return results;
+        }
+        catch (Exception ex)
+        {
+            return [new TextSearchResult($"An error occurred. {ex.Message}")];
+        }
     }
 
     private TextSearchFilter GetTextSearchFilter(string site = null)

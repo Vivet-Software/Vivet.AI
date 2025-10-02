@@ -17,7 +17,6 @@ using Vivet.AI.Extensions.Embeddings.Pinecone;
 using Vivet.AI.Extensions.Embeddings.Postgres;
 using Vivet.AI.Extensions.Embeddings.Qdrant;
 using Vivet.AI.Extensions.Embeddings.Weaviate;
-using Vivet.AI.Filters;
 using Vivet.AI.Models;
 using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
@@ -77,10 +76,11 @@ internal static class ServiceCollectionExtensions
                 builder
                     .AddLoggerFactory(x);
 
-                builder
-                    .AddFilters<IFunctionInvocationFilter>(x)
-                    .AddFilters<IAutoFunctionInvocationFilter>(x)
-                    .AddFilters<IPromptRenderFilter>(x);
+                // BUG: 333: Filters
+                //builder
+                //    .AddFilters<IFunctionInvocationFilter>(x)
+                //    .AddFilters<IAutoFunctionInvocationFilter>(x)
+                //    .AddFilters<IPromptRenderFilter>(x);
 
                 // TODO: Exception Handling (Function Invocation Filter, e.g. Logging)
                 // TODO: Prompt Caching (Prompt Render Filter - https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Caching/SemanticCachingWithFilters.cs)
@@ -91,9 +91,6 @@ internal static class ServiceCollectionExtensions
 
                 return builder;
             });
-
-        services
-            .AddSingleton<IFunctionInvocationFilter, FunctionCallCollectorFilter>();
 
         services
             .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Chat.Plugins.BuiltInPlugins.WebSearch)

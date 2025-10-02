@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Plugins.Consts;
+﻿namespace Vivet.AI.Services.Plugins.Consts;
 
 internal static class BuiltInPluginNames
 {

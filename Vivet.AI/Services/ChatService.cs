@@ -12,9 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
-using Vivet.AI.Filters;
-using Vivet.AI.Filters.Models;
-using Vivet.AI.Services.Exceptions;
+using Vivet.AI.Services.Collectors;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.ConfigOverrides;
@@ -68,7 +66,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         request
             .Validate();
 
-        FunctionCallCollectorContext.Current.Value = new FunctionCallCollector();
+        ChatCollectorContext.Initialize();
 
         var kernel = this.GetKernel(request);
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
@@ -104,7 +102,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         stopwatch
             .Start();
 
-        FunctionCallCollectorContext.Current.Value = new FunctionCallCollector();
+        ChatCollectorContext.Initialize();
 
         var kernel = this.GetKernel(request);
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
@@ -260,6 +258,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         }, cancellationToken);
     }
 
+
     private static ChatResponse GetResponse(string rawContent, ChatHistory chatHistory, TimeSpan elapsedTime)
     {
         if (rawContent == null) 
@@ -268,31 +267,33 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         if (chatHistory == null) 
             throw new ArgumentNullException(nameof(chatHistory));
 
+        var inputPrompt = chatHistory
+            .GetPromptAsText();
+
         if (string.IsNullOrEmpty(rawContent))
         {
-            throw new AiException("No Content returned by the request.");
+            var noContentException = BaseService.GetResponseExceptionOrDefault("No Content returned by the request.");
+
+            return new ChatResponse
+            {
+                InputPrompt = inputPrompt,
+                ElapsedTime = elapsedTime,
+                Exception = noContentException
+            };
         }
 
         var answer = rawContent
             .GetChatResponseAnswer();
 
-        if (answer == null)
-        {
-            return null;
-        }
-
         var response = JsonConvert.DeserializeObject<ChatResponse>(answer, Settings.ResponseSerializerSettings);
-
-        if (response.ErrorMessage != null)
-        {
-            throw new AiException(response.ErrorMessage);
-        }
 
         var thinking = rawContent
             .GetChatResponseThinking();
 
-        var inputPrompt = chatHistory
-            .GetPromptAsText();
+        var functionCalls = ChatCollectorContext.Functions
+            .GetAll();
+
+        var exception = ChatService.GetResponseExceptionOrDefault(response.ErrorMessage);
 
         response.Answer = answer;
         response.Thinking = thinking;
@@ -302,6 +303,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         // TODO: Chat Streaming Token Usage / External Id (not possible through SK yet)
         response.TokenUsage = null;
         response.ExternalId = null;
+        response.FunctionCalls = functionCalls;
+        response.Exception = exception;
 
         return response;
     }
@@ -314,9 +317,27 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         if (chatHistory == null) 
             throw new ArgumentNullException(nameof(chatHistory));
 
+        var inputPrompt = chatHistory
+            .GetPromptAsText();
+
+        var tokenUsage = chatMessageContent
+            .GetTokenUsage();
+
+        var externalId = chatMessageContent
+            .GetExternalId();
+
         if (string.IsNullOrEmpty(chatMessageContent.Content))
         {
-            throw new AiException("No Content returned by the request.");
+            var noContentException = BaseService.GetResponseExceptionOrDefault("No Content returned by the request.");
+
+            return new ChatResponse<T>
+            {
+                InputPrompt = inputPrompt,
+                ElapsedTime = elapsedTime,
+                TokenUsage = tokenUsage,
+                ExternalId = externalId,
+                Exception = noContentException
+            };
         }
 
         var answer = chatMessageContent.Content
@@ -324,20 +345,10 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         var response = JsonConvert.DeserializeObject<ChatResponse<T>>(answer, Settings.ResponseSerializerSettings);
 
-        if (response.ErrorMessage != null)
-        {
-            throw new AiException(response.ErrorMessage);
-        }
-
         var responseType = response
             .GetType();
 
         var jObject = JsonConvert.DeserializeObject<JObject>(answer);
-
-        if (response.ErrorMessage != null)
-        {
-            throw new AiException(response.ErrorMessage);
-        }
 
         var answerToken = jObject[nameof(ChatResponse.Answer)];
 
@@ -348,6 +359,10 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
                 stringResponse.Answer = answerToken.Type == JTokenType.String
                     ? answerToken.Value<string>()
                     : answerToken.ToString();
+
+                stringResponse.Answer = string.IsNullOrEmpty(stringResponse.Answer) 
+                    ? null 
+                    : stringResponse.Answer;
             }
         }
         else if (responseType is { IsGenericType: true } && responseType.GetGenericTypeDefinition() == typeof(ChatResponse<>))
@@ -371,14 +386,10 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var thinking = chatMessageContent.Content
             .GetChatResponseThinking();
 
-        var inputPrompt = chatHistory
-            .GetPromptAsText();
+        var functionCalls = ChatCollectorContext.Functions
+            .GetAll();
 
-        var tokenUsage = chatMessageContent
-            .GetTokenUsage();
-
-        var externalId = chatMessageContent
-            .GetExternalId();
+        var exception = BaseService.GetResponseExceptionOrDefault(response.ErrorMessage);
 
         response.Thinking = thinking;
         response.RawResponse = chatMessageContent.Content;
@@ -386,6 +397,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         response.TokenUsage = tokenUsage;
         response.ExternalId = externalId;
         response.ElapsedTime = elapsedTime;
+        response.FunctionCalls = functionCalls;
+        response.Exception = exception;
 
         return response;
     }

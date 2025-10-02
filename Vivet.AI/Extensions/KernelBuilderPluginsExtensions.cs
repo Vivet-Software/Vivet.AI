@@ -11,11 +11,11 @@ internal static class KernelBuilderPluginsExtensions
         if (kernelBuilderPlugins == null)
             throw new ArgumentNullException(nameof(kernelBuilderPlugins));
 
-        if (type == null)
-            throw new ArgumentNullException(nameof(type));
-
         if (serviceProvider == null)
             throw new ArgumentNullException(nameof(serviceProvider));
+
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
 
         if (!typeof(object).IsAssignableFrom(type))
         {
@@ -33,14 +33,22 @@ internal static class KernelBuilderPluginsExtensions
             throw new InvalidOperationException($"Plugin type {type.FullName} has no public constructor.");
         }
 
-        var parameters = constructorInfo
-            .GetParameters()
-            .Select(x => serviceProvider
-                .GetService(x.ParameterType))
-            .ToArray();
+        object instance;
+        try
+        {
+            var parameters = constructorInfo
+                .GetParameters()
+                .Select(x => serviceProvider
+                    .GetService(x.ParameterType))
+                .ToArray();
 
-        var instance = constructorInfo
-            .Invoke(parameters);
+            instance = constructorInfo
+                .Invoke(parameters);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Plugin type {type.FullName} constructor can't be resolved. See inner exception for details.", ex);
+        }
 
         kernelBuilderPlugins
             .AddFromObject(instance, name ?? type.Name);

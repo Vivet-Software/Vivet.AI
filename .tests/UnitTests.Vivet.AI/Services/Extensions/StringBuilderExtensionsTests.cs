@@ -20,9 +20,34 @@ public class StringBuilderExtensionsTests
     {
         StringBuilder stringBuilder = null;
         var context = new object();
+        const string NAME = "name";
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext(context));
+        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext(context, NAME));
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void AppendBuiltInPluginContextWhenContextIsNullThrowsArgumentNullExceptionTest()
+    {
+        StringBuilder stringBuilder = null;
+        object context = null;
+        const string NAME = "name";
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        stringBuilder.AppendBuiltInPluginContext(context, NAME);
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void AppendBuiltInPluginContextWhenNameIsNullThrowsArgumentNullExceptionTest()
+    {
+        StringBuilder stringBuilder = null;
+        var context = new object();
+        const string NAME = null;
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext(context, NAME));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

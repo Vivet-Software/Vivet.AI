@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
-using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
+using Vivet.AI.Services.Plugins.Consts;
 
 namespace Vivet.AI.Services.Extensions;
 
@@ -14,7 +14,11 @@ internal static class KernelExtensions
     internal static Kernel AddFilters<T>(this Kernel kernel)
         where T : class
     {
-        var services = kernel.Services.GetServices<T>();
+        if (kernel == null) 
+            throw new ArgumentNullException(nameof(kernel));
+        
+        var services = kernel.Services
+            .GetServices<T>();
 
         foreach (var filter in services)
         {

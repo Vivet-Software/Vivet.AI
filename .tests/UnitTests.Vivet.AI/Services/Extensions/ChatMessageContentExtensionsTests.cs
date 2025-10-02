@@ -11,6 +11,90 @@ namespace UnitTests.Vivet.AI.Services.Extensions;
 public class ChatMessageContentExtensionsTests
 {
     [TestMethod]
+    public void GetAgentIdTest()
+    {
+        var id = Guid.NewGuid().ToString();
+        const string NAME = "name";
+
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = $"{NAME} [{id}]"
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNotNull(agentId);
+        Assert.AreEqual(id, agentId);
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenBracketStartIsMissingTest()
+    {
+        var id = Guid.NewGuid().ToString();
+        const string NAME = "name";
+
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = $"{NAME} {id}]"
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNull(agentId);
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenBracketEndIsMissingTest()
+    {
+        var id = Guid.NewGuid().ToString();
+        const string NAME = "name";
+
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = $"{NAME} [{id}"
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNull(agentId);
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenBracketStartIsAfterBracketEndTest()
+    {
+        var id = Guid.NewGuid().ToString();
+        const string NAME = "name";
+
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = $"{NAME} ]{id}["
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNull(agentId);
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenAuthorNameIsNullTest()
+    {
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = null
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNull(agentId);
+    }
+
+
+    [TestMethod]
     public void GetExternalIdTest()
     {
         const string EXPECTED = "id";

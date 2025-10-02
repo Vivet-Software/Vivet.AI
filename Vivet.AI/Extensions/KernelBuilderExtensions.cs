@@ -6,9 +6,9 @@ using System;
 using System.Linq;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
-using Vivet.AI.Plugins;
-using Vivet.AI.Plugins.Consts;
 using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Plugins;
+using Vivet.AI.Services.Plugins.Consts;
 
 namespace Vivet.AI.Extensions;
 
@@ -39,7 +39,13 @@ internal static class KernelBuilderExtensions
     {
         if (builder == null) 
             throw new ArgumentNullException(nameof(builder));
-        
+
+        // TODO: Filter Order (Order of filters matter, but not possible). Also consider built-in filters.
+
+        // BUG: 333: Filters might be added unintentially. e.g. Microsoft.HandsOff...something Filter
+        // We could a a list of filters in config, then a AutoEnableAllFilters. And the same for plugins?
+        // When looking at Invocation filters in FunctionCallCollectorFilter there are 2 HandOffInvocations filters.
+
         var filters = serviceProvider
             .GetServices<T>();
 
@@ -54,18 +60,42 @@ internal static class KernelBuilderExtensions
             .Select(x => x
                 .GetTypes()
                 .Where(y => !y.IsAbstract && y.IsClass && typeof(T).IsAssignableFrom(y)))
-            .SelectMany(x => x);
+            .SelectMany(x => x)
+            .Distinct()
+            .Where(x => x != null);
 
         foreach (var type in types)
         {
-            var service = serviceProvider
-                .GetService(type);
+            var constructorInfo = type
+                .GetConstructors()
+                .OrderByDescending(x => x
+                    .GetParameters().Length)
+                .FirstOrDefault();
 
-            if (service is T instance)
+            if (constructorInfo == null)
             {
-                builder.Services
-                    .AddSingleton(instance);
+                throw new InvalidOperationException($"Filter type {type.FullName} has no public constructor.");
             }
+
+            object instance;
+            try
+            {
+                var parameters = constructorInfo
+                    .GetParameters()
+                    .Select(x => serviceProvider
+                        .GetService(x.ParameterType))
+                    .ToArray();
+
+                instance = constructorInfo
+                    .Invoke(parameters);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Filter type {type.FullName} constructor can't be resolved. See inner exception for details.", ex);
+            }
+
+            builder.Services
+                .AddSingleton(typeof(T), instance);
         }
 
         return builder;

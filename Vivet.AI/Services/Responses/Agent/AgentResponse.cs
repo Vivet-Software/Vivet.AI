@@ -20,4 +20,7 @@ public class AgentResponse : BaseResponse
     /// The results for each agent invoked in the request.
     /// </summary>
     public virtual IEnumerable<AgentResult> Results { get; set; } = [];
+
+    // BUG: 444: Maybe the aggregated result from the agents, for sequential it would be the last, for concurrent it would be all.
+    // maybe map what the other orchestrations returns
 }
