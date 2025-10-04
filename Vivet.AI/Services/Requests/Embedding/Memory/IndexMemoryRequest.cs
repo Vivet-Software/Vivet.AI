@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Attributes;
 using Vivet.AI.Services.Models.Blobs;
@@ -31,19 +32,19 @@ public class IndexMemoryRequest<T> : BaseIndexRequest<MemoryConfigOverrides>
     /// The ID of the user creating the memory entry.
     /// </summary>
     [RequiredOneOf(nameof(this.UserId))]
-    public virtual string UserId { get; set; }
+    public virtual Guid? UserId { get; set; }
 
     /// <summary>
     /// The ID of the user creating the memory entry.
     /// </summary>
     [RequiredOneOf(nameof(this.AgentId))]
-    public virtual string AgentId { get; set; }
+    public virtual Guid? AgentId { get; set; }
 
     /// <summary>
     /// The ID of the thread or conversation.
     /// </summary>
     [Required]
-    public virtual string ThreadId { get; set; }
+    public virtual Guid ThreadId { get; set; }
 
     /// <summary>
     /// The collection of blobs associated with the memory entry.

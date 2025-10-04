@@ -13,6 +13,93 @@ namespace UnitTests.Vivet.AI.Services.Extensions;
 public class KernelExtensionsTests
 {
     [TestMethod]
+    public void GetAutoFunctionInvocationContextsTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void GetAutoFunctionInvocationContextsWhenKernelIsNullThrowsArgumentNullExceptionTest()
+    {
+        Kernel kernel = null;
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(kernel.GetAutoFunctionInvocationContexts);
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+
+    [TestMethod]
+    public void AddAutoFunctionInvocationContextTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void AddAutoFunctionInvocationContextWhenKernelIsNullThrowsArgumentNullExceptionTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void AddAutoFunctionInvocationContextWhenContextIsNullThrowsArgumentNullExceptionTest()
+    {
+        Assert.Inconclusive();
+    }
+
+
+    [TestMethod]
+    public void GetAgentIdTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenKernelIsNullThrowsArgumentNullExceptionTest()
+    {
+        Kernel kernel = null;
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(() => kernel.GetAgentId());
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+
+    [TestMethod]
+    public void GetAgentResponseCallbackTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void GetAgentResponseCallbackWhenKernelIsNullThrowsArgumentNullExceptionTest()
+    {
+        Kernel kernel = null;
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(kernel.GetAgentResponseCallback);
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+
+    [TestMethod]
+    public void AddFiltersTest()
+    {
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public void AddFiltersWhenKernelIsNullThrowsArgumentNullExceptionTest()
+    {
+        Kernel kernel = null;
+
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(kernel.AddFilters);
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+
+    [TestMethod]
     public void AddCustomPluginsTest()
     {
         Assert.Inconclusive();

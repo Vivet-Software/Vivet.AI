@@ -14,7 +14,7 @@ public abstract class BaseCriteria<TCollection>
     /// <summary>
     /// Gets or sets the scope ID associated with this criteria.
     /// </summary>
-    public virtual string ScopeId { get; set; }
+    public virtual Guid? ScopeId { get; set; }
 
     /// <summary>
     /// Gets or sets the date range for filtering.

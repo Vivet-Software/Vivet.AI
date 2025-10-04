@@ -12,10 +12,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
-using Vivet.AI.Services.Collectors;
+using Vivet.AI.Services.Consts;
 using Vivet.AI.Services.Extensions;
-using Vivet.AI.Services.Filters;
 using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Chat.Models.ConfigOverrides;
@@ -48,8 +48,10 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             ElapsedTime = response.ElapsedTime,
             RawResponse = response.RawResponse,
             Language = response.Language,
+            FunctionCalls = response.FunctionCalls,
             TokenUsage = response.TokenUsage,
-            ExternalId = response.ExternalId
+            ExternalId = response.ExternalId,
+            Exception = response.Exception
         };
     }
 
@@ -67,34 +69,25 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         request
             .Validate();
 
-        ChatCollectorContext.Initialize();
+        var kernel = this.GetKernel(request);
+        var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
-        try
-        {
-            var kernel = this.GetKernel(request);
-            var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
+        var chatHistory = await this.GetChatHistory<T>(request, cancellationToken)
+            .ConfigureAwait(false);
 
-            var chatHistory = await this.GetChatHistory<T>(request, cancellationToken)
-                .ConfigureAwait(false);
+        var chatMessageContent = await this.chatCompletionService
+            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
+            .ConfigureAwait(false);
 
-            var chatMessageContent = await this.chatCompletionService
-                .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
-                .ConfigureAwait(false);
+        stopwatch
+            .Stop();
 
-            stopwatch
-                .Stop();
+        var response = ChatService.GetResponse<T>(chatMessageContent, chatHistory, kernel, stopwatch.Elapsed);
 
-            var response = ChatService.GetResponse<T>(chatMessageContent, chatHistory, stopwatch.Elapsed);
+        _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
+            .ConfigureAwait(false);
 
-            _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
-                .ConfigureAwait(false);
-
-            return response;
-        }
-        finally
-        {
-            ChatCollectorContext.Dispose();
-        }
+        return response;
     }
 
     /// <inheritdoc />
@@ -110,48 +103,40 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         stopwatch
             .Start();
 
-        ChatCollectorContext.Initialize();
+        var kernel = this.GetKernel(request);
+        var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
-        try
+        var chatHistory = await GetChatHistory<string>(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        var streamingChatMessageContents = this.chatCompletionService
+            .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken)
+            .ConfigureAwait(false);
+
+        var content = new StringBuilder();
+        await foreach (var streamingChatMessageContent in streamingChatMessageContents)
         {
-            var kernel = this.GetKernel(request);
-            var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
-
-            var chatHistory = await GetChatHistory<string>(request, cancellationToken)
-                .ConfigureAwait(false);
-
-            var streamingChatMessageContents = this.chatCompletionService
-                .GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel, cancellationToken);
-
-            var content = new StringBuilder();
-            await foreach (var streamingChatMessageContent in streamingChatMessageContents.ConfigureAwait(false))
+            if (!string.IsNullOrEmpty(streamingChatMessageContent.Content))
             {
-                if (!string.IsNullOrEmpty(streamingChatMessageContent.Content))
-                {
-                    content
-                        .Append(streamingChatMessageContent.Content);
+                content
+                    .Append(streamingChatMessageContent.Content);
 
-                    yield return streamingChatMessageContent.Content;
-                }
-            }
-
-            stopwatch
-                .Stop();
-
-            var response = ChatService.GetResponse(content.ToString(), chatHistory, stopwatch.Elapsed);
-
-            _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (onChatStreamingComplete != null)
-            {
-                _ = Task.Run(() => onChatStreamingComplete
-                    .Invoke(response), cancellationToken);
+                yield return streamingChatMessageContent.Content;
             }
         }
-        finally
+
+        stopwatch
+            .Stop();
+
+        var response = ChatService.GetResponse(content.ToString(), chatHistory, kernel, stopwatch.Elapsed);
+
+        _ = this.SaveMemory(request, response, onMemoryIndexed, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (onChatStreamingComplete != null)
         {
-            ChatCollectorContext.Dispose();
+            _ = Task.Run(() => onChatStreamingComplete
+                .Invoke(response), cancellationToken);
         }
     }
 
@@ -164,10 +149,11 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var kernel = kernelBuilder
             .Build();
 
-        kernel.FunctionInvocationFilters
-            .Add(new FunctionCallCollectorFilter());
+        kernel.Data
+            .Add(KernelData.FUNCTION_CALLS, new List<AutoFunctionInvocationContext>());
 
         kernel
+            .AddFilters()
             .AddBuiltInPluginConfigOverrides(request.ConfigOverrides.Plugins)
             .AddCustomPlugins(serviceProvider, request.Plugins.CustomPlugins);
 
@@ -222,7 +208,12 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             return Task.CompletedTask;
         }
 
-        if (request.ConfigOverrides.Plugins?.Memory is { SkipMemoryContext: true })
+        if (this.options.Plugins.BuiltInPlugins.Memory == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (request.ConfigOverrides.Plugins?.Memory is { SkipSaveMemoryContext: true })
         {
             return Task.CompletedTask;
         }
@@ -271,13 +262,16 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         }, cancellationToken);
     }
 
-    private static ChatResponse GetResponse(string rawContent, ChatHistory chatHistory, TimeSpan elapsedTime)
+    private static ChatResponse GetResponse(string rawContent, ChatHistory chatHistory, Kernel kernel, TimeSpan elapsedTime)
     {
         if (rawContent == null) 
             throw new ArgumentNullException(nameof(rawContent));
 
         if (chatHistory == null) 
             throw new ArgumentNullException(nameof(chatHistory));
+
+        if (kernel == null)
+            throw new ArgumentNullException(nameof(kernel));
 
         var inputPrompt = chatHistory
             .GetPromptAsText();
@@ -294,20 +288,19 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             };
         }
 
-        var answer = rawContent
+        var responseAnswer = rawContent
             .GetChatResponseAnswer();
 
-        var response = JsonConvert.DeserializeObject<ChatResponse>(answer, Settings.ResponseSerializerSettings);
+        var response = JsonConvert.DeserializeObject<ChatResponse>(responseAnswer, Settings.ResponseSerializerSettings);
+
+        ChatService.SetResponseAnswer(response, responseAnswer);
 
         var thinking = rawContent
             .GetChatResponseThinking();
 
-        var functionCalls = ChatCollectorContext.Functions
-            .GetAll();
-
+        var functionCalls = ChatService.GetResponseFunctionCalls(kernel);
         var exception = ChatService.GetResponseExceptionOrDefault(response.ErrorMessage);
 
-        response.Answer = answer;
         response.Thinking = thinking;
         response.RawResponse = rawContent;
         response.InputPrompt = inputPrompt;
@@ -320,7 +313,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return response;
     }
-    private static ChatResponse<T> GetResponse<T>(ChatMessageContent chatMessageContent, ChatHistory chatHistory, TimeSpan elapsedTime)
+    private static ChatResponse<T> GetResponse<T>(ChatMessageContent chatMessageContent, ChatHistory chatHistory, Kernel kernel, TimeSpan elapsedTime)
         where T : class
     {
         if (chatMessageContent == null)
@@ -328,6 +321,9 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         if (chatHistory == null) 
             throw new ArgumentNullException(nameof(chatHistory));
+
+        if (kernel == null) 
+            throw new ArgumentNullException(nameof(kernel));
 
         var inputPrompt = chatHistory
             .GetPromptAsText();
@@ -352,55 +348,17 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             };
         }
 
-        var answer = chatMessageContent.Content
+        var responseAnswer = chatMessageContent.Content
             .GetChatResponseAnswer();
 
-        var response = JsonConvert.DeserializeObject<ChatResponse<T>>(answer, Settings.ResponseSerializerSettings);
+        var response = JsonConvert.DeserializeObject<ChatResponse<T>>(responseAnswer, Settings.ResponseSerializerSettings);
 
-        var responseType = response
-            .GetType();
-
-        var jObject = JsonConvert.DeserializeObject<JObject>(answer);
-
-        var answerToken = jObject[nameof(ChatResponse.Answer)];
-
-        if (response is ChatResponse<string> stringResponse)
-        {
-            if (answerToken != null)
-            {
-                stringResponse.Answer = answerToken.Type == JTokenType.String
-                    ? answerToken.Value<string>()
-                    : answerToken.ToString();
-
-                stringResponse.Answer = string.IsNullOrEmpty(stringResponse.Answer) 
-                    ? null 
-                    : stringResponse.Answer;
-            }
-        }
-        else if (responseType is { IsGenericType: true } && responseType.GetGenericTypeDefinition() == typeof(ChatResponse<>))
-        {
-            if (answerToken != null)
-            {
-                var answerType = responseType.GetGenericArguments()[0];
-
-                var answerValue = answerToken.Type == JTokenType.String
-                    ? JsonConvert.DeserializeObject(answerToken.Value<string>(), answerType)
-                    : answerToken.ToObject(answerType);
-
-                var propertyInfo = responseType
-                    .GetProperty(nameof(ChatResponse<object>.Answer));
-
-                propertyInfo?
-                    .SetValue(response, answerValue);
-            }
-        }
+        ChatService.SetResponseAnswer(response, responseAnswer);
 
         var thinking = chatMessageContent.Content
             .GetChatResponseThinking();
 
-        var functionCalls = ChatCollectorContext.Functions
-            .GetAll();
-
+        var functionCalls = ChatService.GetResponseFunctionCalls(kernel);
         var exception = BaseService.GetResponseExceptionOrDefault(response.ErrorMessage);
 
         response.Thinking = thinking;
@@ -413,5 +371,65 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         response.Exception = exception;
 
         return response;
+    }
+    private static IEnumerable<FunctionCall> GetResponseFunctionCalls(Kernel kernel)
+    {
+        if (kernel == null)
+            throw new ArgumentNullException(nameof(kernel));
+
+        var functionCalls = kernel
+            .GetAutoFunctionInvocationContexts()
+            .Select(x => x.GetFunctionCall())
+            .OrderBy(x => x.CreatedAt);
+
+        return functionCalls;
+    }
+    private static void SetResponseAnswer<T>(ChatResponse<T> response, string responseAnswer) 
+        where T : class
+    {
+        if (response == null) 
+            throw new ArgumentNullException(nameof(response));
+        
+        if (responseAnswer == null) 
+            throw new ArgumentNullException(nameof(responseAnswer));
+        
+        var responseType = response
+            .GetType();
+
+        var jObject = JsonConvert.DeserializeObject<JObject>(responseAnswer);
+
+        var answerToken = jObject[nameof(ChatResponse.Answer)];
+
+        if (response is ChatResponse<string> stringResponse)
+        {
+            if (answerToken != null)
+            {
+                stringResponse.Answer = answerToken.Type == JTokenType.String
+                    ? answerToken.Value<string>()
+                    : answerToken.ToString();
+
+                stringResponse.Answer = string.IsNullOrEmpty(stringResponse.Answer)
+                    ? null
+                    : stringResponse.Answer;
+            }
+        }
+        else if (responseType is { IsGenericType: true } && responseType.GetGenericTypeDefinition() == typeof(ChatResponse<>))
+        {
+            if (answerToken != null)
+            {
+                var answerType = responseType
+                    .GetGenericArguments()[0];
+
+                var answerValue = answerToken.Type == JTokenType.String
+                    ? JsonConvert.DeserializeObject(answerToken.Value<string>(), answerType)
+                    : answerToken.ToObject(answerType);
+
+                var propertyInfo = responseType
+                    .GetProperty(nameof(ChatResponse<object>.Answer));
+
+                propertyInfo?
+                    .SetValue(response, answerValue);
+            }
+        }
     }
 }

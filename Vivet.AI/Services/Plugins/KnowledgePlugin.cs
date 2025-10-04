@@ -43,7 +43,7 @@ public sealed class KnowledgePlugin
     [KernelFunction("knowledge")] 
     [Description(@"Retrieve knowledge stored in private or scoped sources such as notes, documents, organizational records or similar. 
 Always use this function when the user’s request may relate to these sources, even if similar information exists in public knowledge.")]
-    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, string tenantId, string subTenantId, string scopeId, string userId)
+    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, Guid? tenantId, Guid? subTenantId, Guid? scopeId, Guid? userId)
     {
         if (string.IsNullOrEmpty(question))
         {
@@ -52,11 +52,6 @@ Always use this function when the user’s request may relate to these sources, 
 
         try
         {
-            tenantId = string.IsNullOrEmpty(tenantId) ? null : tenantId;
-            subTenantId = string.IsNullOrEmpty(subTenantId) ? null : subTenantId;
-            scopeId = string.IsNullOrEmpty(scopeId) ? null : scopeId;
-            userId = string.IsNullOrEmpty(userId) ? null : userId;
-
             var limit = this.options.UseQueryDeduplication
                 ? this.options.ContextQueryLimit * 2
                 : this.options.ContextQueryLimit;

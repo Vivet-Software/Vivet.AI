@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.Plugins.BuiltIn;
 
 namespace Vivet.AI.Services.Requests.Chat.Models.Plugins.BuiltIn;
@@ -13,5 +14,5 @@ public class ChatMemoryContext : BaseMemoryContext
     /// Used for personalizing memory lookups.
     /// </summary>
     [Required]
-    public virtual string UserId { get; set; }
+    public virtual Guid UserId { get; set; } 
 }

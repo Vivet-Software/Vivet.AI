@@ -14,17 +14,17 @@ public class KnowledgeCriteria : BaseCriteria<Data.Models.Knowledge>
     /// <summary>
     /// The tenant identifier for filtering knowledge entries.
     /// </summary>
-    public virtual string TenantId { get; set; }
+    public virtual Guid? TenantId { get; set; }
 
     /// <summary>
     /// The sub-tenant identifier for filtering knowledge entries.
     /// </summary>
-    public virtual string SubTenantId { get; set; }
+    public virtual Guid? SubTenantId { get; set; }
 
     /// <summary>
     /// Gets or sets the user ID associated with this criteria.
     /// </summary>
-    public virtual string UserId { get; set; }
+    public virtual Guid? UserId { get; set; }
 
     /// <summary>
     /// The language of the knowledge entries to filter.

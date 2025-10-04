@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using Vivet.AI.Services.Collectors.Models;
 using Vivet.AI.Services.Models;
 
 namespace Vivet.AI.Services.Responses.Agent.Models;
@@ -15,13 +14,13 @@ public class AgentResult : AgentResult<string>;
 /// Represents an agent response.
 /// </summary>
 /// <typeparam name="T">The type of the answer returned by the model.</typeparam>
-public class AgentResult<T> // BUG: 111: Can we use T ??? problem is for sequential for example, maybe it's the final result we want as type T, but not the intermediate.
+public class AgentResult<T> 
     where T : class
 {
     /// <summary>
     /// The unique identifier of the agent.
     /// </summary>
-    public virtual string AgentId { get; set; }
+    public virtual Guid AgentId { get; set; }
 
     /// <summary>
     /// The answer produced by the model.

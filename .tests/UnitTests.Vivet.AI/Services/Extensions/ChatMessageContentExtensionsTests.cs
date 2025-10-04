@@ -13,7 +13,7 @@ public class ChatMessageContentExtensionsTests
     [TestMethod]
     public void GetAgentIdTest()
     {
-        var id = Guid.NewGuid().ToString();
+        var id = Guid.NewGuid();
         const string NAME = "name";
 
         var chatMessageContent = new ChatMessageContent
@@ -134,7 +134,7 @@ public class ChatMessageContentExtensionsTests
     }
 
     [TestMethod]
-    public void GetExternalIdWhenUsageKeyIsMissingTest()
+    public void GetExternalIdWhenIdKeyIsMissingTest()
     {
         var content = new ChatMessageContent
         {
@@ -158,6 +158,76 @@ public class ChatMessageContentExtensionsTests
         };
 
         var result = content.GetExternalId();
+
+        Assert.IsNull(result);
+    }
+
+
+    [TestMethod]
+    public void GetCreatedAtTest()
+    {
+        var expected = DateTimeOffset.UtcNow;
+
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["CreatedAt"] = expected.ToString()
+            }
+        };
+
+        var result = content.GetCreatedAt();
+        Assert.IsNotNull(result);
+        Assert.AreEqual(expected.ToString(), result.Value.ToString());
+    }
+
+    [TestMethod]
+    public void GetCreatedAtThrowsArgumentNullExceptionTest()
+    {
+        ChatMessageContent content = null;
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(() => content.GetCreatedAt());
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void GetCreatedAtWhenMetadataIsNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = null
+        };
+
+        var result = content.GetCreatedAt();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetCreatedAtWhenCreatedAtKeyIsMissingTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>()
+        };
+
+        var result = content.GetCreatedAt();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetCreatedAtWhenWhenNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["CreatedAt"] = null
+            }
+        };
+
+        var result = content.GetCreatedAt();
 
         Assert.IsNull(result);
     }
@@ -232,6 +302,75 @@ public class ChatMessageContentExtensionsTests
         };
 
         var result = content.GetTokenUsage();
+
+        Assert.IsNull(result);
+    }
+
+
+    [TestMethod]
+    public void GetFinishReasonIdTest()
+    {
+        const string EXPECTED = "finish";
+
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["FinishReason"] = EXPECTED
+            }
+        };
+
+        var result = content.GetFinishReason();
+        Assert.AreEqual(EXPECTED, result);
+    }
+
+    [TestMethod]
+    public void GetFinishReasonlIdThrowsArgumentNullExceptionTest()
+    {
+        ChatMessageContent content = null;
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(content.GetFinishReason);
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void GetFinishReasonlIdWhenMetadataIsNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = null
+        };
+
+        var result = content.GetFinishReason();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetFinishReasonlIdWhenIdKeyIsMissingTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>()
+        };
+
+        var result = content.GetFinishReason();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetFinishReasonlIdWhenWhenNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["FinishReason"] = null
+            }
+        };
+
+        var result = content.GetFinishReason();
 
         Assert.IsNull(result);
     }

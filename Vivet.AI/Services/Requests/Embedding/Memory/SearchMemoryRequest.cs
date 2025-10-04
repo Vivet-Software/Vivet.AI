@@ -1,4 +1,5 @@
-﻿using Vivet.AI.Config;
+﻿using System;
+using Vivet.AI.Config;
 using Vivet.AI.Services.Requests.Embedding.Memory.Models;
 
 namespace Vivet.AI.Services.Requests.Embedding.Memory;
@@ -13,5 +14,5 @@ public class SearchMemoryRequest : BaseSearchRequest<Data.Models.Memory, MemoryC
     /// If this matches the <see cref="Vivet.AI.Data.Models.Memory.ThreadId"/> the score will be increased by
     /// the configured <see cref="MemoryScoringOptions.ThreadMatchBoost"/>.
     /// </summary>
-    public virtual string CurrentThreadId { get; set; }
+    public virtual Guid? CurrentThreadId { get; set; }
 }

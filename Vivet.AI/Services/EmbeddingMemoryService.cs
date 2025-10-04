@@ -286,6 +286,11 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         if (counterpartEmbeddings == null) 
             throw new ArgumentNullException(nameof(counterpartEmbeddings));
 
+        var userId = request.UserId?.ToString();
+        var agentId = request.AgentId?.ToString();
+        var scopeId = request.ScopeId?.ToString();
+        var threadId = request.ThreadId.ToString();
+
         var memories = embeddings
             .Select((x, i) =>
             {
@@ -325,10 +330,10 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     Order = i,
                     Language = request.Language,
                     EmbeddingModel = this.options.Model.Name,
-                    UserId = request.UserId,
-                    AgentId = request.AgentId,
-                    ScopeId = request.ScopeId,
-                    ThreadId = request.ThreadId,
+                    UserId = userId,
+                    AgentId = agentId,
+                    ScopeId = scopeId,
+                    ThreadId = threadId,
                     QuestionAnswerId = questionAnswerId,
                     IsQuestion = isQuestion,
                     IsAnswer = !isQuestion
@@ -346,6 +351,11 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         if (questionAnswerId == null)
             throw new ArgumentNullException(nameof(questionAnswerId));
+
+        var userId = request.UserId?.ToString();
+        var agentId = request.AgentId?.ToString();
+        var scopeId = request.ScopeId?.ToString();
+        var threadId = request.ThreadId.ToString();
 
         TokenUsage tokenUsage = null;
         TokenUsage metadataTokenUsage = null;
@@ -409,10 +419,10 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     Order = 0,
                     Language = request.Language,
                     EmbeddingModel = this.options.Model.Name,
-                    UserId = request.UserId,
-                    AgentId = request.AgentId,
-                    ScopeId = request.ScopeId,
-                    ThreadId = request.ThreadId,
+                    UserId = userId,
+                    AgentId = agentId,
+                    ScopeId = scopeId,
+                    ThreadId = threadId,
                     QuestionAnswerId = questionAnswerId,
                     IsQuestion = true,
                     BlobBase64 = blobData.Base64,
@@ -441,7 +451,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         return (blobMemories, tokenUsage, metadataTokenUsage);
     }
-    private double GetSameThreadScore(VectorSearchResult<Memory> result, string currentThreadId = null)
+    private double GetSameThreadScore(VectorSearchResult<Memory> result, Guid? currentThreadId = null)
     {
         if (result == null) 
             throw new ArgumentNullException(nameof(result));
@@ -451,7 +461,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
             return 0.00D;
         }
 
-        if (result.Record.ThreadId == currentThreadId)
+        if (result.Record.ThreadId == currentThreadId.ToString())
         {
             return this.memoryOptions.Scoring.ThreadMatchBoost;
         }

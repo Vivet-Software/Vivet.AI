@@ -13,22 +13,22 @@ public class MemoryCriteria : BaseCriteria<Data.Models.Memory>
     /// <summary>
     /// Gets or sets the user ID associated with this criteria.
     /// </summary>
-    public virtual string UserId { get; set; }
+    public virtual Guid? UserId { get; set; }
 
     /// <summary>
     /// The ID of the agent associated with the memory entry.
     /// </summary>
-    public virtual string AgentId { get; set; }
+    public virtual Guid? AgentId { get; set; }
 
     /// <summary>
     /// The ID of the thread or conversation.
     /// </summary>
-    public virtual string ThreadId { get; set; }
+    public virtual Guid? ThreadId { get; set; }
 
     /// <summary>
     /// The ID of the specific question-answer pair.
     /// </summary>
-    public virtual string QuestionAnswerId { get; set; }
+    public virtual Guid? QuestionAnswerId { get; set; }
 
     /// <summary>
     /// Indicates whether the memory entry is a question.

@@ -78,7 +78,8 @@ public static class ServiceCollectionExtensions
             .AddAmazonBedrockAiChatServices(options, runtimeClient)
             .AddAmazonBedrockAiEmbeddingServices(options, runtimeClient)
             .AddAmazonBedrockAiMetadataServices(options, runtimeClient)
-            .AddAmazonBedrockAiSummarizationServices(options, runtimeClient);
+            .AddAmazonBedrockAiSummarizationServices(options, runtimeClient)
+            .AddAmazonBedrockAiAgentsServices(options, runtimeClient);
 
         return services;
     }
@@ -169,6 +170,28 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+    private static IServiceCollection AddAmazonBedrockAiAgentsServices(this IServiceCollection services, AiOptions options, AmazonBedrockRuntimeClient runtimeClient)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Agents == null)
+        {
+            return services;
+        }
+
+        services
+            .AddBedrockChatClient(options.Agents.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
+            .AddBedrockChatCompletionService(options.Agents.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+
+        services
+            .AddAmazonAgentsServices(options);
+
+        return services;
+    }
 
     private static IServiceCollection AddAmazonChatServices(this IServiceCollection services, AiOptions options)
     {
@@ -198,27 +221,27 @@ public static class ServiceCollectionExtensions
         else if (modelNameLowercase.Contains("jamba"))
         {
             services
-                .AddMetadataServices<AmazonJambaExecutionSettings>(options);
+                .AddChatServices<AmazonJambaExecutionSettings>(options);
         }
         else if (modelNameLowercase.Contains("mistral"))
         {
             services
-                .AddMetadataServices<AmazonMistralExecutionSettings>(options);
+                .AddChatServices<AmazonMistralExecutionSettings>(options);
         }
         else if (modelNameLowercase.Contains("titan"))
         {
             services
-                .AddMetadataServices<AmazonTitanExecutionSettings>(options);
+                .AddChatServices<AmazonTitanExecutionSettings>(options);
         }
         else if (modelNameLowercase.Contains("jurassic"))
         {
             services
-                .AddMetadataServices<AmazonJurassicExecutionSettings>(options);
+                .AddChatServices<AmazonJurassicExecutionSettings>(options);
         }
         else if (modelNameLowercase.Contains("llama"))
         {
             services
-                .AddMetadataServices<AmazonLlama3ExecutionSettings>(options);
+                .AddChatServices<AmazonLlama3ExecutionSettings>(options);
         }
 
         throw new NotSupportedException($"Model '{options.Metadata.Model.Name}' is not supported for Amazon Bedrock");
@@ -251,27 +274,27 @@ public static class ServiceCollectionExtensions
         else if (modelNameLowercase.Contains("jamba"))
         {
             services
-                .AddChatServices<AmazonJambaExecutionSettings>(options);
+                .AddMetadataServices<AmazonJambaExecutionSettings>(options);
         }
         else if (modelNameLowercase.Contains("mistral"))
         {
             services
-                .AddChatServices<AmazonMistralExecutionSettings>(options);
+                .AddMetadataServices<AmazonMistralExecutionSettings>(options);
         }
         else if (modelNameLowercase.Contains("titan"))
         {
             services
-                .AddChatServices<AmazonTitanExecutionSettings>(options);
+                .AddMetadataServices<AmazonTitanExecutionSettings>(options);
         }
         else if (modelNameLowercase.Contains("jurassic"))
         {
             services
-                .AddChatServices<AmazonJurassicExecutionSettings>(options);
+                .AddMetadataServices<AmazonJurassicExecutionSettings>(options);
         }
         else if (modelNameLowercase.Contains("llama"))
         {
             services
-                .AddChatServices<AmazonLlama3ExecutionSettings>(options);
+                .AddMetadataServices<AmazonLlama3ExecutionSettings>(options);
         }
 
         throw new NotSupportedException($"Model '{options.Chat.Model.Name}' is not supported for Amazon Bedrock");
@@ -325,6 +348,59 @@ public static class ServiceCollectionExtensions
         {
             services
                 .AddSummarizationServices<AmazonLlama3ExecutionSettings>(options);
+        }
+
+        throw new NotSupportedException($"Model '{options.Summarization.Model.Name}' is not supported for Amazon Bedrock");
+    }
+    private static IServiceCollection AddAmazonAgentsServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        var modelNameLowercase = options.Agents.Model.Name.ToLowerInvariant();
+
+        if (modelNameLowercase.Contains("claude"))
+        {
+            services
+                .AddAgentsServices<AmazonClaudeExecutionSettings>(options);
+        }
+        else if (modelNameLowercase.Contains("command"))
+        {
+            services
+                .AddAgentsServices<AmazonCommandExecutionSettings>(options);
+        }
+        else if (modelNameLowercase.Contains("command-r"))
+        {
+            services
+                .AddAgentsServices<AmazonCommandRExecutionSettings>(options);
+        }
+        else if (modelNameLowercase.Contains("jamba"))
+        {
+            services
+                .AddAgentsServices<AmazonJambaExecutionSettings>(options);
+        }
+        else if (modelNameLowercase.Contains("mistral"))
+        {
+            services
+                .AddAgentsServices<AmazonMistralExecutionSettings>(options);
+        }
+        else if (modelNameLowercase.Contains("titan"))
+        {
+            services
+                .AddAgentsServices<AmazonTitanExecutionSettings>(options);
+        }
+        else if (modelNameLowercase.Contains("jurassic"))
+        {
+            services
+                .AddAgentsServices<AmazonJurassicExecutionSettings>(options);
+        }
+        else if (modelNameLowercase.Contains("llama"))
+        {
+            services
+                .AddAgentsServices<AmazonLlama3ExecutionSettings>(options);
         }
 
         throw new NotSupportedException($"Model '{options.Summarization.Model.Name}' is not supported for Amazon Bedrock");

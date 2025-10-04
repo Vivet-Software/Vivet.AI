@@ -1,7 +1,7 @@
-﻿using System;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AzureAIInference;
+using System;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
 using Vivet.AI.Services.Extensions;
@@ -72,7 +72,8 @@ public static class ServiceCollectionExtensions
             .AddAzureAiInferenceChatServices(options)
             .AddAzureAiInferenceEmbeddingServices(options)
             .AddAzureAiInferenceMetadataServices(options)
-            .AddAzureAiInferenceSummarizationServices(options);
+            .AddAzureAiInferenceSummarizationServices(options)
+            .AddAzureAiInferenceAgentsServices(options);
 
         return services;
     }
@@ -164,6 +165,29 @@ public static class ServiceCollectionExtensions
 
         services
             .AddSummarizationServices<AzureAIInferencePromptExecutionSettings>(options);
+
+        return services;
+    }
+    private static IServiceCollection AddAzureAiInferenceAgentsServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Agents == null)
+        {
+            return services;
+        }
+
+        services
+            .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
+            .AddAzureAIInferenceChatClient(options.Agents.Model.Name, options.ApiKey, new Uri(options.Endpoint), serviceId: ServiceIds.AGENT_SERVICE_ID, httpClient: httpClient)
+            .AddAzureAIInferenceChatCompletion(options.Agents.Model.Name, options.ApiKey, new Uri(options.Endpoint), serviceId: ServiceIds.AGENT_SERVICE_ID, httpClient: httpClient);
+
+        services
+            .AddAgentsServices<AzureAIInferencePromptExecutionSettings>(options);
 
         return services;
     }

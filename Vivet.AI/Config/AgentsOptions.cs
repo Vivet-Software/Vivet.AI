@@ -5,9 +5,9 @@ using Vivet.AI.Config.Models;
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Agent Options
+/// Agents Options
 /// </summary>
-public class AgentOptions
+public class AgentsOptions
 {
     /// <summary>
     /// The chat model name.

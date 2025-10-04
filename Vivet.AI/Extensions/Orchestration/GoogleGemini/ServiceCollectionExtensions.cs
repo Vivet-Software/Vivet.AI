@@ -72,7 +72,8 @@ public static class ServiceCollectionExtensions
             .AddGoogleGeminiAiChatServices(options)
             .AddGoogleGeminiAiEmbeddingServices(options)
             .AddGoogleGeminiAiMetadataServices(options)
-            .AddGoogleGeminiAiSummarizationServices(options);
+            .AddGoogleGeminiAiSummarizationServices(options)
+            .AddGoogleGeminiAiAgentsServices(options);
 
         return services;
     }
@@ -157,6 +158,27 @@ public static class ServiceCollectionExtensions
 
         services
             .AddSummarizationServices<GeminiPromptExecutionSettings>(options);
+
+        return services;
+    }
+    private static IServiceCollection AddGoogleGeminiAiAgentsServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Agents == null)
+        {
+            return services;
+        }
+
+        services
+            .AddGoogleAIGeminiChatCompletion(options.Agents.Model.Name, options.ApiKey, serviceId: ServiceIds.AGENT_SERVICE_ID);
+
+        services
+            .AddAgentsServices<GeminiPromptExecutionSettings>(options);
 
         return services;
     }

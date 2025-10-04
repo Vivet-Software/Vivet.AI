@@ -12,7 +12,7 @@ public abstract class BaseMemoryContext
     /// Scope identifier for the request.
     /// Used when looking up memory entries.
     /// </summary>
-    public virtual string ScopeId { get; set; }
+    public virtual Guid ScopeId { get; set; }
 
     /// <summary>
     /// Identifier of the current conversation thread.
@@ -22,5 +22,5 @@ public abstract class BaseMemoryContext
     /// </para>
     /// </summary>
     [Required]
-    public virtual string CurrentThreadId { get; set; } = Guid.NewGuid().ToString();
+    public virtual Guid CurrentThreadId { get; set; } = Guid.NewGuid();
 }

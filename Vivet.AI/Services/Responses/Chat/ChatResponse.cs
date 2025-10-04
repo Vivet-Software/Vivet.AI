@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
-using Vivet.AI.Services.Collectors.Models;
+using Vivet.AI.Services.Models;
 
 namespace Vivet.AI.Services.Responses.Chat;
 

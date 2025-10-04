@@ -7,7 +7,7 @@ namespace Vivet.AI.Services.Extensions;
 
 internal static class ChatMessageContentExtensions
 {
-    internal static string GetAgentId(this ChatMessageContent chatMessageContent)
+    internal static Guid? GetAgentId(this ChatMessageContent chatMessageContent)
     {
         if (chatMessageContent == null)
             throw new ArgumentNullException(nameof(chatMessageContent));
@@ -31,7 +31,9 @@ internal static class ChatMessageContentExtensions
 
                 if (len > 0)
                 {
-                    return chatMessageContent.AuthorName.Substring(indexOfBracketStart + 1, len);
+                    var value = chatMessageContent.AuthorName.Substring(indexOfBracketStart + 1, len);
+
+                    return Guid.Parse(value);
                 }
             }
         }
@@ -49,14 +51,43 @@ internal static class ChatMessageContentExtensions
             return null;
         }
 
-        if (!chatMessageContent.Metadata.TryGetValue("Id", out var idObj) || idObj == null)
+        if (!chatMessageContent.Metadata.TryGetValue("Id", out var value) || value == null)
         {
             return null;
         }
 
         try
         {
-            return idObj as string;
+            return value as string;
+        }
+        catch (RuntimeBinderException)
+        {
+            return null;
+        }
+    }
+
+    internal static DateTimeOffset? GetCreatedAt(this ChatMessageContent chatMessageContent)
+    {
+        if (chatMessageContent == null)
+            throw new ArgumentNullException(nameof(chatMessageContent));
+
+        if (chatMessageContent.Metadata == null)
+        {
+            return null;
+        }
+
+        if (!chatMessageContent.Metadata.TryGetValue("CreatedAt", out var value) || value == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var strValue = value.ToString();
+
+            return strValue == null
+                ? null
+                : DateTimeOffset.Parse(strValue);
         }
         catch (RuntimeBinderException)
         {
@@ -74,14 +105,14 @@ internal static class ChatMessageContentExtensions
             return null;
         }
 
-        if (!chatMessageContent.Metadata.TryGetValue("Usage", out var usageObj) || usageObj == null)
+        if (!chatMessageContent.Metadata.TryGetValue("Usage", out var value) || value == null)
         {
             return null;
         }
 
         try
         {
-            dynamic usage = usageObj;
+            dynamic usage = value;
             long inputTokens = usage.InputTokenCount;
             long outputTokens = usage.OutputTokenCount;
 
@@ -90,6 +121,31 @@ internal static class ChatMessageContentExtensions
                 InputTokens = inputTokens,
                 OutputTokens = outputTokens
             };
+        }
+        catch (RuntimeBinderException)
+        {
+            return null;
+        }
+    }
+
+    internal static string GetFinishReason(this ChatMessageContent chatMessageContent)
+    {
+        if (chatMessageContent == null)
+            throw new ArgumentNullException(nameof(chatMessageContent));
+
+        if (chatMessageContent.Metadata == null)
+        {
+            return null;
+        }
+
+        if (!chatMessageContent.Metadata.TryGetValue("FinishReason", out var value) || value == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return value.ToString();
         }
         catch (RuntimeBinderException)
         {

@@ -169,6 +169,30 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+    private static IServiceCollection AddOllamaAgentsServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Agents == null)
+        {
+            return services;
+        }
+
+        services
+            .AddOllamaApiClient(nameof(options.Agents), options.Endpoint, options.Agents.Model.Name, options.Agents.Timeout, out var ollamaApiClient)
+            .AddOllamaChatClient(ollamaApiClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
+            .AddOllamaChatCompletion(ollamaApiClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+
+        services
+            .AddAgentsServices<OllamaPromptExecutionSettings>(options);
+
+        return services;
+    }
+
     private static IServiceCollection AddOllamaApiClient(this IServiceCollection services, string name, string baseAddress, string modelName, TimeSpan timeout, out OllamaApiClient ollamaApiClient)
     {
         if (services == null)

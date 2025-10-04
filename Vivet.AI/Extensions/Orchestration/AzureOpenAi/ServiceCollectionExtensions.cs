@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using System;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using System;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
 using Vivet.AI.Services.Extensions;
@@ -69,7 +69,8 @@ public static class ServiceCollectionExtensions
             .AddAzureOpenAiChatServices(options)
             .AddAzureOpenAiEmbeddingServices(options)
             .AddAzureOpenAiMetadataServices(options)
-            .AddAzureOpenAiSummarizationServices(options);
+            .AddAzureOpenAiSummarizationServices(options)
+            .AddAzureOpenAiAgentsServices(options);
 
         return services;
     }
@@ -161,6 +162,29 @@ public static class ServiceCollectionExtensions
 
         services
             .AddSummarizationServices<AzureOpenAIPromptExecutionSettings>(options);
+
+        return services;
+    }
+    private static IServiceCollection AddAzureOpenAiAgentsServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Agents == null)
+        {
+            return services;
+        }
+
+        services
+            .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
+            .AddAzureOpenAIChatClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
+            .AddAzureOpenAIChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+
+        services
+            .AddAgentsServices<AzureOpenAIPromptExecutionSettings>(options);
 
         return services;
     }

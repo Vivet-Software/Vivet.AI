@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Vivet.AI.Services.Collectors.Models;
+namespace Vivet.AI.Services.Models;
 
 /// <summary>
 /// The result of a function call.

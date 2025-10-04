@@ -4,9 +4,16 @@ using Vivet.AI.Services.Responses.Agent.Models;
 namespace Vivet.AI.Services.Responses.Agent;
 
 /// <summary>
+/// Represents a chat response from the model with a default generic type of <see cref="string"/>.
+/// </summary>
+public class AgentResponse : AgentResponse<string>;
+
+/// <summary>
 /// Represents an agent response.
 /// </summary>
-public class AgentResponse : BaseResponse
+/// <typeparam name="T">The type of the answer returned by the model.</typeparam>
+public class AgentResponse<T> : BaseResponse
+    where T : class
 {
     /// <summary>
     /// An approximation of the agent input prompt generated. The user role message.
@@ -20,11 +27,4 @@ public class AgentResponse : BaseResponse
     /// The results for each agent invoked in the request.
     /// </summary>
     public virtual IEnumerable<AgentResult> Results { get; set; } = [];
-
-    // BUG: 000: TESTS: Update all chat tests (exception handling has changed)
-    // Add tests for AgentService so we can test different orchestrations and determine if we want "aggregated result" on AgentResponse
-    // Add/Implement missing tests (especially extensions)
-
-    // BUG: 111: Maybe the aggregated result from the agents, for sequential it would be the last, for concurrent it would be all.
-    // maybe map what the other orchestrations returns
 }

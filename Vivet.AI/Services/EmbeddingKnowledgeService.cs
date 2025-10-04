@@ -229,6 +229,11 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
 
         var textChunks = TextChunking.GetTextChunks(text, this.knowledgeOptions.TextChunking.MinTokens, this.knowledgeOptions.TextChunking.MaxTokens);
 
+        var tenantId = request.TenantId?.ToString();
+        var subTenantId = request.SubTenantId?.ToString();
+        var scopeId = request.ScopeId?.ToString();
+        var userId = request.UserId?.ToString();
+
         var embedTextChunks = new List<TextChunk>();
         foreach (var textChunk in textChunks)
         {
@@ -238,10 +243,11 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             var existingEmbedding = await this.vectorStore.Collection
                 .GetAsync(x =>
                         x.ContentHash == contentHash &&
-                        x.TenantId == request.TenantId &&
-                        x.SubTenantId == request.SubTenantId &&
-                        x.ScopeId == request.ScopeId,
-                    1, cancellationToken: cancellationToken)
+                        x.TenantId == tenantId &&
+                        x.SubTenantId == subTenantId &&
+                        x.ScopeId == scopeId &&
+                        x.UserId == userId,
+                    1, cancellationToken: cancellationToken)    
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -268,9 +274,10 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                     Order = i,
                     Language = request.Language,
                     EmbeddingModel = this.options.Model.Name,
-                    TenantId = request.TenantId,
-                    SubTenantId = request.SubTenantId,
-                    ScopeId = request.ScopeId,
+                    TenantId = tenantId,
+                    SubTenantId = subTenantId,
+                    ScopeId = scopeId,
+                    UserId = userId,
                     Source = request.Source,
                     CreatedBy = request.CreatedBy,
                     Tags = request.Tags
@@ -318,6 +325,11 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             throw new NullReferenceException(nameof(embedding));
         }
 
+        var tenantId = request.TenantId?.ToString();
+        var subTenantId = request.SubTenantId?.ToString();
+        var scopeId = request.ScopeId?.ToString();
+        var userId = request.UserId?.ToString();
+
         await this.vectorStore.Collection
             .UpsertAsync(new Knowledge
             {
@@ -327,10 +339,10 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 Order = 0,
                 Language = request.Language,
                 EmbeddingModel = this.options.Model.Name,
-                TenantId = request.TenantId,
-                SubTenantId = request.SubTenantId,
-                ScopeId = request.ScopeId,
-                UserId = request.UserId,
+                TenantId = tenantId,
+                SubTenantId = subTenantId,
+                ScopeId = scopeId,
+                UserId = userId,
                 Source = request.Source,
                 CreatedBy = request.CreatedBy,
                 Tags = request.Tags,

@@ -56,7 +56,7 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = this.userId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
+                            CurrentThreadId = Guid.NewGuid()
                         }
                     }
                 }
@@ -129,7 +129,7 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = this.userId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
+                            CurrentThreadId = Guid.NewGuid()
                         }
                     }
                 }
@@ -171,7 +171,7 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = this.userId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
+                            CurrentThreadId = Guid.NewGuid()
                         }
                     }
                 }
@@ -218,7 +218,7 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = this.userId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
+                            CurrentThreadId = Guid.NewGuid()
                         }
                     }
                 }
@@ -255,7 +255,7 @@ public class ChatServiceTests : BaseTests
                     Memory = new ChatMemoryContext
                     {
                         UserId = this.userId,
-                        CurrentThreadId = Guid.NewGuid().ToString()
+                        CurrentThreadId = Guid.NewGuid()
                     }
                 }
             }
@@ -314,8 +314,8 @@ public class ChatServiceTests : BaseTests
     {
         var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
 
-        var threadId = Guid.NewGuid().ToString();
-        var localUserId = Guid.NewGuid().ToString();
+        var threadId = Guid.NewGuid();
+        var localUserId = Guid.NewGuid();
 
         const string QUESTION_INDEXED = "Tell me about Ceasar.";
         const string ANSWER_INDEXED = "Ceasar was a dictator of rome.";
@@ -342,11 +342,11 @@ public class ChatServiceTests : BaseTests
                 {
                     Plugins =
                     {
-                        Knowledge =
+                        Knowledge = new KnowledgePluginOverrides
                         {
                             SkipKnowledgeContext = true
                         },
-                        WebSearch =
+                        WebSearch = new WebSearchPluginOverrides
                         {
                             SkipWebSearchContext = true
                         }
@@ -359,7 +359,7 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = localUserId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
+                            CurrentThreadId = Guid.NewGuid()
                         }
                     }
                 }
@@ -371,6 +371,7 @@ public class ChatServiceTests : BaseTests
         Assert.IsTrue(response.InputPrompt.Contains("[MEMORY]"));
         Assert.IsTrue(response.InputPrompt.Contains(QUESTION_INDEXED));
         Assert.IsTrue(response.InputPrompt.Contains(ANSWER_INDEXED));
+        Assert.IsNotEmpty(response.FunctionCalls);
     }
 
     [TestMethod]
@@ -378,8 +379,8 @@ public class ChatServiceTests : BaseTests
     {
         var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
 
-        var threadId = Guid.NewGuid().ToString();
-        var localUserId = Guid.NewGuid().ToString();
+        var threadId = Guid.NewGuid();
+        var localUserId = Guid.NewGuid();
 
         const string QUESTION_INDEXED = "Tell me about Ceasar.";
         const string ANSWER_INDEXED = "Ceasar was a dictator of rome.";
@@ -412,8 +413,8 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = localUserId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
-                        }
+                            CurrentThreadId = Guid.NewGuid()
+                        }   
                     }
                 }
             });
@@ -432,8 +433,8 @@ public class ChatServiceTests : BaseTests
     {
         var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
 
-        var threadId = Guid.NewGuid().ToString();
-        var localUserId = Guid.NewGuid().ToString();
+        var threadId = Guid.NewGuid();
+        var localUserId = Guid.NewGuid();
 
         const string QUESTION_INDEXED = "Tell me about Ceasar.";
         const string ANSWER_INDEXED = "Ceasar was a dictator of rome.";
@@ -460,7 +461,7 @@ public class ChatServiceTests : BaseTests
                 {
                     Plugins =
                     {
-                        Memory =
+                        Memory = new MemoryPluginOverrides
                         {
                             SkipMemoryContext = true
                         }
@@ -486,9 +487,9 @@ public class ChatServiceTests : BaseTests
     {
         var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
-        var scopeId = Guid.NewGuid().ToString();
+        var scopeId = Guid.NewGuid();
 
-        const string TEXT_INDEXED = "We had 100 orders last year.";
+        const string TEXT_INDEXED = "We had 100 orders in 2022.";
 
         var indexRequest = new IndexTextRequest
         {
@@ -499,7 +500,7 @@ public class ChatServiceTests : BaseTests
         await embeddingKnowledgeService
             .IndexAsync(indexRequest);
 
-        const string QUESTION = "Can you look up how many orders did we have last year?";
+        const string QUESTION = "Can you look up how many orders we had in 2022?";
 
         var response = await this.ChatService
             .ChatAsync(new ChatRequest
@@ -509,11 +510,11 @@ public class ChatServiceTests : BaseTests
                 {
                     Plugins =
                     {
-                        Memory =
+                        Memory = new MemoryPluginOverrides
                         {
                             SkipMemoryContext = true
                         },
-                        WebSearch =
+                        WebSearch = new WebSearchPluginOverrides
                         {
                             SkipWebSearchContext = true
                         }
@@ -536,6 +537,7 @@ public class ChatServiceTests : BaseTests
         Assert.IsTrue(response.InputPrompt.Contains("[FunctionResultContent]"));
         Assert.IsTrue(response.InputPrompt.Contains("[KNOWLEDGE]"));
         Assert.IsTrue(response.InputPrompt.Contains(TEXT_INDEXED));
+        Assert.IsNotEmpty(response.FunctionCalls);
     }
 
     [TestMethod]
@@ -543,7 +545,7 @@ public class ChatServiceTests : BaseTests
     {
         var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
-        var scopeId = Guid.NewGuid().ToString();
+        var scopeId = Guid.NewGuid();
 
         const string TEXT_INDEXED = "We had 100 orders last year.";
 
@@ -566,11 +568,11 @@ public class ChatServiceTests : BaseTests
                 {
                     Plugins =
                     {
-                        Knowledge =
+                        Knowledge = new KnowledgePluginOverrides
                         {
                             SkipKnowledgeContext = true
                         },
-                        WebSearch =
+                        WebSearch = new WebSearchPluginOverrides
                         {
                             SkipWebSearchContext = true
                         }
@@ -583,7 +585,7 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = this.userId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
+                            CurrentThreadId = Guid.NewGuid()
                         }
                     }
                 }
@@ -649,15 +651,15 @@ public class ChatServiceTests : BaseTests
                 {
                     Plugins =
                     {
-                        Memory =
+                        Memory = new MemoryPluginOverrides
                         {
                             SkipMemoryContext = true
                         },
-                        Knowledge =
+                        Knowledge = new KnowledgePluginOverrides
                         {
                             SkipKnowledgeContext = true
                         },
-                        WebSearch =
+                        WebSearch = new WebSearchPluginOverrides
                         {
                             SkipWebSearchContext = true
                         }
@@ -686,7 +688,7 @@ public class ChatServiceTests : BaseTests
     {
         const string QUESTION = $"This is a test request, where I want you to respond with an {nameof(BaseResponse.ErrorMessage)}.";
 
-        await Assert.ThrowsAsync<AiException>(async () => await this.ChatService
+        var response = await this.ChatService
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
@@ -697,11 +699,15 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = this.userId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
+                            CurrentThreadId = Guid.NewGuid()
                         }
                     }
                 }
-            }));
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsNotNull(response.Exception);
+        Assert.AreEqual(typeof(AiException), response.Exception.GetType());
     }
 
     [TestMethod]
@@ -736,7 +742,7 @@ public class ChatServiceTests : BaseTests
                         Memory = new ChatMemoryContext
                         {
                             UserId = this.userId,
-                            CurrentThreadId = Guid.NewGuid().ToString()
+                            CurrentThreadId = Guid.NewGuid()
                         }
                     }
                 }

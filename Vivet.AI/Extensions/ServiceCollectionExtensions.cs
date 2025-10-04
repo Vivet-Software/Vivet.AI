@@ -71,16 +71,16 @@ internal static class ServiceCollectionExtensions
                 var chatOptions = x
                     .GetService<ChatOptions>();
 
+                var chatCompletionService = x
+                    .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.CHAT_SERVICE_ID);
+
                 var builder = Kernel.CreateBuilder();
 
-                builder
-                    .AddLoggerFactory(x);
-
-                // TODO: Exception Handling (Function Invocation Filter, e.g. Logging)
-                // TODO: Prompt Caching (Prompt Render Filter - https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Caching/SemanticCachingWithFilters.cs)
-                // TODO: PII Identification (Prompt Render Filter - http://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Filtering/PIIDetection.cs)
+                builder.Services
+                    .AddScoped(_ => chatCompletionService);
 
                 builder
+                    .AddLoggerFactory(x)
                     .AddPlugins(x, chatOptions.Plugins);
 
                 return builder;
@@ -289,6 +289,64 @@ internal static class ServiceCollectionExtensions
             .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID)
             .AddHealthChecks()
             .AddChatModelCheck(ServiceIds.SUMMARIZATION_SERVICE_ID, ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID);
+
+        return services;
+    }
+
+    internal static IServiceCollection AddAgentsServices<T>(this IServiceCollection services, AiOptions options)
+        where T : PromptExecutionSettings, new()
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        services
+            .AddSingleton(options.Agents);
+
+        services
+            .AddKeyedSingleton(ServiceIds.AGENT_SERVICE_ID, (x, _) =>
+            {
+                var agentOptions = x
+                    .GetService<AgentsOptions>();
+
+                var chatCompletionService = x
+                    .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.AGENT_SERVICE_ID);
+
+                var builder = Kernel.CreateBuilder();
+
+                builder.Services
+                    .AddScoped(_ => chatCompletionService);
+
+                builder
+                    .AddLoggerFactory(x)
+                    .AddPlugins(x, agentOptions.Plugins);
+
+                return builder;
+            });
+
+        services
+            .AddTextSearch(ServiceIds.AGENT_SERVICE_ID, options.Agents.Plugins.BuiltInPlugins.WebSearch)
+            .AddPromptExecutionSettings<T>(options.Agents.Model.Parameters, ServiceIds.AGENT_SERVICE_ID)
+            .AddScoped<IAgentsService>(x =>
+            {
+                var agentOptions = x
+                    .GetRequiredService<AgentsOptions>();
+
+                var kernelBuilder = x
+                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.AGENT_SERVICE_ID);
+
+                var promptExecutionSettings = x
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.AGENT_SERVICE_ID);
+
+                var embeddingMemoryService = x
+                    .GetService<IEmbeddingMemoryService>();
+
+                return new AgentsService(agentOptions, x, kernelBuilder, promptExecutionSettings, embeddingMemoryService);
+            });
+
+        services
+            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_AGENT_SERVICE_ID)
+            .AddHealthChecks()
+            .AddChatModelCheck(ServiceIds.AGENT_SERVICE_ID, ServiceIds.HEALTH_AGENT_SERVICE_ID);
 
         return services;
     }

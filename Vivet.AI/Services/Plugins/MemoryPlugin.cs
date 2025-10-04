@@ -44,25 +44,20 @@ public sealed class MemoryPlugin
     [KernelFunction("memory")]
     [Description(@"Retrieve relevant user-specific memories, including past questions, answers, notes, or uploaded content, 
 and inject them into the current chat context to support personalized and consistent responses.")]
-    public async Task<string> GetMemoriesAsync([Description("The current user question or message")]string question, string userId, string agentId, string scopeId, string currentThreadId) 
+    public async Task<string> GetMemoriesAsync([Description("The current user question or message")]string question, Guid? userId, Guid? agentId, Guid? scopeId, Guid? currentThreadId) 
     {
         if (string.IsNullOrEmpty(question))
         {
             return null;
         }
 
-        if (string.IsNullOrEmpty(userId) && string.IsNullOrEmpty(agentId))
+        if (userId == null && agentId == null)
         {
             return null;
         }
 
         try
         {
-            userId = string.IsNullOrEmpty(userId) ? null : userId;
-            agentId = string.IsNullOrEmpty(agentId) ? null : agentId;
-            scopeId = string.IsNullOrEmpty(scopeId) ? null : scopeId;
-            currentThreadId = string.IsNullOrEmpty(currentThreadId) ? null : currentThreadId;
-
             var from = DateTimeOffset.UtcNow
                 .AddDays(-this.options.RetentionInDays);
 
@@ -77,8 +72,8 @@ and inject them into the current chat context to support personalized and consis
                 Criteria = new MemoryCriteria
                 {
                     UserId = userId,
-                    ScopeId = scopeId,
                     AgentId = agentId,
+                    ScopeId = scopeId,
                     DateRange = new DateRange
                     {
                         From = from

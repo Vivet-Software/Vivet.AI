@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Embedding;
@@ -13,7 +14,7 @@ public abstract class BaseIndexRequest<TOverrides>
     /// <summary>
     /// Gets or sets the scope identifier.
     /// </summary>
-    public virtual string ScopeId { get; set; }
+    public virtual Guid? ScopeId { get; set; }
 
     /// <summary>
     /// Gets or sets the language associated with the request.

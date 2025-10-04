@@ -8,7 +8,7 @@ public class WebSearchContext
     /// <summary>
     /// Number of search results to return for the web search.
     /// </summary>
-    public virtual int Limit { get; init; } = 5;
+    public virtual int? Limit { get; init; }
 
     /// <summary>
     /// The url of the site to limit the search for.

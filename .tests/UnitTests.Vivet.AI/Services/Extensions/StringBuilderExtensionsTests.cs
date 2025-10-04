@@ -28,9 +28,9 @@ public class StringBuilderExtensionsTests
     }
 
     [TestMethod]
-    public void AppendBuiltInPluginContextWhenContextIsNullThrowsArgumentNullExceptionTest()
+    public void AppendBuiltInPluginContextWhenContextIsNullTest()
     {
-        StringBuilder stringBuilder = null;
+        var stringBuilder = new StringBuilder();
         object context = null;
         const string NAME = "name";
 

@@ -72,7 +72,8 @@ public static class ServiceCollectionExtensions
             .AddHuggingFaceChatServices(options)
             .AddHuggingFaceEmbeddingServices(options)
             .AddHuggingFaceMetadataServices(options)
-            .AddHuggingFaceSummarizationServices(options);
+            .AddHuggingFaceSummarizationServices(options)
+            .AddHuggingFaceAgentsServices(options);
 
         return services;
     }
@@ -161,6 +162,28 @@ public static class ServiceCollectionExtensions
 
         services
             .AddSummarizationServices<HuggingFacePromptExecutionSettings>(options);
+
+        return services;
+    }
+    private static IServiceCollection AddHuggingFaceAgentsServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Agents == null)
+        {
+            return services;
+        }
+
+        services
+            .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
+            .AddHuggingFaceChatCompletion(options.Agents.Model.Name, new Uri(options.Endpoint), options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+
+        services
+            .AddAgentsServices<HuggingFacePromptExecutionSettings>(options);
 
         return services;
     }
