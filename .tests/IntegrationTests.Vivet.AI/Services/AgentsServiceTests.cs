@@ -7,9 +7,9 @@ using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
 using Vivet.AI.Services.Requests.Agent;
-using Vivet.AI.Services.Requests.Agent.Enums;
 using Vivet.AI.Services.Requests.Agent.Models;
 using Vivet.AI.Services.Requests.Agent.Models.Plugins.BuiltIn;
+using Vivet.AI.Services.Responses.Agent;
 
 namespace IntegrationTests.Vivet.AI.Services;
 
@@ -56,11 +56,10 @@ public class AgentsServiceTests : BaseTests
         };
 
         var response = await this.AgentsService
-            .InvokeAsync(new AgentRequest
+            .InvokeAsync(new ConcurrentAgentsRequest
             {
                 Name = "My Agent Orchestration",
                 Input = "Search the web for the current temparature of Copenhagen",
-                OrchestrationType = AgentOrchestrationType.Concurrent,
                 Agents = agents,
                 Plugins =
                 {
@@ -108,11 +107,10 @@ give format and make it polished. Output the final improved copy as a single tex
         };
 
         var response = await this.AgentsService
-            .InvokeAsync(new AgentRequest
+            .InvokeAsync(new SequentialAgentsRequest
             {
                 Name = "Sequential",
                 Input = "An eco-friendly stainless steel water bottle that keeps drinks cold for 24 hours",
-                OrchestrationType = AgentOrchestrationType.Sequential,
                 Agents = agents,
                 ConfigOverrides =
                 {
@@ -150,11 +148,10 @@ give format and make it polished. Output the final improved copy as a single tex
         };
 
         var response = await this.AgentsService
-            .InvokeAsync(new AgentRequest
+            .InvokeAsync(new ConcurrentAgentsRequest
             {
                 Name = "Concurrent",
                 Input = "What is temperature?",
-                OrchestrationType = AgentOrchestrationType.Concurrent,
                 Agents = agents,
                 ConfigOverrides =
                 {
@@ -200,11 +197,10 @@ If not, provide insight on how to refine suggested copy without example."
         };
 
         var response = await this.AgentsService
-            .InvokeAsync(new AgentRequest
+            .InvokeAsync(new SequentialAgentsRequest
             {
                 Name = "Sequential",
                 Input = "Create a slogan for a new electric SUV that is affordable and fun to drive.",
-                OrchestrationType = AgentOrchestrationType.Sequential,
                 Agents = agents,
                 ConfigOverrides =
                 {
@@ -287,11 +283,10 @@ If not, provide insight on how to refine suggested copy without example."
         };
 
         var response = await this.AgentsService
-            .InvokeAsync(new AgentRequest
+            .InvokeAsync(new HandOffAgentsRequest
             {
                 Name = "Sequential",
                 Input = "I am a customer that needs help with my orders",
-                OrchestrationType = AgentOrchestrationType.HandOff,
                 Agents = agents,
                 ConfigOverrides =
                 {

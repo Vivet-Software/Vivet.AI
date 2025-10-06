@@ -4,16 +4,9 @@ using Vivet.AI.Services.Responses.Agent.Models;
 namespace Vivet.AI.Services.Responses.Agent;
 
 /// <summary>
-/// Represents a chat response from the model with a default generic type of <see cref="string"/>.
+/// Represents an agents response.
 /// </summary>
-public class AgentResponse : AgentResponse<string>;
-
-/// <summary>
-/// Represents an agent response.
-/// </summary>
-/// <typeparam name="T">The type of the answer returned by the model.</typeparam>
-public class AgentResponse<T> : BaseResponse
-    where T : class
+public class AgentsResponse : BaseResponse
 {
     /// <summary>
     /// An approximation of the agent input prompt generated. The user role message.

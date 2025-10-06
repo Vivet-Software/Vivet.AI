@@ -26,7 +26,6 @@ using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Agent;
-using Vivet.AI.Services.Requests.Agent.Enums;
 using Vivet.AI.Services.Requests.Agent.Models;
 using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
@@ -64,7 +63,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
     private readonly InProcessRuntime agenticProcess = new(); // TODO: Advamced Agent Process Runtime Features (States, Subscriptions, Change Agents, Singlenton DI)
 
     /// <inheritdoc />
-    public virtual async Task<AgentResponse> InvokeAsync(AgentRequest request, Func<IList<AgentIndexMemoryResponse>, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+    public virtual async Task<AgentsResponse> InvokeAsync(BaseAgentsRequest request, Func<IList<AgentIndexMemoryResponse>, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
     {
         if (request == null) 
             throw new ArgumentNullException(nameof(request));
@@ -95,7 +94,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
         stopwatch
             .Stop();
 
-        var response = AgentsService.GetResponse(inputPrompt, agents, request.OrchestrationType, stopwatch.Elapsed);
+        var response = AgentsService.GetResponse(inputPrompt, agents, stopwatch.Elapsed);
 
         _ = this.SaveMemory(request, response.Results, onMemoryIndexed, cancellationToken)
             .ConfigureAwait(false);
@@ -104,16 +103,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
     }
 
     /// <inheritdoc />
-    public virtual Task<AgentResponse> InvokeAsync<T>(AgentRequest request, Func<IList<AgentIndexMemoryResponse>, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
-    {
-        // Structured Outputs, and more,
-        // https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/advanced-topics?pivots=programming-language-csharp
-        
-        throw new NotImplementedException();
-    }
-
-    /// <inheritdoc />
-    public virtual IAsyncEnumerable<string> InvokeStreamingAsync(AgentRequest request, Func<IList<AgentIndexMemoryResponse>, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+    public virtual IAsyncEnumerable<string> InvokeStreamingAsync(BaseAgentsRequest request, Func<IList<AgentIndexMemoryResponse>, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
@@ -158,7 +148,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
         }
     }
 
-    private Kernel GetKernel(AgentRequest request, AgentDescriptor agent, BuiltInPluginsConfigOverrides parentConfigOverrides)
+    private Kernel GetKernel(BaseAgentsRequest request, AgentDescriptor agent, BuiltInPluginsConfigOverrides parentConfigOverrides)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -203,7 +193,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
 
         return executionSettings;
     }
-    private async Task<ChatHistory> GetInputPrompt(AgentRequest request, CancellationToken cancellationToken = default)
+    private async Task<ChatHistory> GetInputPrompt(BaseAgentsRequest request, CancellationToken cancellationToken = default)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -220,7 +210,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
 
         return chatHistory;
     }
-    private Agent[] GetAgents(AgentRequest request, PromptExecutionSettings executionSettings)
+    private Agent[] GetAgents(BaseAgentsRequest request, PromptExecutionSettings executionSettings)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -264,7 +254,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
         return agents
             .ToArray();
     }
-    private AgentOrchestration<string, ChatMessageContent[]> GetAgentOrchestration(AgentRequest request, ChatHistory inputPrompt, Agent[] agents)
+    private AgentOrchestration<string, ChatMessageContent[]> GetAgentOrchestration(BaseAgentsRequest request, ChatHistory inputPrompt, Agent[] agents)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -277,9 +267,9 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
 
         var loggerFactory = agents.FirstOrDefault()?.LoggerFactory ?? serviceProvider.GetService<ILoggerFactory>();
 
-        AgentOrchestration<string, ChatMessageContent[]> agentOrchestration = request.OrchestrationType switch
+        AgentOrchestration<string, ChatMessageContent[]> agentOrchestration = request switch
         {
-            AgentOrchestrationType.Sequential => new SequentialOrchestration<string, ChatMessageContent[]>(agents)
+            SequentialAgentsRequest => new SequentialOrchestration<string, ChatMessageContent[]>(agents)
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -288,7 +278,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                 ResultTransform = ResultTransform,
                 ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents)
             },
-            AgentOrchestrationType.Concurrent => new ConcurrentOrchestration<string, ChatMessageContent[]>(agents)
+            ConcurrentAgentsRequest => new ConcurrentOrchestration<string, ChatMessageContent[]>(agents)
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -297,7 +287,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                 ResultTransform = ResultTransform,
                 ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents)
             },
-            AgentOrchestrationType.GroupChat => new GroupChatOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Orchestration: Group Chat
+            GroupChatAgentsRequest => new GroupChatOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Orchestration: Group Chat
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -306,7 +296,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                 ResultTransform = ResultTransform,
                 ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents)
             },
-            AgentOrchestrationType.HandOff => new HandoffOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Orchestration: Hand Off
+            HandOffAgentsRequest => new HandoffOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Orchestration: Hand Off
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -315,7 +305,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                 ResultTransform = ResultTransform,
                 ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents)
             },
-            AgentOrchestrationType.Magnetic => new MagenticOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Orchestration: Magnetic
+            MagneticAgentsRequest => new MagenticOrchestration<string, ChatMessageContent[]>(null, agents) // TODO: Orchestration: Magnetic
             {
                 Name = request.Name,
                 Description = request.Description,
@@ -324,13 +314,14 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                 ResultTransform = ResultTransform,
                 ResponseCallback = chatMessageContent => ResponseCallback(chatMessageContent, agents)
             },
-            _ => throw new ArgumentOutOfRangeException(nameof(request.OrchestrationType), request.OrchestrationType, $"Orchestration type {request.OrchestrationType} not supported")
+
+            _ => throw new ArgumentOutOfRangeException(nameof(request), request.GetType(), $"Orchestration type {request.GetType()} not supported")
         };
 
         return agentOrchestration;
     }
    
-    private Task SaveMemory<T>(AgentRequest request, IEnumerable<AgentResult<T>> results, Func<IList<AgentIndexMemoryResponse>, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
+    private Task SaveMemory<T>(BaseAgentsRequest request, IEnumerable<AgentResult<T>> results, Func<IList<AgentIndexMemoryResponse>, Task> onMemoryIndexed = null, CancellationToken cancellationToken = default)
         where T : class
     {
         if (request == null)
@@ -405,7 +396,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
         }, cancellationToken);
     }
 
-    private static AgentResponse GetResponse(ChatHistory inputPrompt, Agent[] agents, AgentOrchestrationType agentOrchestrationType, TimeSpan elapsedTime)
+    private static AgentsResponse GetResponse(ChatHistory inputPrompt, Agent[] agents, TimeSpan elapsedTime)
     {
         if (inputPrompt == null) 
             throw new ArgumentNullException(nameof(inputPrompt));
@@ -424,15 +415,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
             .Select(x => x.TokenUsage)
             .Aggregate(new TokenUsage(), (current, x) => current + x);
 
-        // BUG: 000: Final Result: We should probably just have a pointer to the Agent results that are considered to be final based on the orchestration
-        // maybe some generic request and response
-        var finalResults = agentOrchestrationType switch
-        {
-            AgentOrchestrationType.Concurrent => results,
-            _ => results.Any() ? [results.Last()] : []
-        };
-
-        return new AgentResponse
+        return new AgentsResponse
         {
             InputPrompt = inputPromptAsText,
             Results = results,

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.Blobs;
-using Vivet.AI.Services.Requests.Agent.Enums;
 using Vivet.AI.Services.Requests.Agent.Models;
 using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Agent.Models.Plugins;
@@ -12,7 +11,7 @@ namespace Vivet.AI.Services.Requests.Agent;
 /// Represents an agent request,
 /// defining the orchestration type and the agents to invoke.
 /// </summary>
-public class AgentRequest
+public abstract class BaseAgentsRequest
 {
     /// <summary>
     /// The name of the agentic orchestration.
@@ -32,16 +31,9 @@ public class AgentRequest
     /// <summary>
     /// The input to pass to the agents.
     /// The orchestration takes your input and routes it through the selected agents in sequence, parallel. etc.,
-    /// depending on the <see cref="OrchestrationType"/>.
     /// </summary>
     [Required]
     public virtual string Input { get; set; }
-
-    /// <summary>
-    /// The type of orchestration to use for the agents.
-    /// </summary>
-    [Required]
-    public virtual AgentOrchestrationType OrchestrationType { get; set; } = AgentOrchestrationType.Sequential;
 
     /// <summary>
     /// Collection of optional blobs associated with the request.
