@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
+using Vivet.AI.Services.Models.MimeTypes;
 
 namespace Vivet.AI.Services.Models.Blobs;
 

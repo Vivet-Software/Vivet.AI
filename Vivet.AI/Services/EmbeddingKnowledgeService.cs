@@ -18,9 +18,10 @@ using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.ConfigOverrides;
+using Vivet.AI.Services.Models.MimeTypes;
 using Vivet.AI.Services.Requests.Embedding;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
-using Vivet.AI.Services.Requests.Embedding.Knowledge.Models;
+using Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Metadata;
 using Vivet.AI.Services.Responses.Embeddings.Knowledge;
 using Vivet.AI.Services.Responses.Embeddings.Knowledge.Models;
@@ -34,7 +35,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
     : BaseEmbeddingService(options, embeddingGenerator, metadataService), IEmbeddingKnowledgeService
 {
     private readonly KnowledgeVectorStore vectorStore = vectorStore ?? throw new ArgumentNullException(nameof(vectorStore));
-    private readonly EmbeddingOptions.KnowledgeOptions knowledgeOptions = options.Knowledge ?? throw new ArgumentNullException(nameof(options.Knowledge));
+    private readonly EmbeddingKnowledgeOptions knowledgeOptions = options.Knowledge ?? throw new ArgumentNullException(nameof(options.Knowledge));
 
     /// <inheritdoc />
     public virtual async Task<IndexKnowledgeResponse> IndexAsync<TOverrides>(BaseIndexKnowledgeRequst<TOverrides> request, CancellationToken cancellationToken = default)
@@ -52,7 +53,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
 
         var response = request switch
         {
-            BaseIndexKnowledgeRequst<KnowledgeConfigOverrides> genericRequest
+            BaseIndexKnowledgeRequst<EmbeddingKnowledgeIndexConfigOverrides> genericRequest
                 when genericRequest.GetType().IsGenericType && genericRequest.GetType().GetGenericTypeDefinition() == typeof(IndexTextRequest<>)
                 => await this.IndexTextReflectionAsync(genericRequest, cancellationToken),
 
@@ -91,15 +92,22 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 .BuildFilter()
         };
 
+        var useQueryDeduplication = request.ConfigOverrides.UseQueryDeduplication ?? this.knowledgeOptions.Search.UseQueryDeduplication;
+        var contextQueryLimit = request.ConfigOverrides.ContextQueryLimit ?? this.knowledgeOptions.Search.ContextQueryLimit;
+
+        var limit = useQueryDeduplication
+            ? contextQueryLimit * 2
+            : contextQueryLimit;
+
         var knowledges = this.vectorStore.Collection
-            .SearchAsync(request.Query, request.Limit, vectorSearchOptions, cancellationToken);
+            .SearchAsync(request.Query, limit, vectorSearchOptions, cancellationToken);
 
         var results = await knowledges
             .Select(result =>
             {
                 var baseScore = result.Score ?? 0.0;
                 var recencyScore = result.Record
-                    .GetRecencyScore(this.knowledgeOptions.Scoring);
+                    .GetRecencyScore(this.knowledgeOptions.Search.Scoring, request.ConfigOverrides.Scoring);
 
                 var adjustedScore = baseScore + recencyScore;
 
@@ -110,7 +118,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                     Result = result
                 };
             })
-            .Where(x => x.AdjustedScore >= this.options.MatchScoreThreashold)
+            .Where(x => x.AdjustedScore >= knowledgeOptions.Search.Scoring.MatchScoreThreshold)
             .OrderByDescending(x => x.AdjustedScore)
             .Select(x => new SearchKnowledgeResult
             {
@@ -119,6 +127,16 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             })
             .ToArrayAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        if (useQueryDeduplication)
+        {
+            var deduplicationMatchScoreThreshold = request.ConfigOverrides.Scoring.DeduplicationMatchScoreThreshold ?? this.knowledgeOptions.Search.Scoring.DeduplicationMatchScoreThreshold;
+            var deduplicatedResults = ContextDeduplicator.DeduplicateKnowledgeResults(results, deduplicationMatchScoreThreshold);
+
+            results = deduplicatedResults
+                .Take(contextQueryLimit)
+                .ToArray();
+        }
 
         stopwatch
             .Stop();
@@ -227,12 +245,15 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             _ => JsonConvert.SerializeObject(request.Text, Formatting.None, Settings.SerializerSettings)
         };
 
-        var textChunks = TextChunking.GetTextChunks(text, this.knowledgeOptions.TextChunking.MinTokens, this.knowledgeOptions.TextChunking.MaxTokens);
-
         var tenantId = request.TenantId?.ToString();
         var subTenantId = request.SubTenantId?.ToString();
         var scopeId = request.ScopeId?.ToString();
         var userId = request.UserId?.ToString();
+
+        var minTokens = request.ConfigOverrides.TextChunking.MinTokens ?? this.knowledgeOptions.TextChunking.MinTokens;
+        var maxTokens = request.ConfigOverrides.TextChunking.MaxTokens ?? this.knowledgeOptions.TextChunking.MaxTokens;
+
+        var textChunks = TextChunking.GetTextChunks(text, minTokens, maxTokens);
 
         var embedTextChunks = new List<TextChunk>();
         foreach (var textChunk in textChunks)
@@ -264,7 +285,10 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
         var knowledges = embedTextChunks
             .Select((x, i) =>
             {
-                var fullContext = TextChunking.GetTextChunkNeighboringContext(embedTextChunks.ToArray(), i, this.knowledgeOptions.TextChunking.NeighborContext.ContextWindow, this.knowledgeOptions.TextChunking.NeighborContext.RestrictToSameParagraph);
+                var contextWindow = request.ConfigOverrides.TextChunking.NeighborContext.ContextWindow ?? this.knowledgeOptions.TextChunking.NeighborContext.ContextWindow;
+                var restrictToSameParagraph = request.ConfigOverrides.TextChunking.NeighborContext.RestrictToSameParagraph ?? this.knowledgeOptions.TextChunking.NeighborContext.RestrictToSameParagraph;
+
+                var fullContext = TextChunking.GetTextChunkNeighboringContext(embedTextChunks.ToArray(), i, contextWindow, restrictToSameParagraph);
 
                 return new Knowledge
                 {
@@ -314,7 +338,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             .GetBlobData(cancellationToken)
             .ConfigureAwait(false);
 
-        var metadataResponse = await this.GetBlobMetadata(request, cancellationToken).ConfigureAwait(false);
+        var metadataResponse = await this.CreateBlobMetadata(request, cancellationToken).ConfigureAwait(false);
         var embeddings = await this.GenerateEmbeddings([metadataResponse.Metadata.Summary], request.ConfigOverrides, cancellationToken).ConfigureAwait(false);
 
         var embedding = embeddings
@@ -372,7 +396,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             MetadataTokenUsage = metadataResponse.TokenUsage
         };
     }
-    private async Task<dynamic> GetBlobMetadata<TMimeType>(BaseIndexBlobRequest<TMimeType> request, CancellationToken cancellationToken = default)
+    private async Task<dynamic> CreateBlobMetadata<TMimeType>(BaseIndexBlobRequest<TMimeType> request, CancellationToken cancellationToken = default)
         where TMimeType : BaseMimeType
     {
         var blobType = request.Blob
@@ -409,7 +433,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 .GetProperty(nameof(MetadataResponse<dynamic>.AdditionalMetadata))?
                 .SetValue(metadataResponse, requestAdditionalMetadata);
         }
-        else if (this.metadataService != null && ((request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval ?? false) || (this.knowledgeOptions.UseAutomaticMetadataRetrieval && request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval != false))) 
+        else if (this.metadataService != null && (request.ConfigOverrides.UseAutomaticMetadataRetrieval ?? this.knowledgeOptions.UseAutomaticMetadataRetrieval))
         {
             var metadataMethod = this.metadataService
                 .GetType()
@@ -419,11 +443,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             var metadataRequest = new GetMetadataRequest
             {
                 Blob = request.Blob,
-                ConfigOverrides =
-                {
-                    SummaryMaxWords = request.ConfigOverrides.Metadata.SummaryMaxWords,
-                    DescriptionMaxWords = request.ConfigOverrides.Metadata.DescriptionMaxWords
-                }
+                ConfigOverrides = request.ConfigOverrides.Metadata
             };
 
             var task = (Task)metadataMethod?

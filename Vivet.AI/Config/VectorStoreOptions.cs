@@ -5,7 +5,7 @@ using Vivet.AI.Config.Enums;
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Vector Database Options (nested class).
+/// Options for vector store.
 /// </summary>
 public class VectorStoreOptions
 {

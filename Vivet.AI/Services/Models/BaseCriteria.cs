@@ -7,20 +7,21 @@ namespace Vivet.AI.Services.Models;
 /// <summary>
 /// Represents the base criteria used to filter collections of embeddings.
 /// </summary>
-/// <typeparam name="TCollection">The type of embedding collection being filtered. Must inherit from <see cref="BaseEmbedding"/>.</typeparam>
-public abstract class BaseCriteria<TCollection>
-    where TCollection : BaseEmbedding
+public abstract class BaseCriteria
 {
     /// <summary>
     /// Gets or sets the scope ID associated with this criteria.
     /// </summary>
     public virtual Guid? ScopeId { get; set; }
+}
 
-    /// <summary>
-    /// Gets or sets the date range for filtering.
-    /// </summary>
-    public virtual DateRange DateRange { get; set; }
-
+/// <summary>
+/// Represents the base criteria used to filter collections of embeddings.
+/// </summary>
+/// <typeparam name="TCollection">The type of embedding collection being filtered. Must inherit from <see cref="BaseEmbedding"/>.</typeparam>
+public abstract class BaseCriteria<TCollection> : BaseCriteria
+    where TCollection : BaseEmbedding
+{
     /// <summary>
     /// Builds the filter expression for the collection based on the criteria.
     /// </summary>

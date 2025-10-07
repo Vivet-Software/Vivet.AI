@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Requests.Metadata.Models;
+using Vivet.AI.Services.Requests.Metadata.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Metadata;
 
@@ -19,5 +20,5 @@ public class GetMetadataRequest
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
     [Required]
-    public virtual MetadataConfigOverrides ConfigOverrides { get; } = new();
+    public virtual MetadataConfigOverrides ConfigOverrides { get; internal set; } = new();
 }

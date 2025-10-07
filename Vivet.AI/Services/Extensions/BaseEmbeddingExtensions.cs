@@ -2,12 +2,15 @@
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Models;
+using Vivet.AI.Models.Enums;
+using Vivet.AI.Services.Models.ConfigOverrides;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Extensions;
 
 internal static class BaseEmbeddingExtensions
 {
-    internal static double GetRecencyScore<T>(this T record, BaseScoringOptions scoringOptions)
+    internal static double GetRecencyScore<T>(this T record, BaseScoringOptions scoringOptions, BaseEmbeddingSearchScoringConfigOverrides overrides)
         where T : BaseEmbedding
     {
         if (record == null)
@@ -19,11 +22,16 @@ internal static class BaseEmbeddingExtensions
         var resultDateTime = DateTimeOffset.FromUnixTimeSeconds(record.UnixTimestamp).UtcDateTime;
         var ageInDays = (DateTimeOffset.UtcNow - resultDateTime).TotalDays;
 
-        return scoringOptions.RecencyDecayStrategy switch
+        var recencyDecayStrategy = overrides.RecencyDecayStrategy ?? scoringOptions.RecencyDecayStrategy;
+        var recencyBoostMax = overrides.RecencyBoostMax ?? scoringOptions.RecencyBoostMax;
+        var recencyDecayDays = overrides.RecencyDecayDays ?? scoringOptions.RecencyDecayDays;
+        var recencySigmoidSteepness = overrides.RecencySigmoidSteepness ?? scoringOptions.RecencySigmoidSteepness;
+
+        return recencyDecayStrategy switch
         {
-            RecencyDecayStrategy.Linear => Math.Max(0, scoringOptions.RecencyBoostMax - ageInDays * scoringOptions.RecencyBoostMax / scoringOptions.RecencyDecayDays),
-            RecencyDecayStrategy.Exponential => scoringOptions.RecencyBoostMax * Math.Exp(-ageInDays / scoringOptions.RecencyDecayDays),
-            RecencyDecayStrategy.Sigmoid => scoringOptions.RecencyBoostMax / (1 + Math.Exp((ageInDays - scoringOptions.RecencyDecayDays) / scoringOptions.RecencySigmoidSteepness)),
+            RecencyDecayStrategy.Linear => Math.Max(0, recencyBoostMax - ageInDays * recencyBoostMax / recencyDecayDays),
+            RecencyDecayStrategy.Exponential => recencyBoostMax * Math.Exp(-ageInDays / recencyDecayDays),
+            RecencyDecayStrategy.Sigmoid => recencyBoostMax / (1 + Math.Exp((ageInDays - recencyDecayDays) / recencySigmoidSteepness)),
             _ => 0
         };
     }

@@ -1,7 +1,7 @@
 ﻿namespace Vivet.AI.Config;
 
 /// <summary>
-/// Memory Scoring Options.
+/// Options for memory scoring.
 /// </summary>
 public class MemoryScoringOptions : BaseScoringOptions
 {

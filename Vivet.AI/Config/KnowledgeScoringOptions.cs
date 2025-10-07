@@ -1,6 +1,6 @@
 ﻿namespace Vivet.AI.Config;
 
 /// <summary>
-/// Knowledge Scoring Options.
+/// Options for knowledge scoring.
 /// </summary>
 public class KnowledgeScoringOptions : BaseScoringOptions;

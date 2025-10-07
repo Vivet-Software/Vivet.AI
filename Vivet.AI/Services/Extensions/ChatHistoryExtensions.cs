@@ -1,11 +1,11 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Plugins.Consts;
 using Vivet.AI.Services.Requests.Agent.Models.Plugins;
@@ -49,7 +49,7 @@ containing a meaningful error message, describing why the request could not be c
         if (typeof(T) != typeof(string))
         {
             var schema = typeof(T).GenerateJsonMap();
-            var serializedSchema = JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = true });
+            var serializedSchema = JsonConvert.SerializeObject(schema, new JsonSerializerSettings { Formatting = Formatting.Indented });
 
             stringBuilder
                 .AppendLine($"Please respond using the following JSON schema: {serializedSchema}");
@@ -213,7 +213,7 @@ Return a JSON object with a property called {nameof(MetadataResponse<T>.Metadata
                 [nameof(MetadataResponse<T>.AdditionalMetadata)] = propertiesDictionary
             };
 
-            var serializedTemplate = JsonSerializer.Serialize(metadataResponseTemplate, new JsonSerializerOptions { WriteIndented = true });
+            var serializedTemplate = JsonConvert.SerializeObject(metadataResponseTemplate, new JsonSerializerSettings { Formatting = Formatting.Indented });
 
             chatHistory
                 .AddSystemMessage(serializedTemplate);

@@ -10,18 +10,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.Blobs.Data;
-using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.MimeTypes;
-using Vivet.AI.Services.Models.Plugins.BuiltIn;
+using Vivet.AI.Services.Models.Plugins.Context;
 using Vivet.AI.Services.Requests.Chat;
-using Vivet.AI.Services.Requests.Chat.Models.Plugins.BuiltIn;
+using Vivet.AI.Services.Requests.Chat.Models.Plugins.Context;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
 using Vivet.AI.Services.Requests.Embedding.Memory;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses;
 
 namespace IntegrationTests.Vivet.AI.Services;
@@ -340,15 +341,23 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    Plugins =
+                    SkipKnowledgeContext = true,
+                    SkipWebSearchContext = true,
+                    // BUG: Tests
+                    MemoryConfigOverrides = new EmbeddingMemorySearchConfigOverrides
                     {
-                        Knowledge = new KnowledgePluginOverrides
+                        UseQueryDeduplication = true,
+                        ContextQueryLimit = 5,
+                        RetentionInDays = 180,
+                        CounterpartContextQueryLimit = 3,
+                        Scoring =
                         {
-                            SkipKnowledgeContext = true
-                        },
-                        WebSearch = new WebSearchPluginOverrides
-                        {
-                            SkipWebSearchContext = true
+                            DeduplicationMatchScoreThreshold = 0.8,
+                            MatchScoreThreshold = 0.91,
+                            RecencyBoostMax = 0.2,
+                            RecencyDecayStrategy = RecencyDecayStrategy.Linear,
+                            ThreadMatchBoost = 0.1,
+                            RecencySigmoidSteepness = 0.4
                         }
                     }
                 },
@@ -459,13 +468,7 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Memory = new MemoryPluginOverrides
-                        {
-                            SkipMemoryContext = true
-                        }
-                    }
+                    SkipMemoryContext = true
                 }
             });
 
@@ -508,17 +511,8 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Memory = new MemoryPluginOverrides
-                        {
-                            SkipMemoryContext = true
-                        },
-                        WebSearch = new WebSearchPluginOverrides
-                        {
-                            SkipWebSearchContext = true
-                        }
-                    }
+                    SkipMemoryContext = true,
+                    SkipWebSearchContext = true
                 },
                 Plugins =
                 {
@@ -566,17 +560,8 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Knowledge = new KnowledgePluginOverrides
-                        {
-                            SkipKnowledgeContext = true
-                        },
-                        WebSearch = new WebSearchPluginOverrides
-                        {
-                            SkipWebSearchContext = true
-                        }
-                    }
+                    SkipKnowledgeContext = true,
+                    SkipWebSearchContext = true
                 },
                 Plugins =
                 {
@@ -608,17 +593,8 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Memory = new MemoryPluginOverrides
-                        {
-                            SkipMemoryContext = true
-                        },
-                        Knowledge = new KnowledgePluginOverrides
-                        {
-                            SkipKnowledgeContext = true
-                        }
-                    }
+                    SkipMemoryContext = true,
+                    SkipKnowledgeContext = true
                 },
                 Plugins =
                 {
@@ -649,21 +625,9 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Memory = new MemoryPluginOverrides
-                        {
-                            SkipMemoryContext = true
-                        },
-                        Knowledge = new KnowledgePluginOverrides
-                        {
-                            SkipKnowledgeContext = true
-                        },
-                        WebSearch = new WebSearchPluginOverrides
-                        {
-                            SkipWebSearchContext = true
-                        }
-                    }
+                    SkipMemoryContext = true,
+                    SkipKnowledgeContext = true,
+                    SkipWebSearchContext = true
                 },
                 Plugins =
                 {

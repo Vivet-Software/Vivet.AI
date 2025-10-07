@@ -4,12 +4,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading.Tasks;
 using Vivet.AI.Services.Interfaces;
-using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
 using Vivet.AI.Services.Requests.Agent;
 using Vivet.AI.Services.Requests.Agent.Models;
-using Vivet.AI.Services.Requests.Agent.Models.Plugins.BuiltIn;
-using Vivet.AI.Services.Responses.Agent;
+using Vivet.AI.Services.Requests.Agent.Models.Plugins.Context;
 
 namespace IntegrationTests.Vivet.AI.Services;
 
@@ -114,13 +112,7 @@ give format and make it polished. Output the final improved copy as a single tex
                 Agents = agents,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Memory = new MemoryPluginOverrides
-                        {
-                            SkipMemoryContext = true
-                        }
-                    }
+                    SkipMemoryContext = true
                 }
             });
 
@@ -155,13 +147,7 @@ give format and make it polished. Output the final improved copy as a single tex
                 Agents = agents,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Memory = new MemoryPluginOverrides
-                        {
-                            SkipMemoryContext = true
-                        }
-                    }
+                    SkipMemoryContext = true
                 }
             });
 
@@ -204,13 +190,7 @@ If not, provide insight on how to refine suggested copy without example."
                 Agents = agents,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Memory = new MemoryPluginOverrides
-                        {
-                            SkipMemoryContext = true
-                        }
-                    }
+                    SkipMemoryContext = true
                 }
             });
 
@@ -290,13 +270,7 @@ If not, provide insight on how to refine suggested copy without example."
                 Agents = agents,
                 ConfigOverrides =
                 {
-                    Plugins =
-                    {
-                        Memory = new MemoryPluginOverrides
-                        {
-                            SkipMemoryContext = true
-                        }
-                    }
+                    SkipMemoryContext = true
                 }
             });
 

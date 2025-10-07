@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Requests.Summarization.Models;
+using Vivet.AI.Services.Requests.Summarization.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Summarization;
 
@@ -12,5 +13,5 @@ public abstract class BaseSummarizeRequest
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
     [Required]
-    public virtual SummarizationConfigOverrides ConfigOverrides { get; } = new();
+    public virtual SummarizationConfigOverrides ConfigOverrides { get; internal set; } = new();
 }

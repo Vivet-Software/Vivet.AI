@@ -74,7 +74,8 @@ public static class ServiceCollectionExtensions
             .AddOllamaChatServices(options)
             .AddOllamaEmbeddingServices(options)
             .AddOllamaMetadataServices(options)
-            .AddOllamaSummarizationServices(options);
+            .AddOllamaSummarizationServices(options)
+            .AddOllamaAgentsServices(options);
 
         return services;
     }

@@ -73,7 +73,7 @@ public class ParameterExpressionExtensionsTests
             From = DateTimeOffset.UtcNow.AddDays(-1)
         };
 
-        param.AddDateRangeExpression(range, ref body);
+        param.AddDateRangeExpression(nameof(BaseEmbedding.UnixTimestamp), range, ref body);
 
         Assert.IsNotNull(body);
         Assert.AreEqual(ExpressionType.GreaterThanOrEqual, body.NodeType);
@@ -90,7 +90,7 @@ public class ParameterExpressionExtensionsTests
             To = DateTimeOffset.UtcNow
         };
 
-        param.AddDateRangeExpression(range, ref body);
+        param.AddDateRangeExpression(nameof(BaseEmbedding.UnixTimestamp), range, ref body);
 
         Assert.IsNotNull(body);
         Assert.AreEqual(ExpressionType.LessThanOrEqual, body.NodeType);

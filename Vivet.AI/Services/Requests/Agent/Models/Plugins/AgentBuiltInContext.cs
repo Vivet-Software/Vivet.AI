@@ -1,6 +1,6 @@
 ﻿using Vivet.AI.Services.Models.Plugins;
-using Vivet.AI.Services.Models.Plugins.BuiltIn;
-using Vivet.AI.Services.Requests.Agent.Models.Plugins.BuiltIn;
+using Vivet.AI.Services.Models.Plugins.Context;
+using Vivet.AI.Services.Requests.Agent.Models.Plugins.Context;
 
 namespace Vivet.AI.Services.Requests.Agent.Models.Plugins;
 

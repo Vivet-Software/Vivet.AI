@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Config.Models;
+using Vivet.AI.Models;
 
 namespace Vivet.AI.Config;
 
@@ -23,7 +24,8 @@ public class ChatOptions
     public virtual TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);
 
     /// <summary>
-    /// Options for configuring plugins.
+    /// Built-in plugins that can be enabled for the chat model.
     /// </summary>
+    [Required]
     public virtual PluginsOptions Plugins { get; set; } = new();
 }

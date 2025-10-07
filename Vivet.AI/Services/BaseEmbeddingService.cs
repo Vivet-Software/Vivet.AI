@@ -33,7 +33,7 @@ public abstract class BaseEmbeddingService(EmbeddingOptions options, IEmbeddingG
     /// <param name="configOverrides">Embedding Cconfig overrides.</param>
     /// <param name="cancellationToken">A token that can be used to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation, containing the generated embeddings./// </returns>
-    protected virtual async Task<GeneratedEmbeddings<Embedding<float>>> GenerateEmbeddings(string[] textChunks, EmbedingConfigOverrides configOverrides, CancellationToken cancellationToken = default)
+    protected virtual async Task<GeneratedEmbeddings<Embedding<float>>> GenerateEmbeddings(string[] textChunks, BaseEmbedingIndexConfigOverrides configOverrides, CancellationToken cancellationToken = default)
     {
         if (textChunks == null)
             throw new ArgumentNullException(nameof(textChunks));

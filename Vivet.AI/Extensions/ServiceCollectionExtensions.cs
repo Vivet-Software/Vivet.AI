@@ -81,13 +81,13 @@ internal static class ServiceCollectionExtensions
 
                 builder
                     .AddLoggerFactory(x)
-                    .AddPlugins(x, chatOptions.Plugins);
+                    .AddBuiltInPlugins(x, chatOptions.Plugins);
 
                 return builder;
             });
 
         services
-            .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Chat.Plugins.BuiltInPlugins.WebSearch)
+            .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Chat.Plugins.WebSearch)
             .AddPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
             .AddScoped<IChatService>(x =>
             {
@@ -318,13 +318,13 @@ internal static class ServiceCollectionExtensions
 
                 builder
                     .AddLoggerFactory(x)
-                    .AddPlugins(x, agentOptions.Plugins);
+                    .AddBuiltInPlugins(x, agentOptions.Plugins);
 
                 return builder;
             });
 
         services
-            .AddTextSearch(ServiceIds.AGENT_SERVICE_ID, options.Agents.Plugins.BuiltInPlugins.WebSearch)
+            .AddTextSearch(ServiceIds.AGENT_SERVICE_ID, options.Agents.Plugins.WebSearch)
             .AddPromptExecutionSettings<T>(options.Agents.Model.Parameters, ServiceIds.AGENT_SERVICE_ID)
             .AddScoped<IAgentsService>(x =>
             {
@@ -448,7 +448,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddMemoryVectorStore(this IServiceCollection services, EmbeddingOptions.MemoryOptions options)
+    private static IServiceCollection AddMemoryVectorStore(this IServiceCollection services, EmbeddingMemoryOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -481,7 +481,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddKnowledgeVectorStore(this IServiceCollection services, EmbeddingOptions.KnowledgeOptions options)
+    private static IServiceCollection AddKnowledgeVectorStore(this IServiceCollection services, EmbeddingKnowledgeOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));

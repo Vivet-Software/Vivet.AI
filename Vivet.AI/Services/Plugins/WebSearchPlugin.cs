@@ -15,8 +15,8 @@ namespace Vivet.AI.Services.Plugins;
 /// </summary>
 public sealed class WebSearchPlugin
 {
-    private readonly ITextSearch textSearchService;
     private readonly WebSearchProvider provider;
+    private readonly ITextSearch textSearchService;
 
     /// <summary>
     /// Constructor.

@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Data;
 using System;
-using System.Linq;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
 using Vivet.AI.Services.Interfaces;
@@ -34,7 +33,7 @@ internal static class KernelBuilderExtensions
         return builder;
     }
 
-    internal static IKernelBuilder AddPlugins(this IKernelBuilder builder, IServiceProvider serviceProvider, PluginsOptions pluginsOptions)
+    internal static IKernelBuilder AddBuiltInPlugins(this IKernelBuilder builder, IServiceProvider serviceProvider, PluginsOptions pluginsOptions)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -46,36 +45,18 @@ internal static class KernelBuilderExtensions
             throw new ArgumentNullException(nameof(pluginsOptions));
 
         builder
-            .AddMemoryPlugin(serviceProvider, pluginsOptions.BuiltInPlugins.Memory)
-            .AddKnowledgePlugin(serviceProvider, pluginsOptions.BuiltInPlugins.Knowledge)
-            .AddWebSearchPlugin(serviceProvider, pluginsOptions.BuiltInPlugins.WebSearch);
-
-        var typeAndNames = pluginsOptions.CustomPlugins
-            .Select(x => new
-            {
-                x.Name,
-                Type = Type.GetType(x.Type, true)
-            });
-
-        foreach (var typeAndName in typeAndNames)
-        {
-            builder.Plugins
-                .AddFromType(serviceProvider, typeAndName.Type, typeAndName.Name);
-        }
+            .AddMemoryPlugin(serviceProvider)
+            .AddKnowledgePlugin(serviceProvider)
+            .AddWebSearchPlugin(serviceProvider, pluginsOptions.WebSearch);
 
         return builder;
     }
 
 
-    private static IKernelBuilder AddMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, MemoryPluginOptions options = null)
+    private static IKernelBuilder AddMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
-
-        if (options == null)
-        {
-            return builder;
-        }
 
         var embeddingMemoryService = serviceProvider
             .GetService<IEmbeddingMemoryService>();
@@ -85,22 +66,17 @@ internal static class KernelBuilderExtensions
             return builder;
         }
 
-        var memoryPlugin = new MemoryPlugin(options, embeddingMemoryService);
+        var memoryPlugin = new MemoryPlugin(embeddingMemoryService);
 
         builder.Plugins
             .AddFromObject(memoryPlugin, BuiltInPluginNames.MEMORY_PLUGIN);
 
         return builder;
     }
-    private static IKernelBuilder AddKnowledgePlugin(this IKernelBuilder builder, IServiceProvider serviceProvider, KnowledgePluginOptions options = null)
+    private static IKernelBuilder AddKnowledgePlugin(this IKernelBuilder builder, IServiceProvider serviceProvider)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
-
-        if (options == null)
-        {
-            return builder;
-        }
 
         var embeddingKnowledgeService = serviceProvider
             .GetService<IEmbeddingKnowledgeService>();
@@ -110,7 +86,7 @@ internal static class KernelBuilderExtensions
             return builder;
         }
 
-        var knowledgePlugin = new KnowledgePlugin(options, embeddingKnowledgeService);
+        var knowledgePlugin = new KnowledgePlugin(embeddingKnowledgeService);
 
         builder.Plugins
             .AddFromObject(knowledgePlugin, BuiltInPluginNames.KNOWLEDGE_PLUGIN);

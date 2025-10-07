@@ -1,15 +1,13 @@
-﻿using System;
+﻿using Microsoft.SemanticKernel;
+using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.SemanticKernel;
-using Vivet.AI.Config;
-using Vivet.AI.Services.Helpers;
 using Vivet.AI.Services.Interfaces;
-using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Requests.Embedding.Memory;
 using Vivet.AI.Services.Requests.Embedding.Memory.Models;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Plugins;
 
@@ -18,17 +16,14 @@ namespace Vivet.AI.Services.Plugins;
 /// </summary>
 public sealed class MemoryPlugin
 {
-    private readonly MemoryPluginOptions options;
     private readonly IEmbeddingMemoryService embeddingMemoryService;
 
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="options">See <see cref="MemoryPluginOptions"/>.</param>
     /// <param name="embeddingMemoryService">The <see cref="IEmbeddingMemoryService"/>.</param>
-    public MemoryPlugin(MemoryPluginOptions options, IEmbeddingMemoryService embeddingMemoryService)
+    public MemoryPlugin(IEmbeddingMemoryService embeddingMemoryService)
     {
-        this.options = options ?? throw new ArgumentNullException(nameof(options));
         this.embeddingMemoryService = embeddingMemoryService ?? throw new ArgumentNullException(nameof(embeddingMemoryService));
     }
 
@@ -40,11 +35,12 @@ public sealed class MemoryPlugin
     /// <param name="scopeId">The scope id.</param>
     /// <param name="agentId">The agent id.</param>
     /// <param name="currentThreadId">The thread id of the current conversation.</param>
+    /// <param name="configOverrides">The config overrides from the request.</param>
     /// <returns>The memory chat prompt snippet.</returns>
     [KernelFunction("memory")]
     [Description(@"Retrieve relevant user-specific memories, including past questions, answers, notes, or uploaded content, 
 and inject them into the current chat context to support personalized and consistent responses.")]
-    public async Task<string> GetMemoriesAsync([Description("The current user question or message")]string question, Guid? userId, Guid? agentId, Guid? scopeId, Guid? currentThreadId) 
+    public async Task<string> GetMemoriesAsync([Description("The current user question or message")]string question, Guid? userId, Guid? agentId, Guid? scopeId, Guid? currentThreadId, EmbeddingMemorySearchConfigOverrides configOverrides)
     {
         if (string.IsNullOrEmpty(question))
         {
@@ -58,28 +54,17 @@ and inject them into the current chat context to support personalized and consis
 
         try
         {
-            var from = DateTimeOffset.UtcNow
-                .AddDays(-this.options.RetentionInDays);
-
-            var limit = this.options.UseQueryDeduplication
-                ? this.options.ContextQueryLimit * 2
-                : this.options.ContextQueryLimit;
-
             var request = new SearchMemoryRequest
             {
                 Query = question,
                 CurrentThreadId = currentThreadId,
-                Criteria = new MemoryCriteria
+                Criteria = new MemorySearchCriteria
                 {
                     UserId = userId,
                     AgentId = agentId,
-                    ScopeId = scopeId,
-                    DateRange = new DateRange
-                    {
-                        From = from
-                    }
+                    ScopeId = scopeId
                 },
-                Limit = limit
+                ConfigOverrides = configOverrides
             };
 
             var response = await this.embeddingMemoryService
@@ -88,15 +73,6 @@ and inject them into the current chat context to support personalized and consis
             var memoryResults = response.Results
                 .Select(x => x.Result)
                 .ToArray();
-
-            if (this.options.UseQueryDeduplication)
-            {
-                var deduplicatedResults = ContextDeduplicator.DeduplicateMemoryResults(memoryResults, this.options.DeduplicationMatchScoreThreshold);
-
-                memoryResults = deduplicatedResults
-                    .Take(this.options.ContextQueryLimit)
-                    .ToArray();
-            }
 
             var stringBuilder = new StringBuilder();
 
@@ -112,10 +88,7 @@ and inject them into the current chat context to support personalized and consis
                         stringBuilder
                             .AppendLine($"user: Q: {memoryResult.FullContext}");
 
-                        var counterpartContexts = memoryResult.CounterpartContext
-                            .Take(this.options.CounterpartContextQueryLimit);
-
-                        foreach (var counterPartContext in counterpartContexts)
+                        foreach (var counterPartContext in memoryResult.CounterpartContext)
                         {
                             stringBuilder
                                 .AppendLine($"Assistant: A: {counterPartContext}");
@@ -123,10 +96,7 @@ and inject them into the current chat context to support personalized and consis
                     }
                     else if (memoryResult.IsAnswer)
                     {
-                        var counterpartContexts = memoryResult.CounterpartContext
-                            .Take(this.options.CounterpartContextQueryLimit);
-
-                        foreach (var counterpartContext in counterpartContexts)
+                        foreach (var counterpartContext in memoryResult.CounterpartContext)
                         {
                             stringBuilder
                                 .AppendLine($"user: Q: {counterpartContext}");

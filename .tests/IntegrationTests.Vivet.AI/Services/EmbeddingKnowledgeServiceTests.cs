@@ -534,10 +534,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
             },
             ConfigOverrides =
             {
-                Metadata =
-                {
-                    UseAutomaticMetadataRetrieval = false
-                }
+                UseAutomaticMetadataRetrieval = false
             }
         };
 

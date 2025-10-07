@@ -4,8 +4,8 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Vivet.AI.Services.Extensions;
-using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
+using Vivet.AI.Services.Requests.Chat.Models.ConfigOverrides;
 
 namespace UnitTests.Vivet.AI.Services.Extensions;
 
@@ -94,7 +94,7 @@ public class KernelExtensionsTests
         Kernel kernel = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(kernel.AddFilters);
+        Assert.ThrowsException<ArgumentNullException>(kernel.AddDefaultFilters);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -147,19 +147,19 @@ public class KernelExtensionsTests
 
 
     [TestMethod]
-    public void AddPluginConfigOverridesTest()
+    public void RemoveSkippedBuiltInPluginsTest()
     {
         Assert.Inconclusive();
     }
 
     [TestMethod]
-    public void AddPluginConfigOverridesWhenKernelIsNullThrowsArgumentNullExceptionTest()
+    public void RemoveSkippedBuiltInPluginsWhenKernelIsNullThrowsArgumentNullExceptionTest()
     {
         Kernel kernel = null;
-        var configOverrides = new BuiltInPluginsConfigOverrides();
+        var configOverrides = new ChatConfigOverrides();
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => kernel.AddBuiltInPluginConfigOverrides(configOverrides));
+        Assert.ThrowsException<ArgumentNullException>(() => kernel.RemoveSkippedBuiltInPlugins(configOverrides));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

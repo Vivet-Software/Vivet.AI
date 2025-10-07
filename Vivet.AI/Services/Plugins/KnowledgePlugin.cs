@@ -5,10 +5,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
-using Vivet.AI.Config;
-using Vivet.AI.Services.Helpers;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
+using Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Plugins;
 
@@ -17,17 +16,14 @@ namespace Vivet.AI.Services.Plugins;
 /// </summary>
 public sealed class KnowledgePlugin
 {
-    private readonly KnowledgePluginOptions options;
     private readonly IEmbeddingKnowledgeService embeddingKnowledgeService;
 
     /// <summary>
     /// Constructor.
     /// </summary>
-    /// <param name="options">The <see cref="KnowledgePluginOptions"/>.</param>
     /// <param name="embeddingKnowledgeService">The <see cref="IEmbeddingKnowledgeService"/>.</param>
-    public KnowledgePlugin(KnowledgePluginOptions options, IEmbeddingKnowledgeService embeddingKnowledgeService)
+    public KnowledgePlugin(IEmbeddingKnowledgeService embeddingKnowledgeService)
     {
-        this.options = options ?? throw new ArgumentNullException(nameof(options));
         this.embeddingKnowledgeService = embeddingKnowledgeService ?? throw new ArgumentNullException(nameof(embeddingKnowledgeService));
     }
 
@@ -39,11 +35,12 @@ public sealed class KnowledgePlugin
     /// <param name="subTenantId">The sub-tenant id.</param>
     /// <param name="scopeId">The scope id.</param>
     /// <param name="userId">The user id.</param>
+    /// <param name="configOverrides">The config overrides from the request.</param>
     /// <returns>The knowledge chat prompt snippet.</returns>
     [KernelFunction("knowledge")] 
     [Description(@"Retrieve knowledge stored in private or scoped sources such as notes, documents, organizational records or similar. 
 Always use this function when the user’s request may relate to these sources, even if similar information exists in public knowledge.")]
-    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, Guid? tenantId, Guid? subTenantId, Guid? scopeId, Guid? userId)
+    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, Guid? tenantId, Guid? subTenantId, Guid? scopeId, Guid? userId, EmbeddingKnowledgeSearchConfigOverrides configOverrides)
     {
         if (string.IsNullOrEmpty(question))
         {
@@ -52,10 +49,6 @@ Always use this function when the user’s request may relate to these sources, 
 
         try
         {
-            var limit = this.options.UseQueryDeduplication
-                ? this.options.ContextQueryLimit * 2
-                : this.options.ContextQueryLimit;
-
             var response = await this.embeddingKnowledgeService
                 .SearchAsync(new SearchKnowledgeRequest
                 {
@@ -67,22 +60,13 @@ Always use this function when the user’s request may relate to these sources, 
                         ScopeId = scopeId,
                         UserId = userId
                     },
-                    Limit = limit
+                    ConfigOverrides = configOverrides
                 })
                 .ConfigureAwait(false);
 
             var knowledgeResults = response.Results
                 .Select(x => x.Result)
                 .ToArray();
-
-            if (this.options.UseQueryDeduplication)
-            {
-                var deduplicatedResults = ContextDeduplicator.DeduplicateKnowledgeResults(knowledgeResults, this.options.DeduplicationMatchScoreThreshold);
-
-                knowledgeResults = deduplicatedResults
-                    .Take(this.options.ContextQueryLimit)
-                    .ToArray();
-            }
 
             var stringBuilder = new StringBuilder();
 

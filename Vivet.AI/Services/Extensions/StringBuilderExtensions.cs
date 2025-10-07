@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -15,11 +16,13 @@ internal static class StringBuilderExtensions
     internal static StringBuilder AppendBuiltInPluginContext<TContext>(this StringBuilder stringBuilder, TContext context, string name)
         where TContext : class
     {
-        if (stringBuilder == null) 
+        if (stringBuilder == null)
             throw new ArgumentNullException(nameof(stringBuilder));
 
-        if (name == null) 
+        if (name == null)
             throw new ArgumentNullException(nameof(name));
+
+        // BUG: 000: ConfigOverrides is not part of the contex, we need to find a different to pass it
 
         if (context == null)
         {
@@ -79,16 +82,18 @@ internal static class StringBuilderExtensions
             return null;
         }
 
-        var contextString = GetContextString(context);
+        var contextString = GetContextValues(context);
 
         if (contextString == null)
         {
             return null;
         }
 
-        return $"{pluginName}: {string.Join(", ", contextString)}";
+        var pluginContext = $"{pluginName}: {string.Join(", ", contextString)}";
+
+        return pluginContext;
     }
-    private static string GetContextString<TContext>(TContext context)
+    private static IEnumerable<object> GetContextValues<TContext>(TContext context)
         where TContext : class
     {
         if (context == null)
@@ -105,7 +110,22 @@ internal static class StringBuilderExtensions
                     return null;
                 }
 
-                return $"{x.Name}={value}";
+                // BUG: 000: What about Guid, DateTime, DateTimeOffset, Nullable, TimeSpan, TimeOnly, DateOnly, etc
+                if (x.PropertyType.IsPrimitive || x.PropertyType == typeof(string))
+                {
+                    return $"{x.Name}={value}";
+                }
+                else
+                {
+                    var jsonSerializerSettings = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore
+                    };
+
+                    var serializedObject = JsonConvert.SerializeObject(value, jsonSerializerSettings);
+
+                    return $"{x.Name}={serializedObject.Replace("\"", "\\\"")}";
+                }
             })
             .Where(x => x != null)
             .ToArray();
@@ -115,6 +135,6 @@ internal static class StringBuilderExtensions
             return null;
         }
 
-        return string.Join(", ", values);
+        return values;
     }
 }

@@ -209,9 +209,9 @@ public class EmbeddingMemoryServiceTests : BaseTests
             ThreadId = threadId,
             ConfigOverrides =
             {
+                UseAutomaticSummarization = true,
                 Summarization = 
                 {
-                    UseAutomaticSummarization = true,
                     SummarizationDegree = 60
                 }
             }
@@ -401,10 +401,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
             },
             ConfigOverrides =
             {
-                Metadata =
-                {
-                    UseAutomaticMetadataRetrieval = false
-                }
+                UseAutomaticMetadataRetrieval = false
             }
         };
 
@@ -604,7 +601,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
     [TestMethod]
     public async Task SearchTest()
     {
-        var threadId = Guid.NewGuid();
+        var scopeId = Guid.NewGuid();
         const string QUESTION = "Never tell me about sweden.";
         const string ANSWER = "Okay absolutely Sweden is of my mind. I will never tell you anything about Sweden";
 
@@ -613,7 +610,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
             Question = QUESTION,
             Answer = ANSWER,
             UserId = this.userId,
-            ThreadId = threadId
+            ScopeId = scopeId
         };
 
         var indexResponse = await this.EmbeddingMemoryService
@@ -627,7 +624,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
                 Query = "Don't mention sweden",
                 Criteria =
                 {
-                    ThreadId = threadId,
+                    ScopeId = scopeId,
                     UserId = this.userId
                 },
                 Limit = 1
@@ -727,7 +724,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
     [TestMethod]
     public async Task SearchWhenBlobTest()
     {
-        var threadId = Guid.NewGuid();
+        var scopeId = Guid.NewGuid();
         const string QUESTION = "Never tell me about sweden.";
         const string ANSWER = "Okay absolutely Sweden is of my mind. I will never tell you anything about Sweden";
         const string BASE64 = "/9j/4AAQSkZJRgABAQEASABIAAD/4QAiRXhpZgAATU0AKgAAAAgAAQESAAMAAAABAAEAAAAAAAD/7AARRHVja3kAAQAEAAAAWgAA/+EDgmh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4NCjx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4NCgk8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPg0KCQk8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOjAxODAxMTc0MDcyMDY4MTE4QTZERjJGNUE3NDM0RDNEIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjdFODQyQUYwNkQ1QjExRTRCMDA0REFDNDU5NzQxRTc4IiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjdFODQyQUVGNkQ1QjExRTRCMDA0REFDNDU5NzQxRTc4IiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKE1hY2ludG9zaCkiPg0KCQkJPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6MDE4MDExNzQwNzIwNjgxMThBNkRGMkY1QTc0MzREM0QiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6MDE4MDExNzQwNzIwNjgxMThBNkRGMkY1QTc0MzREM0QiLz4NCgkJPC9yZGY6RGVzY3JpcHRpb24+DQoJPC9yZGY6UkRGPg0KPC94OnhtcG1ldGE+DQo8P3hwYWNrZXQgZW5kPSd3Jz8+/9sAQwACAQECAQECAgICAgICAgMFAwMDAwMGBAQDBQcGBwcHBgcHCAkLCQgICggHBwoNCgoLDAwMDAcJDg8NDA4LDAwM/9sAQwECAgIDAwMGAwMGDAgHCAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM/8AAEQgAGwAZAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8A/XX/AIKR/tT3/wCzN8Eh/YN0LTxPr3nJZT+Wjmzihj8yacBwUyoKKCwIBlUkHGK/ATxx/wAFzP2s/wC39QkHxl1Y3OlzzRxrY6dYLbSgNEq5VYdrZEnfvX07/wAHUn/BSq90/wDaG8O/AbwXPb2N1pelmTxRqgj82YfbdkkenpkEKrJDDI5Ay2+MZABr4Sv/ANkjSvNsf7Nk8Z+IdKxEmraxo8BubfTZ7kbbYSiGMqhkkiI2gnGzBIPNOw15n7wf8ERP29/H37VvgbU9A+Kms6dr3i/T9OtNat762sY7N5LeVnhlikjj+QtHLEDuAGRMAR8uT95V/Od/wayftpTfCn/gon4j+D/i+Oyurnxzp1zbaZq88Oy9ivbU+abYythnjmhjZwGyQ0Sjua/oxpCP5eP+Cin/AAR3/az+NH/BQfx5438WfD3VbHw14u8YSXlx4qtbu2vLHS7B7gJDNhZfM2RQCMBSqn5MHFfMPxC1HUfh58RX0zQvGXiOKy090htTLCbRnkiYkNcRichSGyQPmK5+Uk5r+xrXdCs/E+iXem6jbQ3thfwvb3EEqho5o3BVlYdwQSK/D79vz9iz4YeDf2lI/Dem+E7W30dNWEIhNzPI2zJG3zGcuRj/AGqaQNnw/wDsvf8ABOH48/ET/goB4P8AH/wKuf8AhY2p6QulfEC81i7lj0lNLkecq1tcNM213JilXEZcvGdxAyQP6hf+Ek8U/wDQsWf/AIN1/wDjdcd+xn+zn4J/Zt+B+l6Z4I8P2mg2moQRXd15bvLJcymMDc8kjM7YAwAWIA4GBXrFID//2Q==";
@@ -738,7 +735,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
                 Question = QUESTION,
                 Answer = ANSWER,
                 UserId = this.userId,
-                ThreadId = threadId,
+                ScopeId = scopeId,
                 Language = this.language,
                 Blobs = new List<BaseBlobMetadata>
                 {
@@ -766,7 +763,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
                 Query = "summary",
                 Criteria =
                 {
-                    ThreadId = threadId
+                    ScopeId = scopeId
                 },
                 Limit = 10
             });

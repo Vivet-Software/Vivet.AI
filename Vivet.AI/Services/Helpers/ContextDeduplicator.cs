@@ -10,20 +10,20 @@ namespace Vivet.AI.Services.Helpers;
 
 internal static class ContextDeduplicator
 {
-    public static MemoryResult[] DeduplicateMemoryResults(IEnumerable<MemoryResult> results, double similarityThreshold = 0.90)
+    public static SearchMemoryResult[] DeduplicateMemoryResults(IEnumerable<SearchMemoryResult> results, double similarityThreshold = 0.90)
     {
         if (results == null)
             throw new ArgumentNullException(nameof(results));
 
-        var deduplicatedResults = new List<MemoryResult>();
+        var deduplicatedResults = new List<SearchMemoryResult>();
 
         // Deduplicate results.
-        foreach (var result in results.OrderByDescending(x => x.CreatedAt))
+        foreach (var result in results.OrderByDescending(x => x.Result.CreatedAt))
         {
             var existingIndex = deduplicatedResults
                 .FindIndex(x =>
-                    (x.Blob != null && result.Blob != null && x.Blob?.Hash == result.Blob.Hash) ||
-                    (x.IsQuestion == result.IsQuestion && x.FullContext.AreSimilar(result.FullContext, similarityThreshold)));
+                    (x.Result.Blob != null && result.Result.Blob != null && x.Result.Blob?.Hash == result.Result.Blob.Hash) ||
+                    (x.Result.IsQuestion == result.Result.IsQuestion && x.Result.FullContext.AreSimilar(result.Result.FullContext, similarityThreshold)));
 
             if (existingIndex == -1)
             {
@@ -34,7 +34,7 @@ internal static class ContextDeduplicator
             {
                 var similarResult = deduplicatedResults[existingIndex];
 
-                var newestResult = result.CreatedAt > similarResult.CreatedAt 
+                var newestResult = result.Result.CreatedAt > similarResult.Result.CreatedAt 
                     ? result 
                     : similarResult;
 
@@ -42,8 +42,8 @@ internal static class ContextDeduplicator
                     ? similarResult 
                     : result;
 
-                newestResult.CounterpartContext = newestResult.CounterpartContext
-                    .Concat(olderResult.CounterpartContext)
+                newestResult.Result.CounterpartContext = newestResult.Result.CounterpartContext
+                    .Concat(olderResult.Result.CounterpartContext)
                     .Distinct()
                     .ToArray();
 
@@ -55,33 +55,33 @@ internal static class ContextDeduplicator
         }
 
         // Collapse Q/A pairs.
-        var collapsedResults = new List<MemoryResult>(deduplicatedResults);
-        foreach (var question in deduplicatedResults.Where(x => x.IsQuestion))
+        var collapsedResults = new List<SearchMemoryResult>(deduplicatedResults);
+        foreach (var question in deduplicatedResults.Where(x => x.Result.IsQuestion))
         {
-            foreach (var answer in deduplicatedResults.Where(x => x.IsAnswer))
+            foreach (var answer in deduplicatedResults.Where(x => x.Result.IsAnswer))
             {
-                var isQuestionSimilar = answer.CounterpartContext is { Length: 1 } && question.FullContext
-                    .AreSimilar(answer.CounterpartContext[0], similarityThreshold);
+                var isQuestionSimilar = answer.Result.CounterpartContext is { Length: 1 } && question.Result.FullContext
+                    .AreSimilar(answer.Result.CounterpartContext[0], similarityThreshold);
 
-                var isAnswerSimilar = question.CounterpartContext is { Length: 1 } && answer.FullContext
-                    .AreSimilar(question.CounterpartContext[0], similarityThreshold);
+                var isAnswerSimilar = question.Result.CounterpartContext is { Length: 1 } && answer.Result.FullContext
+                    .AreSimilar(question.Result.CounterpartContext[0], similarityThreshold);
 
                 if (isQuestionSimilar && isAnswerSimilar)
                 {
-                    var mergedAnswers = question.CounterpartContext
+                    var mergedAnswers = question.Result.CounterpartContext
                         .ToList();
                     
-                    if (!mergedAnswers.Contains(answer.FullContext))
+                    if (!mergedAnswers.Contains(answer.Result.FullContext))
                     {
                         mergedAnswers
-                            .Add(answer.FullContext);
+                            .Add(answer.Result.FullContext);
                     }
 
-                    question.CounterpartContext = mergedAnswers
+                    question.Result.CounterpartContext = mergedAnswers
                         .ToArray();
 
                     var matchingAnswerCount = deduplicatedResults
-                        .Count(x => x.IsAnswer && x.FullContext.Equals(answer.FullContext));
+                        .Count(x => x.Result.IsAnswer && x.Result.FullContext.Equals(answer.Result.FullContext));
 
                     if (matchingAnswerCount == 1)
                     {
@@ -96,7 +96,7 @@ internal static class ContextDeduplicator
             .ToArray();
     }
 
-    internal static KnowledgeResult[] DeduplicateKnowledgeResults(KnowledgeResult[] knowledgeResults, double matchThreshold = 0.90)
+    internal static SearchKnowledgeResult[] DeduplicateKnowledgeResults(SearchKnowledgeResult[] knowledgeResults, double matchThreshold = 0.90)
     {
         if (knowledgeResults == null)
             throw new ArgumentNullException(nameof(knowledgeResults));
@@ -121,14 +121,14 @@ internal static class ContextDeduplicator
 
                 var compare = knowledgeResults[j];
 
-                var isSameBlob = current.Blob != null && compare.Blob != null && compare.Blob.Hash == current.Blob.Hash;
+                var isSameBlob = current.Result.Blob != null && compare.Result.Blob != null && compare.Result.Blob.Hash == current.Result.Blob.Hash;
                 var similarity = isSameBlob 
                     ? 1.00D 
-                    : (double)Fuzz.Ratio(current.FullContext, compare.FullContext) / 100;
+                    : (double)Fuzz.Ratio(current.Result.FullContext, compare.Result.FullContext) / 100;
 
                 if (similarity >= matchThreshold)
                 {
-                    var newer = current.CreatedAt >= compare.CreatedAt
+                    var newer = current.Result.CreatedAt >= compare.Result.CreatedAt
                         ? current
                         : compare;
 

@@ -1,4 +1,6 @@
-﻿namespace Vivet.AI.Services.Models.Blobs;
+﻿using Vivet.AI.Services.Models.MimeTypes;
+
+namespace Vivet.AI.Services.Models.Blobs;
 
 /// <summary>
 /// Represents a blob with a specific MIME type and additional custom metadata.

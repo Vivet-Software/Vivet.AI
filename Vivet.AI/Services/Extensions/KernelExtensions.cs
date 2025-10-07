@@ -13,6 +13,8 @@ namespace Vivet.AI.Services.Extensions;
 
 internal static class KernelExtensions
 {
+    // BUG: 111: Could these methods be moved somewhere else? Check all extension methods, and clean up a bit.
+
     internal static IEnumerable<AutoFunctionInvocationContext> GetAutoFunctionInvocationContexts(this Kernel kernel)
     {
         if (kernel == null)
@@ -62,7 +64,10 @@ internal static class KernelExtensions
         return (AgentResponseCallback)value;
     }
 
-    internal static Kernel AddFilters(this Kernel kernel)
+
+
+
+    internal static Kernel AddDefaultFilters(this Kernel kernel)
     {
         if (kernel == null)
             throw new ArgumentNullException(nameof(kernel));
@@ -72,6 +77,9 @@ internal static class KernelExtensions
 
         kernel.PromptRenderFilters
             .Add(new PromptCacheFilter());
+
+        kernel.AutoFunctionInvocationFilters
+            .Add(new ComplexObjectDeserializationFilter());
 
         kernel.AutoFunctionInvocationFilters
             .Add(new AutoFunctionCallCollectorFilter());
@@ -105,7 +113,7 @@ internal static class KernelExtensions
         return kernel;
     }
 
-    internal static Kernel AddBuiltInPluginConfigOverrides(this Kernel kernel, BuiltInPluginsConfigOverrides configOverrides, BuiltInPluginsConfigOverrides parentConfigOverrides = null)
+    internal static Kernel RemoveSkippedBuiltInPlugins(this Kernel kernel, BaseChatConfigOverrides configOverrides, BaseChatConfigOverrides parentConfigOverrides = null)
     {
         if (kernel == null)
             throw new ArgumentNullException(nameof(kernel));
@@ -113,22 +121,19 @@ internal static class KernelExtensions
         if (configOverrides == null) 
             throw new ArgumentNullException(nameof(configOverrides));
 
-        var skipMemoryContext = configOverrides.Memory?.SkipMemoryContext ?? parentConfigOverrides?.Memory?.SkipMemoryContext ?? false;
-        if (skipMemoryContext)
+        if (parentConfigOverrides?.SkipMemoryContext is true || configOverrides.SkipMemoryContext)
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.MEMORY_PLUGIN);
         }
 
-        var skipKnowledgeContext = configOverrides.Knowledge?.SkipKnowledgeContext ?? parentConfigOverrides?.Knowledge?.SkipKnowledgeContext ?? false;
-        if (skipKnowledgeContext)
+        if (parentConfigOverrides?.SkipKnowledgeContext is true || configOverrides.SkipKnowledgeContext)
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.KNOWLEDGE_PLUGIN);
         }
 
-        var skipWebSearchContext = configOverrides.WebSearch?.SkipWebSearchContext ?? parentConfigOverrides?.WebSearch?.SkipWebSearchContext ?? false;
-        if (skipWebSearchContext)
+        if (parentConfigOverrides?.SkipWebSearchContext is true || configOverrides.SkipWebSearchContext)
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.WEB_SEARCH_PLUGIN);

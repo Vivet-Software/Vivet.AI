@@ -3,7 +3,7 @@
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Options for configuring how neighbor contexts behave.
+/// Options for configuring neighbor contexts behavior.
 /// </summary>
 public class NeighborContextOptions
 {

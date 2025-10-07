@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Attributes;
 using Vivet.AI.Services.Models.Blobs;
-using Vivet.AI.Services.Requests.Embedding.Memory.Models;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Embedding.Memory;
 
@@ -13,7 +13,7 @@ public class IndexMemoryRequest : IndexMemoryRequest<string>;
 /// <summary>
 /// Represents a request to index a memory entry with optional configuration overrides.
 /// </summary>
-public class IndexMemoryRequest<T> : BaseIndexRequest<MemoryConfigOverrides>
+public class IndexMemoryRequest<T> : BaseIndexRequest<EmbeddingMemoryIndexConfigOverrides>
     where T : class
 {
     /// <summary>

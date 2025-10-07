@@ -11,6 +11,7 @@ using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Metadata;
 using Vivet.AI.Services.Requests.Metadata.Models;
+using Vivet.AI.Services.Requests.Metadata.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses.Metadata;
 using Vivet.AI.Services.Serialization;
 

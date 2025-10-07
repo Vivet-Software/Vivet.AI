@@ -16,7 +16,6 @@ using Vivet.AI.Services.Consts;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
-using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Chat.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
@@ -153,8 +152,8 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             .Add(KernelData.FUNCTION_CALLS, new List<AutoFunctionInvocationContext>());
 
         kernel
-            .AddFilters()
-            .AddBuiltInPluginConfigOverrides(request.ConfigOverrides.Plugins)
+            .AddDefaultFilters()
+            .RemoveSkippedBuiltInPlugins(request.ConfigOverrides)
             .AddCustomPlugins(serviceProvider, request.Plugins.CustomPlugins);
 
         kernel.Plugins
@@ -208,16 +207,6 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             return Task.CompletedTask;
         }
 
-        if (this.options.Plugins.BuiltInPlugins.Memory == null)
-        {
-            return Task.CompletedTask;
-        }
-
-        if (request.ConfigOverrides.Plugins?.Memory is { SkipSaveMemoryContext: true })
-        {
-            return Task.CompletedTask;
-        }
-
         return Task.Run(async () =>
         {
             ChatIndexMemoryResponse chatIndexMemoryResponse;
@@ -233,11 +222,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
                         ScopeId = request.Plugins.Context.Memory.ScopeId,
                         Language = response.Language,
                         Blobs = request.Blobs,
-                        ConfigOverrides =
-                        {
-                            Metadata = request.ConfigOverrides.Plugins.Memory?.Metadata ?? new EmbeddingMetadataConfigOverrides(),
-                            Summarization = request.ConfigOverrides.Plugins.Memory?.Summarization ?? new EmbeddingSummarizationConfigOverrides()
-                        }
+                        ConfigOverrides = request.ConfigOverrides.Memory
                     }, cancellationToken)
                     .ConfigureAwait(false);
 

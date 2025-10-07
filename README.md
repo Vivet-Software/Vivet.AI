@@ -390,11 +390,7 @@ When supported by the provider (e.g., **DeepSeek R1**), the service exposes:
 - Optional callbacks (`onMemoryIndexed`) allow you to hook into the lifecycle for logging or analytics.
 
 #### Custom Plugins
-Custom plugins extend the chat model with your own functionality. They can be added in two ways:  
-- **Configuration (global)** – Registered in `appsettings.json`. Always available to the chat model.  
-- **Per request (scoped)** – Passed with a specific `ChatRequest`, giving fine-grained control. The caller is responsible for instantiating and wiring up dependencies.  
-
-You can combine both approaches — for example, register global plugins for core features and add request-specific plugins for special scenarios.  
+Custom plugins extend the chat model with your own functionality. They can be added **Per request** – Passed with a specific `ChatRequest`, giving fine-grained control. Ensure that dependencies to a plugin is registered as dependencies in `IServiceCollection`.  
 
 When plugins are available, the chat model automatically decides whether to invoke them based on the user’s query. This is by design — the model plans and decides when and how to use plugins.  
 - For custom plugins, if you require a plugin to **always** be invoked, call it manually in your application and include its result in the system message of the request.  
@@ -438,9 +434,7 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
     },
     "Timeout": "00:01:00",
     "Plugins": { 
-      "CustomPlugins": [
-      ],
-      "BuiltInPlugins": { }
+      "WebSearch": null,
     }
   }
 }
@@ -465,35 +459,12 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 | Chat.Model.Parameters.TopK                      | int?              | null      | Limits candidate tokens considered per generation step.                                                                                                          |
 | Chat.Model.Parameters.ReasoningEffort           | ReasoningEffort?  | null      | Effort level to reduce reasoning complexity or token usage.                                                                                                      |
 | Chat.Timeout                                    | TimeSpan          | 00:01:00  | Maximum time allowed for a chat request.                                                                                                                         |
-| Chat.Plugins                                    |                   |           | Options for configuring chat plugins. Plugins (also called *tools*) are sets of related functions that can be exposed to a chat model. They allow the model to integrate with external services and invoke custom functionality. |
-| Chat.Plugins.CustomPlugins                      | string[]          | []        | Fully qualified type name (`"{namespace}.{name}, {assembly}"`). Plugins configured here are always included in chat requests and cannot be disabled. For optional usage, register them per request. |
-| Chat.Plugins.BuiltInPlugins                     |                   |           | Built-in Plugins that can be enabled for the chat model. To disable a plugin, simply omit it's configuration section. See configuration below                    |
+| Chat.Plugins                                    |                   |           | Options for configuring built-in chat plugins. Plugins (also called *tools*) are sets of related functions that can be exposed to a chat model. They allow the model to integrate with external services and invoke custom functionality. |
 
 ### 🔌 Chat Built-in Plugin Configuration
-#### 🧠 Memory
-```json
-"BuiltInPlugins": {
-  "Memory": {
-    "RetentionInDays": 180,
-    "ContextQueryLimit": 3,
-    "CounterpartContextQueryLimit": 2,
-    "UseQueryDeduplication": true,
-    "DeduplicationMatchScoreThreshold": 0.90
-  }
-}
-```
-| Setting                                                   | Type   | Default | Description                                                                                            |
-| --------------------------------------------------------- | ------ | ------- | ------------------------------------------------------------------------------------------------------ |
-| BuiltInPlugins.Memory                                     |        |         | Chat memory configuration. *Requires [Embedding Memory](#-embedding-memory-service) to be configured.* |
-| BuiltInPlugins.Memory.RetentionInDays                     | int    | 180     | How far back memories will be included in queries.                                                     |
-| BuiltInPlugins.Memory.ContextQueryLimit                   | int    | 3       | Maximum number of memory entries retrieved per query.                                                  |
-| BuiltInPlugins.Memory.CounterpartContextQueryLimit        | int    | 2       | Maximum number of counterpart (Q/A pair) entries retrieved.                                            |
-| BuiltInPlugins.Memory.UseQueryDeduplication               | bool   | true    | Deduplicate similar memory entries before building context.                                            |
-| BuiltInPlugins.Memory.DeduplicationMatchScoreThreshold    | double | 0.90    | Fuzzy similarity threshold for deduplication.                                                          |
-
 #### 📚 Knowledge
 ```json
-"BuiltInPlugins": {
+"Plugins": {
   "Knowledge": {
     "ContextQueryLimit": 3,
     "UseQueryDeduplication": true,
@@ -501,16 +472,16 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
   }
 }
 ```
-| Setting                                                   | Type   | Default | Description                                                                                                     |
-| --------------------------------------------------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------- |
-| BuiltInPlugins.Knowledge                                  |        |         | Chat knowledge configuration. *Requires [Embedding Knowledge](#-embedding-knowledge-service) to be configured.* |
-| BuiltInPlugins.Knowledge.ContextQueryLimit                | int    | 3       | Maximum number of knowledge entries retrieved per query.                                                        |
-| BuiltInPlugins.Knowledge.UseQueryDeduplication            | bool   | true    | Deduplicate similar knowledge entries before building context.                                                  |
-| BuiltInPlugins.Knowledge.DeduplicationMatchScoreThreshold | double | 0.90    | Fuzzy similarity threshold for knowledge deduplication.                                                         |
+| Setting                                            | Type   | Default | Description                                                                                                     |
+| -------------------------------------------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------- |
+| Plugins.Knowledge                                  |        |         | Chat knowledge configuration. *Requires [Embedding Knowledge](#-embedding-knowledge-service) to be configured.* |
+| Plugins.Knowledge.ContextQueryLimit                | int    | 3       | Maximum number of knowledge entries retrieved per query.                                                        |
+| Plugins.Knowledge.UseQueryDeduplication            | bool   | true    | Deduplicate similar knowledge entries before building context.                                                  |
+| Plugins.Knowledge.DeduplicationMatchScoreThreshold | double | 0.90    | Fuzzy similarity threshold for knowledge deduplication.                                                         |
 
 #### 🌐 Web Search
 ```json
-"BuiltInPlugins": {
+"Plugins": {
   "WebSearch": {
     "Provider": "Google",
     "Id": null,
@@ -519,13 +490,13 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
   }
 }
 ```
-| Setting                            | Type              | Default  | Description                                                         |
-| ---------------------------------- | ----------------  | -------- | ------------------------------------------------------------------- |
-| BuiltInPlugins.WebSearch           |                   | null     | Web search plugin. Dafault null, not enabled.                       |
-| BuiltInPlugins.WebSearch.Provider  | WebSearchProvider | `Google` | The provider for the plugin to use when searching the web.          |
-| BuiltInPlugins.WebSearch.Id        | string            | null     | The identifier used for web search. _Only used by some providers_.  |
-| BuiltInPlugins.WebSearch.ApiKey    | string            | null     | The api-key of the web search provider.                             |
-| BuiltInPlugins.WebSearch.Limit     | int               | null     | Number of search results to return for the web search.              |
+| Setting                     | Type              | Default  | Description                                                         |
+| --------------------------- | ----------------  | -------- | ------------------------------------------------------------------- |
+| Plugins.WebSearch           |                   | null     | Web search plugin. Dafault null, not enabled.                       |
+| Plugins.WebSearch.Provider  | WebSearchProvider | `Google` | The provider for the plugin to use when searching the web.          |
+| Plugins.WebSearch.Id        | string            | null     | The identifier used for web search. _Only used by some providers_.  |
+| Plugins.WebSearch.ApiKey    | string            | null     | The api-key of the web search provider.                             |
+| Plugins.WebSearch.Limit     | int               | null     | Number of search results to return for the web search.              |
 
 The table below shows the supported providers and their required configuration values (`Id`, `ApiKey`):
 
@@ -636,13 +607,17 @@ The **Embedding** configuration contains settings shared by both **Memory** and 
     "MatchScoreThreashold": 0.86,
     "Timeout": "00:01:00",
     "Memory": {
+      "Query": { 
+        "Scoring": { },
+      },
       "TextChunking": { },
-      "Scoring": { },
       "VectorStore": { }
     },
     "Knowledge": {
+      "Query": { 
+        "Scoring": { },
+      },
       "TextChunking": { },
-      "Scoring": { },
       "VectorStore": { }
     }
   }
@@ -650,14 +625,41 @@ The **Embedding** configuration contains settings shared by both **Memory** and 
 ```
 
 ### 📑 Common Embedding Configuration Details
-| Setting                | Type     | Default    | Description                                                                                                                                                                                                                                                                  |
-| ---------------------- | -------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Model`                |          |            | Embedding model configuration.                                                                                                                                                                                                                                               |
+| Setting                | Type     | Default    | Description                                                                                                   |
+| ---------------------- | -------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
+| `Model`                |          |            | Embedding model configuration.                                                                                |
 | `Model.Name`           | string   | `null`     | Name of the embedding model (must be supported by the chosen AI provider). _The configured model may be overridden for individual requests, Use with caution, as different models generate embeddings differently, which may lead to misalignment with existing embeddings._ |
-| `Model.UseHealthCheck` | bool     | `true`     | Whether to validate the embedding model on startup.                                                                                                                                                                                                                          |
-| `VectorSize`           | int      | `1536`     | Embedding dimension size. Depends entirely on the model used.                                                                                                                                                                                                                |
-| `MatchScoreThreashold` | float    | `0.86`     | Cosine similarity threshold for semantic matches (see below for recommended ranges).                                                                                                                                                                                         |
-| `Timeout`              | TimeSpan | `00:01:00` | Timeout for embedding operations.                                                                                                                                                                                                                                            |
+| `Model.UseHealthCheck` | bool     | `true`     | Whether to validate the embedding model on startup.                                                           |
+| `VectorSize`           | int      | `1536`     | Embedding dimension size. Depends entirely on the model used.                                                 |
+| `Timeout`              | TimeSpan | `00:01:00` | Timeout for embedding operations.                                                                             |
+| `Memory`               |          |            | Memory configuration. *Requires [Embedding Memory](#-embedding-memory-service) to be configured.*             |
+| `Knowledge`            |          |            | Knowledge configuration. *Requires [Embedding Knowledge](#-embedding-knowledge-service) to be configured.*    |
+
+#### 🧮 Query
+Defines settings used when querying the vector store.  
+Scoring defines the weight configuration for **approximate nearest neighbor search (ANN)** ranking.
+```json
+"Query": {
+  "UseQueryDeduplication": true,
+  "ContextQueryLimit": 3,
+  "Scoring": {
+    "RecencyDecayStrategy": "Linear",
+    "RecencyBoostMax": 0.1,
+    "RecencyDecayDays": 30,
+    "RecencySigmoidSteepness": 1.0,
+    "DeduplicationMatchScoreThreshold": 0.90,
+}
+```
+| Setting                                           | Type   | Default  | Description                                                                          |
+| ------------------------------------------------- | ------ | -------- | ------------------------------------------------------------------------------------ |
+| `Query.UseQueryDeduplication`                     | bool   | true     | Deduplicate similar memory entries before building context.                          |
+| `Query.ContextQueryLimit`                         | int    | 3        | Maximum number of memory entries retrieved per query.                                |
+| `Query.Scoring.MatchScoreThreshold`               | float  | `0.86`   | Cosine similarity threshold for semantic matches (see below for recommended ranges). |
+| `Query.Scoring.DeduplicationMatchScoreThreshold`  | double | 0.90     | Fuzzy similarity threshold for deduplication.                                        |
+| `Query.Scoring.RecencyDecayStrategy`              | enum   | `Linear` | How recency scores decay over time (`Linear`, `Exponential`, `Sigmoid`).             |
+| `Query.Scoring.RecencyBoostMax`                   | double | `0.1`    | Max boost applied to the newest entries.                                             |
+| `Query.Scoring.RecencyDecayDays`                  | double | `30`     | Days until recency boost becomes negligible.                                         |
+| `Query.Scoring.RecencySigmoidSteepness`           | double | `1.0`    | Steepness of the curve (only used for Sigmoid).                                      |
 
 ##### Recommended Match Score Thresholds
 * 0.00 - 0.70: Often noise, unless domain is very narrow.
@@ -687,23 +689,6 @@ Defines how documents are split into smaller segments before embedding.
 | `NeighborContext.ContextWindow`           | int  | `1`     | How many chunks before/after are stored as contextual neighbors.                                       |
 | `NeighborContext.RestrictToSameParagraph` | bool | `true`  | Whether neighbors must belong to the same paragraph.                                                   |
 
-#### 📊 Match Scoring
-Defines the weight configuration for **approximate nearest neighbor search (ANN)** ranking.
-```json
-"Scoring": {
-  "RecencyDecayStrategy": "Linear",
-  "RecencyBoostMax": 0.1,
-  "RecencyDecayDays": 30,
-  "RecencySigmoidSteepness": 1.0
-}
-```
-| Setting                   | Type   | Default  | Description                                                                                         |
-| ------------------------- | ------ | -------- | --------------------------------------------------------------------------------------------------- |
-| `RecencyDecayStrategy`    | enum   | `Linear` | How recency scores decay over time (`Linear`, `Exponential`, `Sigmoid`).                            |
-| `RecencyBoostMax`         | double | `0.1`    | Max boost applied to the newest entries.                                                            |
-| `RecencyDecayDays`        | double | `30`     | Days until recency boost becomes negligible.                                                        |
-| `RecencySigmoidSteepness` | double | `1.0`    | Steepness of the curve (only used for Sigmoid).                                                     |
-
 #### 🗄️ Vector Store
 Defines which vector database to use for embedding storage and retrieval.
 ```json
@@ -725,7 +710,7 @@ Defines which vector database to use for embedding storage and retrieval.
 | `Username`       | string   | `null`      | Optional username. Used by some providers                                                                          |
 | `ApiKey`         | string   | `null`      | Required if authentication is enabled.                                                                             |
 | `Timeout`        | TimeSpan | `00:00:30`  | Query timeout.                                                                                                     |
-| `UseHealthCheck` | bool     | `true`      | Whether to check connectivity on startup.                                                                          |
+| `UseHealthCheck` | bool     | `true`      | Whether to check connectivity periodically.                                                                        |
 
 <br /><br />
 
@@ -764,24 +749,31 @@ The unique memory-specific setting is:
   "UseAutomaticSummarization": false,
   "UseAutomaticMetadataRetrieval": true,
   "SummarizationDegree": 0,
+  "Search": { 
+    "RetentionInDays": 180,
+    "CounterpartContextQueryLimit": 2,
+    "Scoring": { 
+      "ThreadMatchBoost": 0.2
+    },
+  },
   "TextChunking": { },
-  "Scoring": {
-    "ThreadMatchBoost": 0.2
-  }
   "VectorStore": { }
 }
 ```
 
 ### 📑 Embedding Memory Configuration Details
-| Setting                          | Type        | Default   | Description                                                                                              |
-| -------------------------------- | ----------- | --------- | -------------------------------------------------------------------------------------------------------- |
-| `UseExtendedMemoryContext`       | bool        | `true`    | Enables counterpart lookups so the LLM can reference previous answers to similar questions.              |
-| `UseAutomaticSummarization`      | bool        | `false`   | Enable or disable automatic summarization of memories.                                                   |
-| `UseAutomaticMetadataRetrieval`  | bool        | `true`    | Automatically retrieve metadata for indexed items.                                                       |
-| `TextChunking`                   |             |           | Memory text chunking configuration. [Text Chunking Configuration](#-text-chunking)                       |
-| `Scoring`                        |             |           | Memory scoring configuration. [Match Scoring Configuration](#-match-scoring)                             |
-| `Scoring.ThreadMatchBoost`       | double      | `0.2`     | Boosts the score of memories that match the current conversation thread. Only applicable for Memory.     |
-| `VectorStore`                    |             |           | Memory vector store configuration. [Vector Store Configuration](#%EF%B8%8F-vector-store)                         |
+| Setting                              | Type    | Default   | Description                                                                                              |
+| ------------------------------------ | ------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| `UseExtendedMemoryContext`           | bool    | `true`    | Enables counterpart lookups so the LLM can reference previous answers to similar questions.              |
+| `UseAutomaticSummarization`          | bool    | `false`   | Enable or disable automatic summarization of memories.                                                   |
+| `UseAutomaticMetadataRetrieval`      | bool    | `true`    | Automatically retrieve metadata for indexed items.                                                       |
+| `Query`                              |         |           | Memory query configuration. [Query Configuration](#-query)                                               |
+| `Query.RetentionInDays`              | int     | 180       | How far back memories will be included in queries.                                                       |
+| `Query.CounterpartContextQueryLimit` | int     | 2         | Maximum number of counterpart (Q/A pair) entries retrieved.                                              |
+| `Query.Scoring`                      |         |           | Memory scoring configuration.                             |
+| `Query.Scoring.ThreadMatchBoost`     | double  | `0.2`     | Boosts the score of memories that match the current conversation thread. Only applicable for Memory.     |
+| `TextChunking`                       |         |           | Memory text chunking configuration. [Text Chunking Configuration](#-text-chunking)                       |
+| `VectorStore`                        |         |           | Memory vector store configuration. [Vector Store Configuration](#%EF%B8%8F-vector-store)                 |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -920,8 +912,8 @@ The unique knowledge-specific setting is:
 ```json
 "Knowledge": {
   "UseAutomaticMetadataRetrieval": true,
+  "Query": { },
   "TextChunking": { },
-  "Scoring": { },
   "VectorStore": { }
 }
 ```
@@ -930,8 +922,8 @@ The unique knowledge-specific setting is:
 | Setting                          | Type   | Default | Description                                                                                                                 |
 | -------------------------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `UseAutomaticMetadataRetrieval`  | bool   | `true`  | If enabled, metadata is automatically extracted from documents/blobs (via `IMetadataService`) when not explicitly provided. |
+| `Search`                         |        |         | Knowledge query configuration. [Query Configuration](#-query)                                                                  |
 | `TextChunking`                   |        |         | Knowledge text chunking configuration. [Text Chunking Configuration](#-text-chunking)                                       |
-| `Scoring`                        |        |         | Knowledge scoring configuration. [Match Scoring Configuration](#-match-scoring)                                             |
 | `VectorStore`                    |        |         | Knowledge vector store configuration. [Vector Store Configuration](#%EF%B8%8F-vector-store)                                 |
 
 ### 🚀 Example Usage
@@ -1228,8 +1220,9 @@ Console.WriteLine($"Answer Summarized: {response.AnswerSummarized}");
 
 ### ⛔ Error Handling
 - Errors encountered during request processing (e.g., AI model failures, validation issues, or deserialization errors) are surfaced consistently across all services.
-- When an error occurs in the AI model, an **`AiException`** is thrown containing the error message.
-- Developers can catch these exceptions to handle failures programmatically and log error details.
+- When an error occurs in the AI model, an **`AiException`** is set on the response containing the error message.
+- Developers can check these exceptions and handle failures programmatically and log error details accordingly.
+- When an error happens in validation, and exception is thrown.
 <br />
 
 ### 💰 Token & Performance Tracking
@@ -1387,10 +1380,22 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
         "DeduplicationMatchScoreThreshold": 0.90
       },
       "Plugins": {
-        "CustomPlugins": [
-        ],
-        "BuiltInPlugins": {
-          "WebSearch": null
+        "Memory": {
+          "RetentionInDays": 180,
+          "ContextQueryLimit": 3,
+          "CounterpartContextQueryLimit": 3,
+          "UseQueryDeduplication": true,
+          "DeduplicationMatchScoreThreshold": 0.90
+        },
+        "Knowledge": {
+          "ContextQueryLimit": 3,
+          "UseQueryDeduplication": true,
+          "DeduplicationMatchScoreThreshold": 0.90
+        },
+        "WebSearch": {
+          "Provider": "Google",
+          "Id": null,
+          "ApiKey": null
         }
       }
     },
@@ -1478,11 +1483,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
       },
       "SummaryMaxWords": 30,
       "DescriptionMaxWords": 90,
-      "Timeout": "00:01:00",
-      "Plugins": {
-        "CustomPlugins": [
-        ]
-      }
+      "Timeout": "00:01:00"
     },
     "Summarization": {
       "Model": {
@@ -1503,11 +1504,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
         }
       },
       "SummarizationDegree": 25,
-      "Timeout": "00:01:00",
-      "Plugins": {
-        "CustomPlugins": [
-        ]
-      }
+      "Timeout": "00:01:00"
     }
   }
 }

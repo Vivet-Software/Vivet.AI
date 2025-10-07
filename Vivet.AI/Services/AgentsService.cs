@@ -29,30 +29,34 @@ using Vivet.AI.Services.Requests.Agent;
 using Vivet.AI.Services.Requests.Agent.Models;
 using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models;
 using Vivet.AI.Services.Responses.Agent;
 using Vivet.AI.Services.Responses.Agent.Models;
 using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// BUG: 111: Plugin config/Context
-// - how to specify config custom plugins context. there is no way in the request
-// - Maybe say that if no context for built-in plugins then remove it, and don't have configoverride.Skip... (would also ease validation)
-// - What if built-in plugin is not configured in config, and you want it on one request. Maybe that is fine with the above, where you would just not pass context
+// BUG: 999: update web search plugin, config etc. (Limit removed from config)
+// consider re-adding
+// Should plugin config be Ai.Plugins?
+// Should request.CustomPlugins.Type be a generic parameters instead
 
 // BUG: Readme:
-// Change Request plugins to Types instead of objects
+// PLUGINS:
+// Link to config options in chat settings table
+// Move plugins to own section, re-use in Chat and Agents
+
 // Emphasize the the build-in plugins must have context variables in request or an exception is thrown
-// Check if we still writing that plugin dependencies must be registered beforehand, that isn't necessary anymore. Remove it.
 // Same type of custom plugins is allowed, as long as they have different names. Mention the built-in plugin names (memory, knowledge, web_search)
-// Update Custom plugins options configuration to have Type + Name (see CustomPluginOptions)
 // a plugin name can contain only ASCII letters, digits, and underscores
 // Plugins must have seperate context variables even when they are re-used among several plugins
-// update web search plugin, config etc. (Limit removed from config)
-// Check documentation for Response.ErrorMessage, we actual throw and Exception and the property is internal. 
-// Error handling: An exception is now set on BaseResponse if an error happens. For AgentService that is also on each agent. 
-// - AIException means and error from the model.
+
+// PLUGIN EXAMPLES
+// Make request examples with plugins (built-in / Custom)
+
 // Document built in filter (PII Detection and PromptCache (coming features)
+
+// If using complex tyoes in plugins, ensure to pass the context as json (parameterName={json})
 
 /// <inheritdoc cref="IAgentsService"/>
 public class AgentsService(AgentsOptions options, IServiceProvider serviceProvider, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null)
@@ -148,7 +152,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
         }
     }
 
-    private Kernel GetKernel(BaseAgentsRequest request, AgentDescriptor agent, BuiltInPluginsConfigOverrides parentConfigOverrides)
+    private Kernel GetKernel(BaseAgentsRequest request, AgentDescriptor agent, BaseChatConfigOverrides parentConfigOverrides)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -172,8 +176,8 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
             .Add(KernelData.AGENT_RESPONSE_CALLBACK, new AgentResponseCallback());
 
         kernel
-            .AddFilters()
-            .AddBuiltInPluginConfigOverrides(agent.ConfigOverrides.Plugins, parentConfigOverrides)
+            .AddDefaultFilters()
+            .RemoveSkippedBuiltInPlugins(agent.ConfigOverrides, parentConfigOverrides)
             .AddCustomPlugins(serviceProvider, agent.Plugins.CustomPlugins);
 
         kernel.Plugins
@@ -221,7 +225,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
         var agents = new List<Agent>();
         foreach (var agentDescriptor in request.Agents)
         {
-            var kernel = this.GetKernel(request, agentDescriptor, request.ConfigOverrides.Plugins);
+            var kernel = this.GetKernel(request, agentDescriptor, request.ConfigOverrides);
 
             var chatHistory = new ChatHistory();
 
@@ -335,16 +339,6 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
             return Task.CompletedTask;
         }
 
-        if (options.Plugins.BuiltInPlugins.Memory == null)
-        {
-            return Task.CompletedTask;
-        }
-
-        if (request.ConfigOverrides.Plugins?.Memory is { SkipSaveMemoryContext: true })
-        {
-            return Task.CompletedTask;
-        }
-
         return Task.Run(async () =>
         {
             IList<AgentIndexMemoryResponse> indexResponses = new List<AgentIndexMemoryResponse>();
@@ -364,11 +358,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                             ScopeId = request.Plugins.Context.Memory.ScopeId,
                             Language = result.Language,
                             Blobs = request.Blobs,
-                            ConfigOverrides =
-                            {
-                                Metadata = request.ConfigOverrides.Plugins.Memory?.Metadata ?? new EmbeddingMetadataConfigOverrides(),
-                                Summarization = request.ConfigOverrides.Plugins.Memory?.Summarization ?? new EmbeddingSummarizationConfigOverrides()
-                            }
+                            ConfigOverrides = request.ConfigOverrides.Memory
                         }, cancellationToken)
                         .ConfigureAwait(false);
 
