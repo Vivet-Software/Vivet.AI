@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Vivet.AI.Services.Models.ConfigOverrides;
 
-namespace Vivet.AI.Services.Models.ConfigOverrides;
+namespace Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 
 /// <summary>
 /// Base class for configuration of embedding search config overrides.
 /// </summary>
-public abstract class BaseEmbeddingSearchConfigOverrides : BaseConfigOverrides
+public abstract class BaseSearchConfigOverrides : BaseConfigOverrides
 {
     /// <summary>
     /// Whether to deduplicate results before building the knoweldge context for the chat prompt.
@@ -24,8 +25,8 @@ public abstract class BaseEmbeddingSearchConfigOverrides : BaseConfigOverrides
 /// <summary>
 /// Base class for configuration of embedding search config overrides.
 /// </summary>
-public abstract class BaseEmbeddingSearchConfigOverrides<T> : BaseEmbeddingSearchConfigOverrides
-    where T : BaseEmbeddingSearchScoringConfigOverrides, new()
+public abstract class BaseSearchConfigOverrides<T> : BaseSearchConfigOverrides
+    where T : BaseScoringConfigOverrides, new()
 {
     /// <summary>
     /// Scoring configuration. 

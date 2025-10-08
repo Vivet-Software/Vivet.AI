@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Microsoft.SemanticKernel;
+using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.SemanticKernel;
 using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
 using Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 
@@ -31,16 +33,14 @@ public sealed class KnowledgePlugin
     /// Retrieve and inject relevant knowledge entries into the current chat history.
     /// </summary>
     /// <param name="question">The current user question or message.</param>
-    /// <param name="tenantId">The tenant id.</param>
-    /// <param name="subTenantId">The sub-tenant id.</param>
-    /// <param name="scopeId">The scope id.</param>
-    /// <param name="userId">The user id.</param>
+    /// <param name="context">The context related to knowledge.</param>
     /// <param name="configOverrides">The config overrides from the request.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>The knowledge chat prompt snippet.</returns>
     [KernelFunction("knowledge")] 
     [Description(@"Retrieve knowledge stored in private or scoped sources such as notes, documents, organizational records or similar. 
 Always use this function when the user’s request may relate to these sources, even if similar information exists in public knowledge.")]
-    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, Guid? tenantId, Guid? subTenantId, Guid? scopeId, Guid? userId, EmbeddingKnowledgeSearchConfigOverrides configOverrides)
+    public async Task<string> GetKnowledgeAsync([Description("The current user question or message")]string question, KnowledgeContext context, KnowledgeSearchConfigOverrides configOverrides, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(question))
         {
@@ -55,13 +55,13 @@ Always use this function when the user’s request may relate to these sources, 
                     Query = question,
                     Criteria =
                     {
-                        TenantId = tenantId,
-                        SubTenantId = subTenantId,
-                        ScopeId = scopeId,
-                        UserId = userId
+                        TenantId = context.TenantId,
+                        SubTenantId = context.SubTenantId,
+                        ScopeId = context.ScopeId,
+                        UserId = context.UserId
                     },
                     ConfigOverrides = configOverrides
-                })
+                }, cancellationToken)
                 .ConfigureAwait(false);
 
             var knowledgeResults = response.Results

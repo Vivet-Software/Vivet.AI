@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Services.Models.Plugins.Context;
+using Vivet.AI.Services.Models.Plugins.Contexts;
 
 namespace Vivet.AI.Services.Requests.Chat.Models.Plugins.Context;
 

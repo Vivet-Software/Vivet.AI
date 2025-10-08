@@ -8,7 +8,7 @@ namespace Vivet.AI.Services.Requests.Embedding.Memory;
 /// <summary>
 /// Represents a request to search memory with specific criteria and optional thread context.
 /// </summary>
-public class SearchMemoryRequest : BaseSearchRequest<MemorySearchCriteria, EmbeddingMemorySearchConfigOverrides>
+public class SearchMemoryRequest : BaseSearchRequest<MemorySearchCriteria, MemorySearchConfigOverrides>
 {
     /// <summary>
     /// The current thread (conversation).

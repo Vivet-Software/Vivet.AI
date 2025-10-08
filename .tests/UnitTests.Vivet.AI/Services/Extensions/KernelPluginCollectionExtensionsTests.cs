@@ -4,6 +4,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Models.Plugins;
+using Vivet.AI.Services.Models.Plugins.Contexts;
 
 namespace UnitTests.Vivet.AI.Services.Extensions;
 

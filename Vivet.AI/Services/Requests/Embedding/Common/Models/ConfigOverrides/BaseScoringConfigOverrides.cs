@@ -1,11 +1,11 @@
 ﻿using Vivet.AI.Models.Enums;
 
-namespace Vivet.AI.Services.Models.ConfigOverrides;
+namespace Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 
 /// <summary>
 /// Base class for configuration of embedding search config overrides.
 /// </summary>
-public class BaseEmbeddingSearchScoringConfigOverrides
+public abstract class BaseScoringConfigOverrides
 {
     /// <summary>
     /// The threshold for cosinus similarity marching.

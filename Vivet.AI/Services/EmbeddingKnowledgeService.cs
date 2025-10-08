@@ -53,7 +53,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
 
         var response = request switch
         {
-            BaseIndexKnowledgeRequst<EmbeddingKnowledgeIndexConfigOverrides> genericRequest
+            BaseIndexKnowledgeRequst<KnowledgeIndexConfigOverrides> genericRequest
                 when genericRequest.GetType().IsGenericType && genericRequest.GetType().GetGenericTypeDefinition() == typeof(IndexTextRequest<>)
                 => await this.IndexTextReflectionAsync(genericRequest, cancellationToken),
 
@@ -95,9 +95,9 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
         var useQueryDeduplication = request.ConfigOverrides.UseQueryDeduplication ?? this.knowledgeOptions.Search.UseQueryDeduplication;
         var contextQueryLimit = request.ConfigOverrides.ContextQueryLimit ?? this.knowledgeOptions.Search.ContextQueryLimit;
 
-        var limit = useQueryDeduplication
+        var limit = request.Limit ?? (useQueryDeduplication
             ? contextQueryLimit * 2
-            : contextQueryLimit;
+            : contextQueryLimit);
 
         var knowledges = this.vectorStore.Collection
             .SearchAsync(request.Query, limit, vectorSearchOptions, cancellationToken);

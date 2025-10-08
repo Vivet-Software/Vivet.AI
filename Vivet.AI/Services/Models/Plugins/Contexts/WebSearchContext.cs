@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Services.Models.Plugins.Context;
+﻿namespace Vivet.AI.Services.Models.Plugins.Contexts;
 
 /// <summary>
 /// Represents the context for the built-in web search plugin.
@@ -8,7 +8,7 @@ public class WebSearchContext
     /// <summary>
     /// Number of search results to return for the web search.
     /// </summary>
-    public virtual int? Limit { get; init; }
+    public virtual int Limit { get; init; } = 5;
 
     /// <summary>
     /// The url of the site to limit the search for.

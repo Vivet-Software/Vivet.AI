@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.Blobs;
-using Vivet.AI.Services.Requests.Metadata.Models;
 using Vivet.AI.Services.Requests.Metadata.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Metadata;

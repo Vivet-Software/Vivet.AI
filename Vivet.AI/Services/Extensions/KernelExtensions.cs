@@ -2,71 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Vivet.AI.Services.Consts;
 using Vivet.AI.Services.Filters;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
 using Vivet.AI.Services.Plugins.Consts;
-using Vivet.AI.Services.Responses.Agent.Models;
 
 namespace Vivet.AI.Services.Extensions;
 
 internal static class KernelExtensions
 {
-    // BUG: 111: Could these methods be moved somewhere else? Check all extension methods, and clean up a bit.
-
-    internal static IEnumerable<AutoFunctionInvocationContext> GetAutoFunctionInvocationContexts(this Kernel kernel)
-    {
-        if (kernel == null)
-            throw new ArgumentNullException(nameof(kernel));
-
-        var value = kernel.Data[KernelData.FUNCTION_CALLS];
-
-        return (IEnumerable<AutoFunctionInvocationContext>)value;
-    }
-
-    internal static void AddAutoFunctionInvocationContext(this Kernel kernel, AutoFunctionInvocationContext functionInvocationContext)
-    {
-        if (kernel == null)
-            throw new ArgumentNullException(nameof(kernel));
-
-        if (functionInvocationContext == null)
-            throw new ArgumentNullException(nameof(functionInvocationContext));
-
-        var functionCalls = (IList<AutoFunctionInvocationContext>)kernel.Data[KernelData.FUNCTION_CALLS];
-
-        functionCalls?
-            .Add(functionInvocationContext);
-    }
-
-    internal static Guid? GetAgentId(this Kernel kernel)
-    {
-        if (kernel == null)
-            throw new ArgumentNullException(nameof(kernel));
-
-        var value = kernel.Data[KernelData.AGENT_ID];
-
-        var strValue = value
-            .ToString();
-
-        return strValue == null 
-            ? null 
-            : Guid.Parse(strValue);
-    }
-
-    internal static AgentResponseCallback GetAgentResponseCallback(this Kernel kernel)
-    {
-        if (kernel == null)
-            throw new ArgumentNullException(nameof(kernel));
-
-        var value = kernel.Data[KernelData.AGENT_RESPONSE_CALLBACK];
-
-        return (AgentResponseCallback)value;
-    }
-
-
-
-
     internal static Kernel AddDefaultFilters(this Kernel kernel)
     {
         if (kernel == null)

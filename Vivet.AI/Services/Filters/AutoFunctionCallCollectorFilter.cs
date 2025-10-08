@@ -1,7 +1,8 @@
 ﻿using Microsoft.SemanticKernel;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Vivet.AI.Services.Extensions;
+using Vivet.AI.Services.Consts;
 
 namespace Vivet.AI.Services.Filters;
 
@@ -21,7 +22,9 @@ public sealed class AutoFunctionCallCollectorFilter : IAutoFunctionInvocationFil
 
         await next(context);
 
-        context.Kernel
-            .AddAutoFunctionInvocationContext(context);
+        var functionCalls = (IList<AutoFunctionInvocationContext>)context.Kernel.Data[KernelData.FUNCTION_CALLS];
+
+        functionCalls?
+            .Add(context);
     }
 }

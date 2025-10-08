@@ -1,15 +1,15 @@
-﻿namespace Vivet.AI.Services.Models.ConfigOverrides;
+﻿namespace Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 
 /// <summary>
 /// Options for configuring how neighbor contexts behaves.
 /// Represents configuration overrides for text chunking.
 /// </summary>
-public class BaseEmbedingIndexTextChunkingNeighborContextConfigOverrides
+public class NeighborContextConfigOverrides
 {
     /// <summary>
     /// The number of neighbors before and after and embedding that is stored as context alongside the vector.
     /// The optimal value depends on how large text chunks is being stored. The longer chunks the larger the neigbor context will also be.
-    /// So the combination of <see cref="BaseEmbedingIndexTextChunkingConfigOverrides.MaxTokens"/> and this will control how large chuncks are being embedded.
+    /// So the combination of <see cref="TextChunkingConfigOverrides.MaxTokens"/> and this will control how large chuncks are being embedded.
     /// 1 neighbors - Short, dense documents or chat-like inputs.
     /// 2 neighbors - Medium detail, e.g., product manuals, blog posts.
     /// 3 neighbors - Procedural docs, research papers, support knowledge bases.

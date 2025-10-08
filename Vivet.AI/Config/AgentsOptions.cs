@@ -1,7 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Config.Models;
-using Vivet.AI.Models;
 
 namespace Vivet.AI.Config;
 

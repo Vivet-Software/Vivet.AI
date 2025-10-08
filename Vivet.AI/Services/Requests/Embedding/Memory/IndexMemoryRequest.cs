@@ -13,7 +13,7 @@ public class IndexMemoryRequest : IndexMemoryRequest<string>;
 /// <summary>
 /// Represents a request to index a memory entry with optional configuration overrides.
 /// </summary>
-public class IndexMemoryRequest<T> : BaseIndexRequest<EmbeddingMemoryIndexConfigOverrides>
+public class IndexMemoryRequest<T> : BaseIndexRequest<MemoryIndexConfigOverrides>
     where T : class
 {
     /// <summary>

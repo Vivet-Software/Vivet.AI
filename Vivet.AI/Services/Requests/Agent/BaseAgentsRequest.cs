@@ -59,5 +59,5 @@ public abstract class BaseAgentsRequest
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
     [Required]
-    public virtual AgentConfigOverrides ConfigOverrides { get; } = new(); 
+    public virtual AgentsConfigOverrides ConfigOverrides { get; } = new(); 
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Vivet.AI.Services.Models.Plugins.Context;
+namespace Vivet.AI.Services.Models.Plugins.Contexts;
 
 /// <summary>
 /// base class for memory plugin context.

@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Config.Enums;
 using Vivet.AI.Models.Enums;
 
 namespace Vivet.AI.Config;

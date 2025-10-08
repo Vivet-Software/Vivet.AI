@@ -63,5 +63,5 @@ public class AgentDescriptor
     /// </para>
     /// </summary>
     [Required]
-    public virtual AgentConfigOverrides ConfigOverrides { get; } = new();
+    public virtual AgentsConfigOverrides ConfigOverrides { get; } = new();
 }

@@ -29,15 +29,13 @@ using Vivet.AI.Services.Requests.Agent;
 using Vivet.AI.Services.Requests.Agent.Models;
 using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
-using Vivet.AI.Services.Requests.Embedding.Memory.Models;
 using Vivet.AI.Services.Responses.Agent;
 using Vivet.AI.Services.Responses.Agent.Models;
 using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// BUG: 999: update web search plugin, config etc. (Limit removed from config)
-// consider re-adding
+// BUG: Plugins
 // Should plugin config be Ai.Plugins?
 // Should request.CustomPlugins.Type be a generic parameters instead
 
@@ -185,7 +183,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
 
         return kernel;
     }
-    private PromptExecutionSettings GetPromptExecutionSettingsOverrrides(AgentConfigOverrides configOverrides)
+    private PromptExecutionSettings GetPromptExecutionSettingsOverrrides(AgentsConfigOverrides configOverrides)
     {
         if (configOverrides == null) 
             throw new ArgumentNullException(nameof(configOverrides));
@@ -231,7 +229,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
 
             chatHistory
                 .AddChatSystemPrompt<string>(agentDescriptor.Instructions)
-                .AddAgentPluginsContextPrompt(agentDescriptor.Plugins, request.Plugins);
+                .AddAgentPluginsContextPrompt(agentDescriptor, request);
 
             var instructions = chatHistory
                 .GetPromptAsText(true);
@@ -418,14 +416,12 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
         if (agent == null) 
             throw new ArgumentNullException(nameof(agent));
 
-        var agentResponseCallback = agent.Kernel
-            .GetAgentResponseCallback();
-
-        var chatMessageContent = agentResponseCallback.ChatMessageContent;
-
         var agentId = Guid.Parse(agent.Id);
+        var agentResponseCallback = (AgentResponseCallback)agent.Kernel.Data[KernelData.AGENT_RESPONSE_CALLBACK];
+        var chatMessageContent = agentResponseCallback.ChatMessageContent;
         var elapsedTime = agentResponseCallback.ElapsedTime;
-        var functionCalls = AgentsService.GetAgentResultFunctionCalls(agent);
+
+        var functionCalls = BaseService.GetResponseFunctionCalls(agent.Kernel);
         
         var instructionsPrompt = functionCalls
             .Aggregate(agent.Instructions, (current, agentInstruction) => current + $"{agentInstruction.RenderedPrompt}{Environment.NewLine}");
@@ -474,19 +470,6 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
         result.Exception = exception;
 
         return result;
-    }
-    private static FunctionCall[] GetAgentResultFunctionCalls(Agent agent)
-    {
-        if (agent == null) 
-            throw new ArgumentNullException(nameof(agent));
-
-        var functionCalls = agent.Kernel
-            .GetAutoFunctionInvocationContexts()
-            .Select(x => x.GetFunctionCall())
-            .OrderBy(x => x.CreatedAt);
-
-        return functionCalls
-            .ToArray();
     }
     private static void SetAgentResultAnswer<T>(AgentResult<T> response, string responseAnswer)
         where T : class
@@ -554,7 +537,19 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                 .GetAgentId();
 
             var agent = agents
-                .FirstOrDefault(x => x.Kernel.GetAgentId() == agentId);
+                .FirstOrDefault(x =>
+                {
+                    var value = x.Kernel.Data[KernelData.AGENT_ID];
+
+                    var strValue = value?
+                        .ToString();
+
+                    Guid? kernelAgentId = strValue == null
+                        ? null
+                        : Guid.Parse(strValue);
+
+                    return kernelAgentId == agentId;
+                });
 
             if (agent != null)
             {
@@ -562,9 +557,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                     .GetCreatedAt();
 
                 var elapsedTime = DateTimeOffset.UtcNow - createdAt ?? TimeSpan.Zero;
-
-                var agentResponseCallback = agent.Kernel
-                    .GetAgentResponseCallback();
+                var agentResponseCallback = (AgentResponseCallback)agent.Kernel.Data[KernelData.AGENT_RESPONSE_CALLBACK];
 
                 agentResponseCallback.ChatMessageContent = chatMessageContent;
                 agentResponseCallback.ElapsedTime = elapsedTime;

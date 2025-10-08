@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Services.Models.ConfigOverrides;
+using Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Metadata.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Summarization.Models.ConfigOverrides;
 
@@ -8,7 +8,7 @@ namespace Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 /// <summary>
 /// Represents configuration overrides specific to memory index operations.
 /// </summary>
-public class EmbeddingMemoryIndexConfigOverrides : BaseEmbedingIndexConfigOverrides
+public class MemoryIndexConfigOverrides : BaseIndexConfigOverrides
 {
     /// <summary>
     /// Use extended context when retrieving memories.

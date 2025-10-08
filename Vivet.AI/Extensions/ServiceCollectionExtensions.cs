@@ -81,7 +81,7 @@ internal static class ServiceCollectionExtensions
 
                 builder
                     .AddLoggerFactory(x)
-                    .AddBuiltInPlugins(x, chatOptions.Plugins);
+                    .AddChatBuiltInPlugins(x, chatOptions.Plugins);
 
                 return builder;
             });
@@ -318,7 +318,7 @@ internal static class ServiceCollectionExtensions
 
                 builder
                     .AddLoggerFactory(x)
-                    .AddBuiltInPlugins(x, agentOptions.Plugins);
+                    .AddAgentsBuiltInPlugins(x, agentOptions.Plugins);
 
                 return builder;
             });

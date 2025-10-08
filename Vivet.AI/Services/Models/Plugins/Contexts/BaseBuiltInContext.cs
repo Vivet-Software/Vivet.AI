@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Services.Models.Plugins;
+﻿namespace Vivet.AI.Services.Models.Plugins.Contexts;
 
 /// <summary>
 /// Represents the base contexts for built-in plugins.

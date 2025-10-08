@@ -1,9 +1,11 @@
-﻿namespace Vivet.AI.Services.Models.ConfigOverrides;
+﻿using Vivet.AI.Services.Models.ConfigOverrides;
+
+namespace Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 
 /// <summary>
 /// Represents configuration overrides specific to embedding index operations.
 /// </summary>
-public abstract class BaseEmbedingIndexConfigOverrides : BaseConfigOverrides
+public abstract class BaseIndexConfigOverrides : BaseConfigOverrides
 {
     /// <summary>
     /// Gets or sets the name of the model to use for this request, overriding the default configured model.
@@ -22,5 +24,5 @@ public abstract class BaseEmbedingIndexConfigOverrides : BaseConfigOverrides
     /// <summary>
     /// Overrides for text chunking.
     /// </summary>
-    public virtual BaseEmbedingIndexTextChunkingConfigOverrides TextChunking { get; internal set; } = new();
+    public virtual TextChunkingConfigOverrides TextChunking { get; internal set; } = new();
 }

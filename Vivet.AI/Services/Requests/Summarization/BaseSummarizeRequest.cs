@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Services.Requests.Summarization.Models;
 using Vivet.AI.Services.Requests.Summarization.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Summarization;

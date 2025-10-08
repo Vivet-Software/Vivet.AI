@@ -1,5 +1,5 @@
 ﻿using Vivet.AI.Services.Models.Plugins;
-using Vivet.AI.Services.Models.Plugins.Context;
+using Vivet.AI.Services.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Agent.Models.Plugins.Context;
 
 namespace Vivet.AI.Services.Requests.Agent.Models.Plugins;
@@ -8,4 +8,4 @@ namespace Vivet.AI.Services.Requests.Agent.Models.Plugins;
 /// Represents the context for built-in plugins.
 /// Only plugins that are enabled and configured should have their context included in the request.
 /// </summary>
-public class AgentBuiltInContext : BaseBuiltInContext<AgentMemoryContext, KnowledgeContext, WebSearchContext>;
+public class AgentBuiltInContext : BaseBuiltInContext<AgentsMemoryContext, KnowledgeContext, WebSearchContext>;

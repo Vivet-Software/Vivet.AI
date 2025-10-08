@@ -1,5 +1,5 @@
 ﻿using Vivet.AI.Services.Models.Plugins;
-using Vivet.AI.Services.Models.Plugins.Context;
+using Vivet.AI.Services.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Chat.Models.Plugins.Context;
 
 namespace Vivet.AI.Services.Requests.Chat.Models.Plugins;

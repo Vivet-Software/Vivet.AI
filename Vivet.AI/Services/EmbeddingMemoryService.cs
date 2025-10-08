@@ -125,9 +125,9 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         var useQueryDeduplication = request.ConfigOverrides.UseQueryDeduplication ?? this.memoryOptions.Search.UseQueryDeduplication;
         var contextQueryLimit = request.ConfigOverrides.ContextQueryLimit ?? this.memoryOptions.Search.ContextQueryLimit;
 
-        var limit = useQueryDeduplication
+        var limit = request.Limit ?? (useQueryDeduplication
             ? contextQueryLimit * 2
-            : contextQueryLimit;
+            : contextQueryLimit);
 
         var memories = this.vectorStore.Collection
             .SearchAsync(request.Query, limit, vectorSearchOptions, cancellationToken);
@@ -249,7 +249,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
     }
 
 
-    private async Task<SummarizationMemoryResponse> SummarizeQuestionAndAnswer<T>(string question, T answer, EmbeddingMemoryIndexConfigOverrides configOverrides, CancellationToken cancellationToken = default)
+    private async Task<SummarizationMemoryResponse> SummarizeQuestionAndAnswer<T>(string question, T answer, MemoryIndexConfigOverrides configOverrides, CancellationToken cancellationToken = default)
         where T : class
     {
         if (question == null)
@@ -475,7 +475,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         return (blobMemories, tokenUsage, metadataTokenUsage);
     }
-    private double GetSameThreadScore(VectorSearchResult<Memory> result, EmbeddingMemorySearchScoringConfigOverrides scoringOerrides, Guid? currentThreadId = null)
+    private double GetSameThreadScore(VectorSearchResult<Memory> result, MemoryScoringConfigOverrides scoringOerrides, Guid? currentThreadId = null)
     {
         if (result == null) 
             throw new ArgumentNullException(nameof(result));

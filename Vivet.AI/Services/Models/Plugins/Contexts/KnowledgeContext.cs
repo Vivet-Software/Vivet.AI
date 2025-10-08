@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Vivet.AI.Services.Models.Plugins.Context;
+namespace Vivet.AI.Services.Models.Plugins.Contexts;
 
 /// <summary>
 /// Represents the context for the built-in knowledge plugin.

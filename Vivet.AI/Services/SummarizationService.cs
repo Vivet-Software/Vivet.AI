@@ -10,7 +10,6 @@ using Vivet.AI.Extensions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Summarization;
-using Vivet.AI.Services.Requests.Summarization.Models;
 using Vivet.AI.Services.Requests.Summarization.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses;
 using Vivet.AI.Services.Responses.Summarization;

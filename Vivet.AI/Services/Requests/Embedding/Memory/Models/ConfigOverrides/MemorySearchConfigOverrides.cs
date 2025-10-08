@@ -1,13 +1,11 @@
-﻿using Vivet.AI.Services.Models.ConfigOverrides;
+﻿using Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
-
-// BUG: 111: Consider moving Embedding models to Embedding/models afterall (and rename them for simpler names)
 
 /// <summary>
 /// Represents configuration overrides specific to memory query operations.
 /// </summary>
-public class EmbeddingMemorySearchConfigOverrides : BaseEmbeddingSearchConfigOverrides<EmbeddingMemorySearchScoringConfigOverrides>
+public class MemorySearchConfigOverrides : BaseSearchConfigOverrides<MemoryScoringConfigOverrides>
 {
     /// <summary>
     /// The maximum number of results to return when searching for counterpart vector matches of questions and answers.

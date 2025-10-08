@@ -33,7 +33,7 @@ internal static class KernelBuilderExtensions
         return builder;
     }
 
-    internal static IKernelBuilder AddBuiltInPlugins(this IKernelBuilder builder, IServiceProvider serviceProvider, PluginsOptions pluginsOptions)
+    internal static IKernelBuilder AddChatBuiltInPlugins(this IKernelBuilder builder, IServiceProvider serviceProvider, PluginsOptions pluginsOptions)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -45,7 +45,26 @@ internal static class KernelBuilderExtensions
             throw new ArgumentNullException(nameof(pluginsOptions));
 
         builder
-            .AddMemoryPlugin(serviceProvider)
+            .AddChatMemoryPlugin(serviceProvider)
+            .AddKnowledgePlugin(serviceProvider)
+            .AddWebSearchPlugin(serviceProvider, pluginsOptions.WebSearch);
+
+        return builder;
+    }
+
+    internal static IKernelBuilder AddAgentsBuiltInPlugins(this IKernelBuilder builder, IServiceProvider serviceProvider, PluginsOptions pluginsOptions)
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        if (serviceProvider == null)
+            throw new ArgumentNullException(nameof(serviceProvider));
+
+        if (pluginsOptions == null)
+            throw new ArgumentNullException(nameof(pluginsOptions));
+
+        builder
+            .AddAgentsMemoryPlugin(serviceProvider)
             .AddKnowledgePlugin(serviceProvider)
             .AddWebSearchPlugin(serviceProvider, pluginsOptions.WebSearch);
 
@@ -53,7 +72,7 @@ internal static class KernelBuilderExtensions
     }
 
 
-    private static IKernelBuilder AddMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider)
+    private static IKernelBuilder AddChatMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider)
     {
         if (builder == null)
             throw new ArgumentNullException(nameof(builder));
@@ -66,7 +85,27 @@ internal static class KernelBuilderExtensions
             return builder;
         }
 
-        var memoryPlugin = new MemoryPlugin(embeddingMemoryService);
+        var memoryPlugin = new ChatMemoryPlugin(embeddingMemoryService);
+
+        builder.Plugins
+            .AddFromObject(memoryPlugin, BuiltInPluginNames.MEMORY_PLUGIN);
+
+        return builder;
+    }
+    private static IKernelBuilder AddAgentsMemoryPlugin(this IKernelBuilder builder, IServiceProvider serviceProvider)
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        var embeddingMemoryService = serviceProvider
+            .GetService<IEmbeddingMemoryService>();
+
+        if (embeddingMemoryService == null)
+        {
+            return builder;
+        }
+
+        var memoryPlugin = new AgentsMemoryPlugin(embeddingMemoryService);
 
         builder.Plugins
             .AddFromObject(memoryPlugin, BuiltInPluginNames.MEMORY_PLUGIN);

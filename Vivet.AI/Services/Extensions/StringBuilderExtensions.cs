@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
+using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
 
 namespace Vivet.AI.Services.Extensions;
@@ -13,7 +13,7 @@ namespace Vivet.AI.Services.Extensions;
 /// </summary>
 internal static class StringBuilderExtensions
 {
-    internal static StringBuilder AppendBuiltInPluginContext<TContext>(this StringBuilder stringBuilder, TContext context, string name)
+    internal static StringBuilder AppendBuiltInPluginContext<TContext>(this StringBuilder stringBuilder, string name, TContext context = null)
         where TContext : class
     {
         if (stringBuilder == null)
@@ -22,20 +22,55 @@ internal static class StringBuilderExtensions
         if (name == null)
             throw new ArgumentNullException(nameof(name));
 
-        // BUG: 000: ConfigOverrides is not part of the contex, we need to find a different to pass it
+        var contextValues = GetComplexValue(nameof(context), context);
 
-        if (context == null)
+        if (contextValues == null)
         {
             return stringBuilder;
         }
 
-        var contextPrompt = StringBuilderExtensions.GetBuiltInPluginContext(context, name);
+        var value = $"{name}: {contextValues}";
 
-        if (contextPrompt != null)
+        stringBuilder
+            .AppendLine(value);
+
+        return stringBuilder;
+    }
+
+    internal static StringBuilder AppendBuiltInPluginContext<TContext, TOverride>(this StringBuilder stringBuilder, string name, TContext context = null, TOverride configOverrides = null)
+        where TContext : class
+        where TOverride : BaseConfigOverrides
+    {
+        if (stringBuilder == null)
+            throw new ArgumentNullException(nameof(stringBuilder));
+
+        if (name == null)
+            throw new ArgumentNullException(nameof(name));
+
+        var contextValues = GetComplexValue(nameof(context), context);
+        var configOverridesValue = GetComplexValue(nameof(configOverrides), configOverrides);
+
+        if (contextValues == null && configOverridesValue == null)
         {
-            stringBuilder
-                .AppendLine(contextPrompt);
+            return stringBuilder;
         }
+
+        var valueBuilder = new StringBuilder()
+            .Append(name)
+            .Append(": ");
+
+        var parts = new[]
+            {
+                contextValues,
+                configOverridesValue
+            }
+            .Where(x => x != null);
+
+        valueBuilder
+            .Append(string.Join(", ", parts));
+
+        stringBuilder
+            .AppendLine(valueBuilder.ToString());
 
         return stringBuilder;
     }
@@ -55,86 +90,63 @@ internal static class StringBuilderExtensions
                 continue;
             }
 
-            var contextVariables = customPlugin.Context
-                .Select(x => $"{x.Key}={x.Value}")
+            var contextValues = customPlugin.Context
+                .Select(x =>
+                {
+                    var value = x.Value.GetType().IsSimple()
+                        ? GetSimpleValue(x.Key, x.Value)
+                        : GetComplexValue(x.Key, x.Value);
+
+                    return value;
+                })
+                .Where(x => x != null)
                 .ToArray();
 
-            if (!contextVariables.Any())
+            if (!contextValues.Any())
             {
                 continue;
             }
 
-            var contextString = $"{customPlugin.Name} Plugin Context: {string.Join(", ", contextVariables)}";
-
             stringBuilder
-                .AppendLine(contextString);
+                .AppendLine($"{customPlugin.Name}: {string.Join(", ", contextValues)}");
         }
 
         return stringBuilder;
     }
 
 
-    private static string GetBuiltInPluginContext<TContext>(TContext context, string pluginName)
-        where TContext : class
+    private static string GetSimpleValue(string name, object value = null)
     {
-        if (context == null)
+        if (name == null)
+            throw new ArgumentNullException(nameof(name));
+
+        if (value == null)
         {
             return null;
         }
 
-        var contextString = GetContextValues(context);
-
-        if (contextString == null)
-        {
-            return null;
-        }
-
-        var pluginContext = $"{pluginName}: {string.Join(", ", contextString)}";
-
-        return pluginContext;
+        return $"{name}={value}";
     }
-    private static IEnumerable<object> GetContextValues<TContext>(TContext context)
-        where TContext : class
+    private static string GetComplexValue(string name, object value = null)
     {
-        if (context == null)
-            throw new ArgumentNullException(nameof(context));
+        if (name == null)
+            throw new ArgumentNullException(nameof(name));
 
-        var values = typeof(TContext)
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Select(x =>
-            {
-                var value = x.GetValue(context);
-
-                if (value == null)
-                {
-                    return null;
-                }
-
-                // BUG: 000: What about Guid, DateTime, DateTimeOffset, Nullable, TimeSpan, TimeOnly, DateOnly, etc
-                if (x.PropertyType.IsPrimitive || x.PropertyType == typeof(string))
-                {
-                    return $"{x.Name}={value}";
-                }
-                else
-                {
-                    var jsonSerializerSettings = new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    };
-
-                    var serializedObject = JsonConvert.SerializeObject(value, jsonSerializerSettings);
-
-                    return $"{x.Name}={serializedObject.Replace("\"", "\\\"")}";
-                }
-            })
-            .Where(x => x != null)
-            .ToArray();
-
-        if (!values.Any())
+        if (value == null)
         {
             return null;
         }
 
-        return values;
+        var jsonSerializerSettings = new JsonSerializerSettings
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        };
+
+        var serializedObject = JsonConvert.SerializeObject(value, jsonSerializerSettings);
+
+        var serializedValue = serializedObject
+            .Replace("\"", "\\\"");
+
+        return $"{name}={serializedValue}";
     }
 }

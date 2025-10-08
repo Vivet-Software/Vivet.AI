@@ -63,7 +63,7 @@ public class AgentsServiceTests : BaseTests
                 {
                     Context =
                     {
-                        Memory = new AgentMemoryContext
+                        Memory = new AgentsMemoryContext
                         {
                             AgentId = Guid.NewGuid()
                         }

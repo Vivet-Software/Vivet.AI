@@ -21,6 +21,8 @@ public abstract class BaseChatConfigOverrides : BaseConfigOverrides
     /// </summary>
     public virtual ChatModelParameters ModelParameters { get; set; }
 
+
+    // BUG: 000: COnsider all the Skip and maybe auto-skip if context isn't provided.
     /// <summary>
     /// Skips the memory invocaton and context in the prompt for this request.
     /// </summary>
@@ -36,21 +38,63 @@ public abstract class BaseChatConfigOverrides : BaseConfigOverrides
     /// </summary>
     public virtual bool SkipWebSearchContext { get; set; } = false;
 
-    // BUG: 888: CHAT Config Overrides - How can we combine Index with Query here.
+    // BUG: 000: CHAT Config Overrides 
+    // better triple-slash
 
     /// <summary>
     /// Memory search config overrides.
     /// </summary>
-    public virtual EmbeddingMemorySearchConfigOverrides MemoryConfigOverrides { get; set; }
+    [Required]
+    public virtual MemorySearchConfigOverrides MemoryConfigOverrides { get; internal set; } = new();
 
     /// <summary>
     /// Knowledge search config overrides.
     /// </summary>
-    public virtual EmbeddingKnowledgeSearchConfigOverrides KnowledgeCongigOverrides { get; set; }
+    [Required]
+    public virtual KnowledgeSearchConfigOverrides KnowledgeConfigOverrides { get; internal set; } = new();
 
     /// <summary>
-    /// Memory config overrides.
+    /// Memory index config overrides.
     /// </summary>
     [Required]
-    public virtual EmbeddingMemoryIndexConfigOverrides Memory { get; internal set; } = new();
+    public virtual MemoryIndexConfigOverrides Memory { get; internal set; } = new();
+}
+
+/// <summary>
+/// 
+/// </summary>
+public class PluginsConfigOverrides
+{
+
+}
+
+// BUG: Where to place
+// We have Models/ConfigOverrides and Models/Plugins
+// The ones above, e.g. MemorySearchConfigOverrides, are places under embedding. move?
+// - We don't have overrides for WebSearch, but if we get it we have nowhere to place it. Why we should move all Memory/Knowledge overrides to Plugins folder
+// - But we also have memory indexing, which does not belong in plugins.
+
+/// <summary>
+/// 
+/// </summary>
+public class MemoryConfigOverrides
+{
+
+}
+
+/// <summary>
+/// 
+/// </summary>
+public class KnowledgeConfigOverrides
+{
+
+}
+
+// BUG: Should we add this just empty? Then we could reuse the same stringbuilder extension
+/// <summary>
+/// 
+/// </summary>
+public class WebSearchConfigOverrides
+{
+
 }

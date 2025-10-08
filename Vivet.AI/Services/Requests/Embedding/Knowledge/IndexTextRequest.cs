@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Services.Requests.Embedding.Knowledge.Models;
 using Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Embedding.Knowledge;
@@ -12,7 +11,7 @@ public class IndexTextRequest : IndexTextRequest<string>;
 /// <summary>
 /// Represents a request to index textual knowledge with optional configuration overrides.
 /// </summary>
-public class IndexTextRequest<T> : BaseIndexKnowledgeRequst<EmbeddingKnowledgeIndexConfigOverrides>
+public class IndexTextRequest<T> : BaseIndexKnowledgeRequst<KnowledgeIndexConfigOverrides>
     where T : class
 {
     /// <summary>

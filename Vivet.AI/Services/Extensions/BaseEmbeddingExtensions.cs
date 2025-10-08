@@ -1,16 +1,14 @@
 ﻿using System;
 using Vivet.AI.Config;
-using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Models;
 using Vivet.AI.Models.Enums;
-using Vivet.AI.Services.Models.ConfigOverrides;
-using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
+using Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Extensions;
 
 internal static class BaseEmbeddingExtensions
 {
-    internal static double GetRecencyScore<T>(this T record, BaseScoringOptions scoringOptions, BaseEmbeddingSearchScoringConfigOverrides overrides)
+    internal static double GetRecencyScore<T>(this T record, BaseScoringOptions scoringOptions, BaseScoringConfigOverrides overrides)
         where T : BaseEmbedding
     {
         if (record == null)

@@ -6,4 +6,4 @@ namespace Vivet.AI.Services.Requests.Embedding.Knowledge;
 /// <summary>
 /// Represents a request to search knowledge entries with specific criteria.
 /// </summary>
-public class SearchKnowledgeRequest : BaseSearchRequest<KnowledgeQueryCriteria, EmbeddingKnowledgeSearchConfigOverrides>;
+public class SearchKnowledgeRequest : BaseSearchRequest<KnowledgeQueryCriteria, KnowledgeSearchConfigOverrides>;

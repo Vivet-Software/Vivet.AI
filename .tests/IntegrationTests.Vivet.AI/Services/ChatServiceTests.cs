@@ -17,7 +17,7 @@ using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.Blobs.Data;
 using Vivet.AI.Services.Models.MimeTypes;
-using Vivet.AI.Services.Models.Plugins.Context;
+using Vivet.AI.Services.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Chat.Models.Plugins.Context;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
@@ -26,6 +26,10 @@ using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses;
 
 namespace IntegrationTests.Vivet.AI.Services;
+
+// BUG: 111: Check all extension methods, what do we have and do they make sense
+
+// BUG: 111: Test plugins, all 3 with change to function parametrs (context)
 
 [TestClass]
 public class ChatServiceTests : BaseTests
@@ -343,8 +347,8 @@ public class ChatServiceTests : BaseTests
                 {
                     SkipKnowledgeContext = true,
                     SkipWebSearchContext = true,
-                    // BUG: Tests
-                    MemoryConfigOverrides = new EmbeddingMemorySearchConfigOverrides
+                    // BUG: 111: Tests (with config override) - assert arguments from function calls.
+                    MemoryConfigOverrides = new MemorySearchConfigOverrides
                     {
                         UseQueryDeduplication = true,
                         ContextQueryLimit = 5,

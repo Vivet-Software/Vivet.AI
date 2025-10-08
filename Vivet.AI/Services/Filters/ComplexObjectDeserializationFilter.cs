@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using Newtonsoft.Json;
+using Vivet.AI.Services.Extensions;
 
 namespace Vivet.AI.Services.Filters;
 
@@ -42,8 +43,12 @@ public sealed class ComplexObjectDeserializationFilter : IAutoFunctionInvocation
             var parameter = context.Function.Metadata.Parameters
                 .FirstOrDefault(x => x.Name == argument.Key);
 
-            // BUG: 000: What about Guid, DateTime, DateTimeOffset, Nullable, TimeSpan, TimeOnly, DateOnly, etc
-            if (parameter?.ParameterType == null || parameter.ParameterType.IsPrimitive || parameter.ParameterType == typeof(string))
+            if (parameter == null)
+            {
+                continue;
+            }
+
+            if (parameter.ParameterType.IsSimple())
             {
                 continue;
             }

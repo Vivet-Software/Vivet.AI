@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Vivet.AI.Services.Models.ConfigOverrides;
+namespace Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 
 /// <summary>
 /// Represents configuration overrides for embedding index text chunking.
 /// </summary>
-public class BaseEmbedingIndexTextChunkingConfigOverrides
+public class TextChunkingConfigOverrides
 {
     /// <summary>
     /// The minimum number of tokens for text chunks to get embedding.
@@ -23,5 +23,5 @@ public class BaseEmbedingIndexTextChunkingConfigOverrides
     /// Overrides for neighbor contexts.
     /// </summary>
     [Required]
-    public virtual BaseEmbedingIndexTextChunkingNeighborContextConfigOverrides NeighborContext { get; internal set; } = new();
+    public virtual NeighborContextConfigOverrides NeighborContext { get; internal set; } = new();
 }

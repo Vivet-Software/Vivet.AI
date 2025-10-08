@@ -6,7 +6,7 @@ namespace Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 /// <summary>
 /// Configuration overrides specific to knowledge blobs.
 /// </summary>
-public class EmbeddingKnowledgeBlobConfigOverrides : EmbeddingKnowledgeIndexConfigOverrides
+public class KnowledgeBlobConfigOverrides : KnowledgeIndexConfigOverrides
 {
     /// <summary>
     /// Metadata overrides.

@@ -1,13 +1,13 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Services.Models.Plugins.Context;
+using Vivet.AI.Services.Models.Plugins.Contexts;
 
 namespace Vivet.AI.Services.Requests.Agent.Models.Plugins.Context;
 
 /// <summary>
 /// Represents the context for the built-in memory plugin.
 /// </summary>
-public class AgentMemoryContext : BaseMemoryContext
+public class AgentsMemoryContext : BaseMemoryContext
 {
     /// <summary>
     /// Identifier of the agent processing the request.

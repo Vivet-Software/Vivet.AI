@@ -15,7 +15,6 @@ using Vivet.AI.Extensions;
 using Vivet.AI.Services.Consts;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
-using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Chat.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
@@ -187,7 +186,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         chatHistory
             .AddChatSystemPrompt<T>(request.SystemMessage)
-            .AddChatPluginsContextPrompt(request.Plugins)
+            .AddChatPluginsContextPrompt(request)
             .AddChatUserPrompt(request.Question, binaryContents);
 
         return chatHistory;
@@ -283,7 +282,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var thinking = rawContent
             .GetChatResponseThinking();
 
-        var functionCalls = ChatService.GetResponseFunctionCalls(kernel);
+        var functionCalls = BaseService.GetResponseFunctionCalls(kernel);
         var exception = ChatService.GetResponseExceptionOrDefault(response.ErrorMessage);
 
         response.Thinking = thinking;
@@ -356,18 +355,6 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         response.Exception = exception;
 
         return response;
-    }
-    private static IEnumerable<FunctionCall> GetResponseFunctionCalls(Kernel kernel)
-    {
-        if (kernel == null)
-            throw new ArgumentNullException(nameof(kernel));
-
-        var functionCalls = kernel
-            .GetAutoFunctionInvocationContexts()
-            .Select(x => x.GetFunctionCall())
-            .OrderBy(x => x.CreatedAt);
-
-        return functionCalls;
     }
     private static void SetResponseAnswer<T>(ChatResponse<T> response, string responseAnswer) 
         where T : class

@@ -8,8 +8,9 @@ using System.Reflection;
 using System.Text;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Plugins.Consts;
-using Vivet.AI.Services.Requests.Agent.Models.Plugins;
-using Vivet.AI.Services.Requests.Chat.Models.Plugins;
+using Vivet.AI.Services.Requests.Agent;
+using Vivet.AI.Services.Requests.Agent.Models;
+using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Responses;
 using Vivet.AI.Services.Responses.Metadata;
 
@@ -64,21 +65,21 @@ containing a meaningful error message, describing why the request could not be c
         return chatHistory;
     }
 
-    internal static ChatHistory AddChatPluginsContextPrompt(this ChatHistory chatHistory, ChatPlugins plugins)
+    internal static ChatHistory AddChatPluginsContextPrompt(this ChatHistory chatHistory, ChatRequest request)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
 
-        if (plugins == null)
-            throw new ArgumentNullException(nameof(plugins));
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
 
         var stringBuilder = new StringBuilder();
 
         stringBuilder
-            .AppendBuiltInPluginContext(plugins.Context.Memory, BuiltInPluginNames.MEMORY_PLUGIN)
-            .AppendBuiltInPluginContext(plugins.Context.Knowledge, BuiltInPluginNames.KNOWLEDGE_PLUGIN)
-            .AppendBuiltInPluginContext(plugins.Context.WebSearch, BuiltInPluginNames.WEB_SEARCH_PLUGIN)
-            .AppendCustomPluginsContext(plugins.CustomPlugins);
+            .AppendBuiltInPluginContext(BuiltInPluginNames.MEMORY_PLUGIN, request.Plugins.Context.Memory, request.ConfigOverrides.MemoryConfigOverrides)
+            .AppendBuiltInPluginContext(BuiltInPluginNames.KNOWLEDGE_PLUGIN, request.Plugins.Context.Knowledge, request.ConfigOverrides.KnowledgeConfigOverrides)
+            .AppendBuiltInPluginContext(BuiltInPluginNames.WEB_SEARCH_PLUGIN, request.Plugins.Context.WebSearch) 
+            .AppendCustomPluginsContext(request.Plugins.CustomPlugins);
 
         var content = stringBuilder
             .ToString();
@@ -95,30 +96,30 @@ containing a meaningful error message, describing why the request could not be c
         return chatHistory;
     }
 
-    internal static ChatHistory AddAgentPluginsContextPrompt(this ChatHistory chatHistory, AgentPlugins plugins, AgentPlugins parentPlugins)
+    internal static ChatHistory AddAgentPluginsContextPrompt(this ChatHistory chatHistory, AgentDescriptor agentDescriptor, BaseAgentsRequest agentsRequest)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
         
-        if (plugins == null) 
-            throw new ArgumentNullException(nameof(plugins));
+        if (agentDescriptor == null) 
+            throw new ArgumentNullException(nameof(agentDescriptor));
         
-        if (parentPlugins == null) 
-            throw new ArgumentNullException(nameof(parentPlugins));
+        if (agentsRequest == null) 
+            throw new ArgumentNullException(nameof(agentsRequest));
 
         var stringBuilder = new StringBuilder();
 
-        var contextMemory = plugins.Context.Memory ?? parentPlugins.Context?.Memory;
-        var contextKnowledge = plugins.Context.Knowledge ?? parentPlugins.Context?.Knowledge;
-        var contextWebSearch = plugins.Context.WebSearch ?? parentPlugins.Context?.WebSearch;
+        var contextMemory = agentDescriptor.Plugins.Context.Memory ?? agentsRequest.Plugins.Context?.Memory;
+        var contextKnowledge = agentDescriptor.Plugins.Context.Knowledge ?? agentsRequest.Plugins.Context?.Knowledge;
+        var contextWebSearch = agentDescriptor.Plugins.Context.WebSearch ?? agentsRequest.Plugins.Context?.WebSearch;
 
         stringBuilder
-            .AppendBuiltInPluginContext(contextMemory, BuiltInPluginNames.MEMORY_PLUGIN)
-            .AppendBuiltInPluginContext(contextKnowledge, BuiltInPluginNames.KNOWLEDGE_PLUGIN)
-            .AppendBuiltInPluginContext(contextWebSearch, BuiltInPluginNames.WEB_SEARCH_PLUGIN);
+            .AppendBuiltInPluginContext(BuiltInPluginNames.MEMORY_PLUGIN, contextMemory, agentsRequest.ConfigOverrides.MemoryConfigOverrides) 
+            .AppendBuiltInPluginContext(BuiltInPluginNames.KNOWLEDGE_PLUGIN, contextKnowledge, agentsRequest.ConfigOverrides.KnowledgeConfigOverrides)
+            .AppendBuiltInPluginContext(BuiltInPluginNames.WEB_SEARCH_PLUGIN, contextWebSearch);
 
-        var customPlugins = plugins.CustomPlugins
-            .Concat(parentPlugins.CustomPlugins)
+        var customPlugins = agentDescriptor.Plugins.CustomPlugins
+            .Concat(agentsRequest.Plugins.CustomPlugins)
             .DistinctBy(x => x.Name);
 
         stringBuilder
