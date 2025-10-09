@@ -28,7 +28,6 @@ public abstract class BaseSearchRequest<TCriteria, TOverride>
     /// <summary>
     /// Gets or sets the maximum number of results to return.
     /// </summary>
-    [Required]
     public virtual int? Limit { get; set; } 
 
     /// <summary>

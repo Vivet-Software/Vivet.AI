@@ -16,10 +16,10 @@ public class KnowledgeSearchCriteria : BaseKnowledgeCriteria
         Expression body = null;
 
         var expression = parameterExpression
-            .AddExpressionEqual(nameof(Data.Models.Knowledge.TenantId), this.TenantId, ref body)
-            .AddExpressionEqual(nameof(Data.Models.Knowledge.SubTenantId), this.SubTenantId, ref body)
-            .AddExpressionEqual(nameof(Data.Models.Knowledge.ScopeId), this.ScopeId, ref body)
-            .AddExpressionEqual(nameof(Data.Models.Knowledge.UserId), this.UserId, ref body);
+            .AddExpressionEqual(nameof(Data.Models.Knowledge.TenantId), this.TenantId?.ToString(), ref body)
+            .AddExpressionEqual(nameof(Data.Models.Knowledge.SubTenantId), this.SubTenantId?.ToString(), ref body)
+            .AddExpressionEqual(nameof(Data.Models.Knowledge.ScopeId), this.ScopeId?.ToString(), ref body)
+            .AddExpressionEqual(nameof(Data.Models.Knowledge.UserId), this.UserId?.ToString(), ref body);
 
         if (body == null)
         {

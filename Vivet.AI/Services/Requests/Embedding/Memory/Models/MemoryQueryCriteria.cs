@@ -42,11 +42,11 @@ public class MemoryQueryCriteria : BaseMemoryCriteria
         Expression body = null;
 
         var expression = parameterExpression
-            .AddExpressionEqual(nameof(Data.Models.Memory.UserId), this.UserId, ref body)
-            .AddExpressionEqual(nameof(Data.Models.Memory.ScopeId), this.ScopeId, ref body)
-            .AddExpressionEqual(nameof(Data.Models.Memory.AgentId), this.AgentId, ref body)
-            .AddExpressionEqual(nameof(Data.Models.Memory.ThreadId), this.ThreadId, ref body)
-            .AddExpressionEqual(nameof(Data.Models.Memory.QuestionAnswerId), this.QuestionAnswerId, ref body)
+            .AddExpressionEqual(nameof(Data.Models.Memory.UserId), this.UserId?.ToString(), ref body)
+            .AddExpressionEqual(nameof(Data.Models.Memory.ScopeId), this.ScopeId?.ToString(), ref body)
+            .AddExpressionEqual(nameof(Data.Models.Memory.AgentId), this.AgentId?.ToString(), ref body)
+            .AddExpressionEqual(nameof(Data.Models.Memory.ThreadId), this.ThreadId?.ToString(), ref body)
+            .AddExpressionEqual(nameof(Data.Models.Memory.QuestionAnswerId), this.QuestionAnswerId?.ToString(), ref body)
             .AddExpressionEqual(nameof(Data.Models.Memory.IsQuestion), this.IsQuestion, ref body)
             .AddExpressionEqual(nameof(Data.Models.Memory.IsAnswer), this.IsAnswer, ref body)
             .AddDateRangeExpression(nameof(Data.Models.Memory.UnixTimestamp), this.DateRange, ref body);

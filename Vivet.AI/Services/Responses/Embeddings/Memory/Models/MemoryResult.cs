@@ -72,11 +72,21 @@ public class MemoryResult : BaseResult
         if (memory == null)
             throw new ArgumentNullException(nameof(memory));
 
-        this.ScopeId = Guid.Parse(memory.ScopeId);
-        this.AgentId = Guid.Parse(memory.AgentId);
-        this.UserId = Guid.Parse(memory.UserId);
-        this.ThreadId = Guid.Parse(memory.ThreadId);
-        this.QuestionAnswerId = Guid.Parse(memory.QuestionAnswerId);
+        this.ScopeId = memory.ScopeId == null 
+            ? null 
+            : Guid.Parse(memory.ScopeId);
+        this.AgentId = memory.AgentId == null 
+            ? null 
+            : Guid.Parse(memory.AgentId);
+        this.UserId = memory.UserId == null 
+            ? null 
+            : Guid.Parse(memory.UserId);
+        this.ThreadId = memory.ThreadId == null 
+            ? null 
+            : Guid.Parse(memory.ThreadId);
+        this.QuestionAnswerId = memory.QuestionAnswerId == null 
+            ? null 
+            : Guid.Parse(memory.QuestionAnswerId);
         this.IsQuestion = memory.IsQuestion;
         this.IsAnswer = memory.IsAnswer;
         this.Blob = memory.BlobBase64 == null

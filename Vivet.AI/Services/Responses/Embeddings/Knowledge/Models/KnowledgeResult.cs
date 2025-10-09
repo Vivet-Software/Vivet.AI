@@ -75,10 +75,18 @@ public class KnowledgeResult : BaseResult
         if (knowledge == null)
             throw new ArgumentNullException(nameof(knowledge));
 
-        this.TenantId = Guid.Parse(knowledge.TenantId);
-        this.SubTenantId = Guid.Parse(knowledge.SubTenantId);
-        this.ScopeId = Guid.Parse(knowledge.ScopeId);
-        this.UserId = Guid.Parse(knowledge.UserId);
+        this.TenantId = knowledge.TenantId == null 
+            ? null 
+            : Guid.Parse(knowledge.TenantId);
+        this.SubTenantId = knowledge.SubTenantId == null 
+            ? null 
+            : Guid.Parse(knowledge.SubTenantId);
+        this.ScopeId = knowledge.ScopeId == null
+            ? null
+            : Guid.Parse(knowledge.ScopeId);
+        this.UserId = knowledge.UserId == null
+            ? null
+            : Guid.Parse(knowledge.UserId);
         this.Source = knowledge.Source;
         this.CreatedBy = knowledge.CreatedBy;
         this.Tags = knowledge.Tags;
