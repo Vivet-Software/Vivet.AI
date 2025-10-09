@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Services.Requests.Agent;
+﻿namespace Vivet.AI.Services.Requests.Agents;
 
 /// <summary>
 /// Concurrent orchestration enables multiple agents to work on the same task in parallel. Each agent processes the input independently,

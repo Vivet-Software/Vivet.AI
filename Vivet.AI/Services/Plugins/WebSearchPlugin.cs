@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Data;
 using Vivet.AI.Models.Enums;
+using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins.Contexts;
 
 namespace Vivet.AI.Services.Plugins;
@@ -35,11 +36,12 @@ public sealed class WebSearchPlugin
     /// </summary>
     /// <param name="query">The current user question or message.</param>
     /// <param name="context">The context for the web search.</param>
+    /// <param name="configOverrides">The config overrides for the web search request.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>The web serarch results.</returns>
     [KernelFunction("simple")]
     [Description("Perform a web search and return simple text results.")]
-    public async Task<IEnumerable<string>> SearchAsync([Description("The current user question or message")]string query, WebSearchContext context, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<string>> SearchAsync([Description("The current user question or message")]string query, WebSearchContext context, WebSearchConfigOverrides configOverrides, CancellationToken cancellationToken = default)
     {
         if (query == null)
         {
@@ -77,11 +79,12 @@ public sealed class WebSearchPlugin
     /// </summary>
     /// <param name="query">The current user question or message.</param>
     /// <param name="context">The context for the web search.</param>
+    /// <param name="configOverrides">The config overrides for the web search request.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>The web serarch results.</returns>
     [KernelFunction("detailed")]
     [Description("Perform a web search and return structured results with titles, URLs, and snippets.")]
-    public async Task<IEnumerable<object>> GetSearchResultsAsync([Description("The current user question or message")]string query, WebSearchContext context, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<object>> GetSearchResultsAsync([Description("The current user question or message")]string query, WebSearchContext context, WebSearchConfigOverrides configOverrides, CancellationToken cancellationToken = default)
     {
         if (query == null)
         {
@@ -119,11 +122,12 @@ public sealed class WebSearchPlugin
     /// </summary>
     /// <param name="query">The current user question or message.</param>
     /// <param name="context">The context for the web search.</param>
+    /// <param name="configOverrides">The config overrides for the web search request.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>The web serarch results.</returns>
     [KernelFunction("text")]
     [Description("Perform a web search and return text-focused results, such as titles and snippets.")]
-    public async Task<IReadOnlyList<TextSearchResult>> GetTextSearchResultsAsync([Description("The current user question or message")]string query, WebSearchContext context, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TextSearchResult>> GetTextSearchResultsAsync([Description("The current user question or message")]string query, WebSearchContext context, WebSearchConfigOverrides configOverrides, CancellationToken cancellationToken = default)
     {
         if (query == null)
         {

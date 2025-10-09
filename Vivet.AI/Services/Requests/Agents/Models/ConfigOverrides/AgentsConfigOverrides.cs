@@ -1,6 +1,6 @@
 ﻿using Vivet.AI.Services.Models.ConfigOverrides;
 
-namespace Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
+namespace Vivet.AI.Services.Requests.Agents.Models.ConfigOverrides;
 
 /// <summary>
 /// Represents configuration overrides specific to agents operations.

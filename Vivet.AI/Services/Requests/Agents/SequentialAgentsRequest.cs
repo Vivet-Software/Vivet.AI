@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Services.Requests.Agent;
+﻿namespace Vivet.AI.Services.Requests.Agents;
 
 /// <summary>
 /// In sequential orchestration, agents are organized in a pipeline. Each agent processes the task in turn,

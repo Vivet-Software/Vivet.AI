@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Services.Requests.Agent;
+﻿namespace Vivet.AI.Services.Requests.Agents;
 
 /// <summary>
 /// Handoff orchestration allows agents to transfer control to one another based on the context or user request.

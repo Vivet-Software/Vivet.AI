@@ -39,7 +39,7 @@ public abstract class BaseMemoryPlugin
             throw new ArgumentNullException(nameof(request));
         
         var response = await this.embeddingMemoryService
-            .SearchAsync(request);
+            .SearchAsync(request, cancellationToken);
 
         var memoryResults = response.Results
             .Select(x => x.Result)

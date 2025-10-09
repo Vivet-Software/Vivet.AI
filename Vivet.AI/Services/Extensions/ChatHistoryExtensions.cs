@@ -8,8 +8,8 @@ using System.Reflection;
 using System.Text;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Plugins.Consts;
-using Vivet.AI.Services.Requests.Agent;
-using Vivet.AI.Services.Requests.Agent.Models;
+using Vivet.AI.Services.Requests.Agents;
+using Vivet.AI.Services.Requests.Agents.Models;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Responses;
 using Vivet.AI.Services.Responses.Metadata;
@@ -65,20 +65,38 @@ containing a meaningful error message, describing why the request could not be c
         return chatHistory;
     }
 
-    internal static ChatHistory AddChatPluginsContextPrompt(this ChatHistory chatHistory, ChatRequest request)
+    internal static ChatHistory AddChatPluginsContextPrompt(this ChatHistory chatHistory, Kernel kernel, ChatRequest request)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
+
+        if (kernel == null) 
+            throw new ArgumentNullException(nameof(kernel));
 
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
         var stringBuilder = new StringBuilder();
 
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.MEMORY_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.MEMORY_PLUGIN, request.Plugins.Context.Memory, request.ConfigOverrides.Plugins.Memory.Search);
+        }
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.KNOWLEDGE_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.KNOWLEDGE_PLUGIN, request.Plugins.Context.Knowledge, request.ConfigOverrides.Plugins.Knowledge.Search);
+        }
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.WEB_SEARCH_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.WEB_SEARCH_PLUGIN, request.Plugins.Context.WebSearch, request.ConfigOverrides.Plugins.WebSearch);
+        }
+
         stringBuilder
-            .AppendBuiltInPluginContext(BuiltInPluginNames.MEMORY_PLUGIN, request.Plugins.Context.Memory, request.ConfigOverrides.MemoryConfigOverrides)
-            .AppendBuiltInPluginContext(BuiltInPluginNames.KNOWLEDGE_PLUGIN, request.Plugins.Context.Knowledge, request.ConfigOverrides.KnowledgeConfigOverrides)
-            .AppendBuiltInPluginContext(BuiltInPluginNames.WEB_SEARCH_PLUGIN, request.Plugins.Context.WebSearch) 
             .AppendCustomPluginsContext(request.Plugins.CustomPlugins);
 
         var content = stringBuilder
@@ -96,11 +114,14 @@ containing a meaningful error message, describing why the request could not be c
         return chatHistory;
     }
 
-    internal static ChatHistory AddAgentPluginsContextPrompt(this ChatHistory chatHistory, AgentDescriptor agentDescriptor, BaseAgentsRequest agentsRequest)
+    internal static ChatHistory AddAgentPluginsContextPrompt(this ChatHistory chatHistory, Kernel kernel, AgentDescriptor agentDescriptor, BaseAgentsRequest agentsRequest)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
-        
+
+        if (kernel == null)
+            throw new ArgumentNullException(nameof(kernel));
+
         if (agentDescriptor == null) 
             throw new ArgumentNullException(nameof(agentDescriptor));
         
@@ -113,10 +134,23 @@ containing a meaningful error message, describing why the request could not be c
         var contextKnowledge = agentDescriptor.Plugins.Context.Knowledge ?? agentsRequest.Plugins.Context?.Knowledge;
         var contextWebSearch = agentDescriptor.Plugins.Context.WebSearch ?? agentsRequest.Plugins.Context?.WebSearch;
 
-        stringBuilder
-            .AppendBuiltInPluginContext(BuiltInPluginNames.MEMORY_PLUGIN, contextMemory, agentsRequest.ConfigOverrides.MemoryConfigOverrides) 
-            .AppendBuiltInPluginContext(BuiltInPluginNames.KNOWLEDGE_PLUGIN, contextKnowledge, agentsRequest.ConfigOverrides.KnowledgeConfigOverrides)
-            .AppendBuiltInPluginContext(BuiltInPluginNames.WEB_SEARCH_PLUGIN, contextWebSearch);
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.MEMORY_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.MEMORY_PLUGIN, contextMemory, agentsRequest.ConfigOverrides.Plugins.Memory.Search);
+        }
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.KNOWLEDGE_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.KNOWLEDGE_PLUGIN, contextKnowledge, agentsRequest.ConfigOverrides.Plugins.Knowledge.Search);
+        }
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.WEB_SEARCH_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.WEB_SEARCH_PLUGIN, contextWebSearch, agentsRequest.ConfigOverrides.Plugins.WebSearch);
+        }
 
         var customPlugins = agentDescriptor.Plugins.CustomPlugins
             .Concat(agentsRequest.Plugins.CustomPlugins)

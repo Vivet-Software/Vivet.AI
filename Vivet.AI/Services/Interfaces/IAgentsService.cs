@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Vivet.AI.Services.Requests.Agent;
+using Vivet.AI.Services.Requests.Agents;
 using Vivet.AI.Services.Responses.Agent;
 
 namespace Vivet.AI.Services.Interfaces;

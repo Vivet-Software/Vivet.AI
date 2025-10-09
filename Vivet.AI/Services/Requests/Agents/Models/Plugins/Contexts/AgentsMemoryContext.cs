@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.Plugins.Contexts;
 
-namespace Vivet.AI.Services.Requests.Agent.Models.Plugins.Context;
+namespace Vivet.AI.Services.Requests.Agents.Models.Plugins.Contexts;
 
 /// <summary>
 /// Represents the context for the built-in memory plugin.

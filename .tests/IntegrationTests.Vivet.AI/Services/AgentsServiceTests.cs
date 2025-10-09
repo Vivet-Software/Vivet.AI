@@ -5,9 +5,9 @@ using System;
 using System.Threading.Tasks;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.Plugins;
-using Vivet.AI.Services.Requests.Agent;
-using Vivet.AI.Services.Requests.Agent.Models;
-using Vivet.AI.Services.Requests.Agent.Models.Plugins.Context;
+using Vivet.AI.Services.Requests.Agents;
+using Vivet.AI.Services.Requests.Agents.Models;
+using Vivet.AI.Services.Requests.Agents.Models.Plugins.Contexts;
 
 namespace IntegrationTests.Vivet.AI.Services;
 
@@ -112,7 +112,13 @@ give format and make it polished. Output the final improved copy as a single tex
                 Agents = agents,
                 ConfigOverrides =
                 {
-                    SkipMemoryContext = true
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            SkipMemoryContext = true
+                        }
+                    }
                 }
             });
 
@@ -147,7 +153,13 @@ give format and make it polished. Output the final improved copy as a single tex
                 Agents = agents,
                 ConfigOverrides =
                 {
-                    SkipMemoryContext = true
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            SkipMemoryContext = true
+                        }
+                    }
                 }
             });
 
@@ -190,7 +202,13 @@ If not, provide insight on how to refine suggested copy without example."
                 Agents = agents,
                 ConfigOverrides =
                 {
-                    SkipMemoryContext = true
+                    Plugins = 
+                    { 
+                        Memory =
+                        {
+                            SkipMemoryContext = true
+                        }
+                    }
                 }
             });
 
@@ -270,7 +288,13 @@ If not, provide insight on how to refine suggested copy without example."
                 Agents = agents,
                 ConfigOverrides =
                 {
-                    SkipMemoryContext = true
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            SkipMemoryContext = true
+                        }
+                    }
                 }
             });
 

@@ -70,7 +70,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var kernel = this.GetKernel(request);
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
-        var chatHistory = await this.GetChatHistory<T>(request, cancellationToken)
+        var chatHistory = await this.GetChatHistory<T>(request, kernel, cancellationToken)
             .ConfigureAwait(false);
 
         var chatMessageContent = await this.chatCompletionService
@@ -104,7 +104,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
         var kernel = this.GetKernel(request);
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
 
-        var chatHistory = await GetChatHistory<string>(request, cancellationToken)
+        var chatHistory = await GetChatHistory<string>(request, kernel, cancellationToken)
             .ConfigureAwait(false);
 
         var streamingChatMessageContents = this.chatCompletionService
@@ -172,7 +172,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         return executionSettings;
     }
-    private async Task<ChatHistory> GetChatHistory<T>(ChatRequest request, CancellationToken cancellationToken = default)
+    private async Task<ChatHistory> GetChatHistory<T>(ChatRequest request, Kernel kernel, CancellationToken cancellationToken = default)
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -186,7 +186,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         chatHistory
             .AddChatSystemPrompt<T>(request.SystemMessage)
-            .AddChatPluginsContextPrompt(request)
+            .AddChatPluginsContextPrompt(kernel, request)
             .AddChatUserPrompt(request.Question, binaryContents);
 
         return chatHistory;
@@ -221,7 +221,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
                         ScopeId = request.Plugins.Context.Memory.ScopeId,
                         Language = response.Language,
                         Blobs = request.Blobs,
-                        ConfigOverrides = request.ConfigOverrides.Memory
+                        ConfigOverrides = request.ConfigOverrides.Plugins.Memory.Indexing
                     }, cancellationToken)
                     .ConfigureAwait(false);
 

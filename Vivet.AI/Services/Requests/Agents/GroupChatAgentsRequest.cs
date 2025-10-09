@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Services.Requests.Agent;
+﻿namespace Vivet.AI.Services.Requests.Agents;
 
 /// <summary>
 /// Group chat orchestration models a collaborative conversation among agents, optionally including a human participant.

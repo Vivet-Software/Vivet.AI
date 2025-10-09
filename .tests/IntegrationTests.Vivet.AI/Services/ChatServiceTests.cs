@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
-using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Interfaces;
@@ -19,17 +18,31 @@ using Vivet.AI.Services.Models.Blobs.Data;
 using Vivet.AI.Services.Models.MimeTypes;
 using Vivet.AI.Services.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Chat;
-using Vivet.AI.Services.Requests.Chat.Models.Plugins.Context;
+using Vivet.AI.Services.Requests.Chat.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
 using Vivet.AI.Services.Requests.Embedding.Memory;
-using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses;
 
 namespace IntegrationTests.Vivet.AI.Services;
 
-// BUG: 111: Check all extension methods, what do we have and do they make sense
-
-// BUG: 111: Test plugins, all 3 with change to function parametrs (context)
+// BUG: 111: Test plugins, all 3 with changes to function parametrs (context)
+// -Tests (with config override) - assert arguments from function calls.
+//MemoryConfigOverrides = new MemorySearchConfigOverrides
+//    {
+//        UseQueryDeduplication = true,
+//        ContextQueryLimit = 5,
+//        RetentionInDays = 180,
+//        CounterpartContextQueryLimit = 3,
+//        Scoring =
+//        {
+//            DeduplicationMatchScoreThreshold = 0.8,
+//            MatchScoreThreshold = 0.91,
+//            RecencyBoostMax = 0.2,
+//            RecencyDecayStrategy = RecencyDecayStrategy.Linear,
+//            ThreadMatchBoost = 0.1,
+//            RecencySigmoidSteepness = 0.4
+//        }
+//    }
 
 [TestClass]
 public class ChatServiceTests : BaseTests
@@ -345,23 +358,15 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    SkipKnowledgeContext = true,
-                    SkipWebSearchContext = true,
-                    // BUG: 111: Tests (with config override) - assert arguments from function calls.
-                    MemoryConfigOverrides = new MemorySearchConfigOverrides
+                    Plugins =
                     {
-                        UseQueryDeduplication = true,
-                        ContextQueryLimit = 5,
-                        RetentionInDays = 180,
-                        CounterpartContextQueryLimit = 3,
-                        Scoring =
+                        Knowledge =
                         {
-                            DeduplicationMatchScoreThreshold = 0.8,
-                            MatchScoreThreshold = 0.91,
-                            RecencyBoostMax = 0.2,
-                            RecencyDecayStrategy = RecencyDecayStrategy.Linear,
-                            ThreadMatchBoost = 0.1,
-                            RecencySigmoidSteepness = 0.4
+                            SkipKnowledgeContext = true
+                        },
+                        WebSearch =
+                        {
+                            SkipWebSearchContext = true
                         }
                     }
                 },
@@ -472,7 +477,13 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    SkipMemoryContext = true
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            SkipMemoryContext = true
+                        }
+                    }
                 }
             });
 
@@ -515,8 +526,17 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    SkipMemoryContext = true,
-                    SkipWebSearchContext = true
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            SkipMemoryContext = true
+                        },
+                        WebSearch = 
+                        {
+                            SkipWebSearchContext = true
+                        }
+                    }
                 },
                 Plugins =
                 {
@@ -564,8 +584,17 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    SkipKnowledgeContext = true,
-                    SkipWebSearchContext = true
+                    Plugins =
+                    {
+                        Knowledge = 
+                        {
+                            SkipKnowledgeContext = true
+                        },
+                        WebSearch =
+                        {
+                            SkipWebSearchContext = true
+                        }
+                    }
                 },
                 Plugins =
                 {
@@ -597,8 +626,17 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    SkipMemoryContext = true,
-                    SkipKnowledgeContext = true
+                    Plugins =
+                    {
+                        Memory = 
+                        {
+                            SkipMemoryContext = true
+                        },
+                        Knowledge = 
+                        {
+                            SkipKnowledgeContext = true
+                        }
+                    }
                 },
                 Plugins =
                 {
@@ -629,9 +667,21 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 ConfigOverrides =
                 {
-                    SkipMemoryContext = true,
-                    SkipKnowledgeContext = true,
-                    SkipWebSearchContext = true
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            SkipMemoryContext = true
+                        },
+                        Knowledge =
+                        {
+                            SkipKnowledgeContext = true
+                        },
+                        WebSearch =
+                        {
+                            SkipWebSearchContext = true
+                        } 
+                    }
                 },
                 Plugins =
                 {

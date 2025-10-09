@@ -8,7 +8,7 @@ namespace Vivet.AI.Services.Extensions;
 
 internal static class BaseEmbeddingExtensions
 {
-    internal static double GetRecencyScore<T>(this T record, BaseScoringOptions scoringOptions, BaseScoringConfigOverrides overrides)
+    internal static double GetRecencyScore<T>(this T record, BaseScoringOptions scoringOptions, BaseScoringConfigOverrides overrides = null)
         where T : BaseEmbedding
     {
         if (record == null)
@@ -20,10 +20,10 @@ internal static class BaseEmbeddingExtensions
         var resultDateTime = DateTimeOffset.FromUnixTimeSeconds(record.UnixTimestamp).UtcDateTime;
         var ageInDays = (DateTimeOffset.UtcNow - resultDateTime).TotalDays;
 
-        var recencyDecayStrategy = overrides.RecencyDecayStrategy ?? scoringOptions.RecencyDecayStrategy;
-        var recencyBoostMax = overrides.RecencyBoostMax ?? scoringOptions.RecencyBoostMax;
-        var recencyDecayDays = overrides.RecencyDecayDays ?? scoringOptions.RecencyDecayDays;
-        var recencySigmoidSteepness = overrides.RecencySigmoidSteepness ?? scoringOptions.RecencySigmoidSteepness;
+        var recencyDecayStrategy = overrides?.RecencyDecayStrategy ?? scoringOptions.RecencyDecayStrategy;
+        var recencyBoostMax = overrides?.RecencyBoostMax ?? scoringOptions.RecencyBoostMax;
+        var recencyDecayDays = overrides?.RecencyDecayDays ?? scoringOptions.RecencyDecayDays;
+        var recencySigmoidSteepness = overrides?.RecencySigmoidSteepness ?? scoringOptions.RecencySigmoidSteepness;
 
         return recencyDecayStrategy switch
         {

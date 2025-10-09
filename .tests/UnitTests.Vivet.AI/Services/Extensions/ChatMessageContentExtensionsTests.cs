@@ -112,7 +112,7 @@ public class ChatMessageContentExtensionsTests
     }
 
     [TestMethod]
-    public void GetExternalIdThrowsArgumentNullExceptionTest()
+    public void GetExternalIdWhenChatMessageContentIsNullTest()
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
@@ -182,7 +182,7 @@ public class ChatMessageContentExtensionsTests
     }
 
     [TestMethod]
-    public void GetCreatedAtThrowsArgumentNullExceptionTest()
+    public void GetCreatedAtWhenChatMessageContentIsNullTest()
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
@@ -256,7 +256,7 @@ public class ChatMessageContentExtensionsTests
     }
 
     [TestMethod]
-    public void GetTokenUsageThrowsArgumentNullExceptionTest()
+    public void GetTokenUsageWhenChatMessageContentIsNullTest()
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
@@ -325,7 +325,7 @@ public class ChatMessageContentExtensionsTests
     }
 
     [TestMethod]
-    public void GetFinishReasonlIdThrowsArgumentNullExceptionTest()
+    public void GetFinishReasonlIdWhenChatMessageContentIsNullTest()
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
@@ -360,7 +360,7 @@ public class ChatMessageContentExtensionsTests
     }
 
     [TestMethod]
-    public void GetFinishReasonlIdWhenWhenNullTest()
+    public void GetFinishReasonlIdWhenWhenFinishReasonIsNullTest()
     {
         var content = new ChatMessageContent
         {

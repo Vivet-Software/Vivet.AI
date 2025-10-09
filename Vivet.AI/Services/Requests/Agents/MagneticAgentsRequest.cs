@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Services.Requests.Agent;
+﻿namespace Vivet.AI.Services.Requests.Agents;
 
 /// <summary>
 /// agentic orchestration is designed based on the Magentic-One system invented by AutoGen.

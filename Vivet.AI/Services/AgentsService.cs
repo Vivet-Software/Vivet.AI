@@ -25,9 +25,9 @@ using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Models.ConfigOverrides;
-using Vivet.AI.Services.Requests.Agent;
-using Vivet.AI.Services.Requests.Agent.Models;
-using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
+using Vivet.AI.Services.Requests.Agents;
+using Vivet.AI.Services.Requests.Agents.Models;
+using Vivet.AI.Services.Requests.Agents.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
 using Vivet.AI.Services.Responses.Agent;
 using Vivet.AI.Services.Responses.Agent.Models;
@@ -229,7 +229,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
 
             chatHistory
                 .AddChatSystemPrompt<string>(agentDescriptor.Instructions)
-                .AddAgentPluginsContextPrompt(agentDescriptor, request);
+                .AddAgentPluginsContextPrompt(kernel, agentDescriptor, request);
 
             var instructions = chatHistory
                 .GetPromptAsText(true);
@@ -356,7 +356,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
                             ScopeId = request.Plugins.Context.Memory.ScopeId,
                             Language = result.Language,
                             Blobs = request.Blobs,
-                            ConfigOverrides = request.ConfigOverrides.Memory
+                            ConfigOverrides = request.ConfigOverrides.Plugins.Memory.Indexing
                         }, cancellationToken)
                         .ConfigureAwait(false);
 

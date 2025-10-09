@@ -8,9 +8,6 @@ using Vivet.AI.Services.Models.Plugins;
 
 namespace Vivet.AI.Services.Extensions;
 
-/// <summary>
-/// String Builder Extensions.
-/// </summary>
 internal static class StringBuilderExtensions
 {
     internal static StringBuilder AppendBuiltInPluginContext<TContext>(this StringBuilder stringBuilder, string name, TContext context = null)
@@ -22,7 +19,7 @@ internal static class StringBuilderExtensions
         if (name == null)
             throw new ArgumentNullException(nameof(name));
 
-        var contextValues = GetComplexValue(nameof(context), context);
+        var contextValues = GetComplexValueOrDefault(nameof(context), context);
 
         if (contextValues == null)
         {
@@ -47,8 +44,8 @@ internal static class StringBuilderExtensions
         if (name == null)
             throw new ArgumentNullException(nameof(name));
 
-        var contextValues = GetComplexValue(nameof(context), context);
-        var configOverridesValue = GetComplexValue(nameof(configOverrides), configOverrides);
+        var contextValues = GetComplexValueOrDefault(nameof(context), context);
+        var configOverridesValue = GetComplexValueOrDefault(nameof(configOverrides), configOverrides);
 
         if (contextValues == null && configOverridesValue == null)
         {
@@ -93,9 +90,14 @@ internal static class StringBuilderExtensions
             var contextValues = customPlugin.Context
                 .Select(x =>
                 {
+                    if (x.Value == null)
+                    {
+                        return null;
+                    }
+
                     var value = x.Value.GetType().IsSimple()
-                        ? GetSimpleValue(x.Key, x.Value)
-                        : GetComplexValue(x.Key, x.Value);
+                        ? GetSimpleValueOrDefault(x.Key, x.Value)
+                        : GetComplexValueOrDefault(x.Key, x.Value);
 
                     return value;
                 })
@@ -115,7 +117,7 @@ internal static class StringBuilderExtensions
     }
 
 
-    private static string GetSimpleValue(string name, object value = null)
+    private static string GetSimpleValueOrDefault(string name, object value = null)
     {
         if (name == null)
             throw new ArgumentNullException(nameof(name));
@@ -127,7 +129,7 @@ internal static class StringBuilderExtensions
 
         return $"{name}={value}";
     }
-    private static string GetComplexValue(string name, object value = null)
+    private static string GetComplexValueOrDefault(string name, object value = null)
     {
         if (name == null)
             throw new ArgumentNullException(nameof(name));

@@ -51,7 +51,7 @@ internal static class KernelPluginCollectionExtensions
             .AddFromObject(instance, customPlugin.Name ?? customPlugin.Type.Name);
     }
 
-    internal static void ValidateContext<TMemory, TKnowledge, TWebSearch>(this KernelPluginCollection kernelPluginCollection, BaseBuiltInContext<TMemory, TKnowledge, TWebSearch> pluginsContext, BaseBuiltInContext<TMemory, TKnowledge, TWebSearch> parentPluginsContext = null)
+    internal static void ValidateContext<TMemory, TKnowledge, TWebSearch>(this KernelPluginCollection kernelPluginCollection, BaseContext<TMemory, TKnowledge, TWebSearch> pluginsContext, BaseContext<TMemory, TKnowledge, TWebSearch> parentPluginsContext = null)
         where TMemory : class
         where TKnowledge : class
         where TWebSearch : class

@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.Blobs;
-using Vivet.AI.Services.Requests.Agent.Models;
-using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
-using Vivet.AI.Services.Requests.Agent.Models.Plugins;
+using Vivet.AI.Services.Requests.Agents.Models;
+using Vivet.AI.Services.Requests.Agents.Models.ConfigOverrides;
+using Vivet.AI.Services.Requests.Agents.Models.Plugins;
 
-namespace Vivet.AI.Services.Requests.Agent;
+namespace Vivet.AI.Services.Requests.Agents;
 
 /// <summary>
 /// Represents an agent request,
@@ -53,7 +53,7 @@ public abstract class BaseAgentsRequest
     /// Plugins and their associated context for both built-in and custom plugins.
     /// </summary>
     [Required]
-    public virtual AgentPlugins Plugins { get; } = new();
+    public virtual AgentsPlugins Plugins { get; } = new();
 
     /// <summary>
     /// Gets or sets the configuration overrides for the request.

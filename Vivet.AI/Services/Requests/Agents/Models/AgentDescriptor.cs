@@ -1,10 +1,10 @@
 ﻿using System;
-using Microsoft.SemanticKernel.ChatCompletion;
 using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Services.Requests.Agent.Models.ConfigOverrides;
-using Vivet.AI.Services.Requests.Agent.Models.Plugins;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Vivet.AI.Services.Requests.Agents.Models.ConfigOverrides;
+using Vivet.AI.Services.Requests.Agents.Models.Plugins;
 
-namespace Vivet.AI.Services.Requests.Agent.Models;
+namespace Vivet.AI.Services.Requests.Agents.Models;
 
 /// <summary>
 /// Represents the configuration and metadata required to create a Semantic Kernel agent.
@@ -53,7 +53,7 @@ public class AgentDescriptor
     /// </para>
     /// </summary>
     [Required]
-    public virtual AgentPlugins Plugins { get; } = new();
+    public virtual AgentsPlugins Plugins { get; } = new();
 
     /// <summary>
     /// Allows overriding default configuration for the agent, such as model-specific settings

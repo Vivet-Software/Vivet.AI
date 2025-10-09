@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Services.Interfaces;
-using Vivet.AI.Services.Requests.Chat.Models.Plugins.Context;
+using Vivet.AI.Services.Requests.Chat.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Embedding.Memory;
 using Vivet.AI.Services.Requests.Embedding.Memory.Models;
 using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;

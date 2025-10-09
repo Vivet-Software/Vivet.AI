@@ -19,14 +19,6 @@ public class ParameterExpressionExtensionsTests
     }
 
     [TestMethod]
-    public void AddExpressionEqualThrowsArgumentNullExceptionTest()
-    {
-        Expression body = null;
-        Assert.ThrowsException<ArgumentNullException>(() =>
-            ((ParameterExpression)null).AddExpressionEqual("IntProp", 5, ref body));
-    }
-
-    [TestMethod]
     public void AddExpressionEqualTest()
     {
         Expression body = null;
@@ -121,11 +113,19 @@ public class ParameterExpressionExtensionsTests
     }
 
     [TestMethod]
-    public void AddExpressionSearchForThrowsArgumentOutOfRangeExceptionTest()
+    public void AddExpressionSearchForWhenEnumIsOutOfRangeTest()
     {
         Expression body = null;
         var param = Expression.Parameter(typeof(Knowledge), "k");
 
         Assert.ThrowsException<ArgumentOutOfRangeException>(() => param.AddExpressionSearchFor((SearchFor)999, ref body));
+    }
+
+    [TestMethod]
+    public void AddExpressionEqualWhenExpressionIsNullTest()
+    {
+        Expression body = null;
+
+        Assert.ThrowsException<ArgumentNullException>(() => ((ParameterExpression)null).AddExpressionEqual("IntProp", 5, ref body));
     }
 }

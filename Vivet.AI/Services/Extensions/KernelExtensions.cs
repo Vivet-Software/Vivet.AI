@@ -65,19 +65,19 @@ internal static class KernelExtensions
         if (configOverrides == null) 
             throw new ArgumentNullException(nameof(configOverrides));
 
-        if (parentConfigOverrides?.SkipMemoryContext is true || configOverrides.SkipMemoryContext)
+        if (parentConfigOverrides?.Plugins.Memory.SkipMemoryContext is true || configOverrides.Plugins.Memory.SkipMemoryContext)
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.MEMORY_PLUGIN);
         }
 
-        if (parentConfigOverrides?.SkipKnowledgeContext is true || configOverrides.SkipKnowledgeContext)
+        if (parentConfigOverrides?.Plugins.Knowledge.SkipKnowledgeContext is true || configOverrides.Plugins.Knowledge.SkipKnowledgeContext)
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.KNOWLEDGE_PLUGIN);
         }
 
-        if (parentConfigOverrides?.SkipWebSearchContext is true || configOverrides.SkipWebSearchContext)
+        if (parentConfigOverrides?.Plugins.WebSearch.SkipWebSearchContext is true || configOverrides.Plugins.WebSearch.SkipWebSearchContext)
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.WEB_SEARCH_PLUGIN);
