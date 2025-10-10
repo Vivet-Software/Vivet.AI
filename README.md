@@ -440,6 +440,7 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 ```
 
 ### 📑 Chat Configuration Details
+
 | Setting                                    | Type              | Default    | Description                                                                                                                                                      |
 | ------------------------------------------ | ----------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Chat`                                     |                   |            | Chat configuration.                                                                                                                                              |
