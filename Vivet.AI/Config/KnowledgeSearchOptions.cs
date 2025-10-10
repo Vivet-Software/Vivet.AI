@@ -3,4 +3,4 @@
 /// <summary>
 /// Options for knowledge querying.
 /// </summary>
-public class KnowledgeQueryOptions : BaseEmbeddingSearchOptions<KnowledgeScoringOptions>;
+public class KnowledgeSearchOptions : BaseEmbeddingSearchOptions<KnowledgeScoringOptions>;

@@ -3,7 +3,7 @@
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Options for memory querying.
+/// Options for memory searching.
 /// </summary>
 public class MemorySearchOptions : BaseEmbeddingSearchOptions<MemoryScoringOptions>
 {
