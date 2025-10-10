@@ -461,7 +461,7 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 | `Chat.Plugins`                             |                   |            | Options for configuring built-in chat plugins. See The [Plugins](#-plugins-1).                                                                                   |
 | `Chat.Plugins.EnableMemoryPlugin`          | bool              |            | Enables or disables the built-in Memory plugin. The [Embedding Memory](#-embedding-memory-service) must be configured for this setting to take effect.           |
 | `Chat.Plugins.EnableKnowledgePlugin`       | bool              |            | Enables or disables the built-in Knowledge plugin. The [Embedding Knowledge](#-embedding-knowledge-service) must be configured for this setting to take effect.  |
-| `Chat.Plugins.EnableWebSearchPlugin`       | bool              |            | Enables or disables the built-in Web Search plugin. The [Web Search](#-web-search) must be configured for this setting to take effect.                     |
+| `Chat.Plugins.EnableWebSearchPlugin`       | bool              |            | Enables or disables the built-in Web Search plugin. The [Web Search](#-web-search) must be configured for this setting to take effect.                           |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
