@@ -612,6 +612,7 @@ Defines setting related to indexing new content in the vector store.
   }
 }
 ```
+
 | Setting                                                         | Type | Default | Description                                                                                            |
 | --------------------------------------------------------------- | ---- | ------- | ------------------------------------------------------------------------------------------------------ |
 | `Indexing.TextChunking.MinTokens`                               | int  | `20`    | Minimum number of tokens per chunk. (Approximation)                                                    |
