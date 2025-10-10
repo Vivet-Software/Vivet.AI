@@ -1225,7 +1225,7 @@ Plugins must have seperate context variables even when they are re-used among se
 // BUG: Finish Plugins section in readme
 // BUG: Also check if config override should have a deeper explanation.
 
-
+ 
 
 #### 🧠 Memory
 There is currently no configuration for then built-in memory plugin.  
