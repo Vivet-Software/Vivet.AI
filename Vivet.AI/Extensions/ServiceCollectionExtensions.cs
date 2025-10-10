@@ -33,7 +33,8 @@ internal static class ServiceCollectionExtensions
             throw new ArgumentNullException(nameof(services));
 
         services
-            .AddSingleton(options);
+            .AddSingleton(options)
+            .AddSingleton(options.Plugins);
 
         return services;
     }
@@ -51,6 +52,7 @@ internal static class ServiceCollectionExtensions
 
         services
             .AddSingleton(options)
+            .AddSingleton(options.Plugins)
             .Configure<AiOptions>(section);
 
         return services;
@@ -68,8 +70,8 @@ internal static class ServiceCollectionExtensions
         services
             .AddKeyedSingleton(ServiceIds.CHAT_SERVICE_ID, (x, _) =>
             {
-                var chatOptions = x
-                    .GetService<ChatOptions>();
+                var pluginsOptions = x
+                    .GetService<PluginsOptions>();
 
                 var chatCompletionService = x
                     .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.CHAT_SERVICE_ID);
@@ -81,13 +83,13 @@ internal static class ServiceCollectionExtensions
 
                 builder
                     .AddLoggerFactory(x)
-                    .AddChatBuiltInPlugins(x, chatOptions.Plugins);
+                    .AddChatBuiltInPlugins(x, pluginsOptions);
 
                 return builder;
             });
 
         services
-            .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Chat.Plugins.WebSearch)
+            .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Plugins.WebSearch)
             .AddPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
             .AddScoped<IChatService>(x =>
             {
@@ -305,8 +307,8 @@ internal static class ServiceCollectionExtensions
         services
             .AddKeyedSingleton(ServiceIds.AGENT_SERVICE_ID, (x, _) =>
             {
-                var agentOptions = x
-                    .GetService<AgentsOptions>();
+                var pluginsOptions = x
+                    .GetService<PluginsOptions>();
 
                 var chatCompletionService = x
                     .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.AGENT_SERVICE_ID);
@@ -318,13 +320,13 @@ internal static class ServiceCollectionExtensions
 
                 builder
                     .AddLoggerFactory(x)
-                    .AddAgentsBuiltInPlugins(x, agentOptions.Plugins);
+                    .AddAgentsBuiltInPlugins(x, pluginsOptions);
 
                 return builder;
             });
 
         services
-            .AddTextSearch(ServiceIds.AGENT_SERVICE_ID, options.Agents.Plugins.WebSearch)
+            .AddTextSearch(ServiceIds.AGENT_SERVICE_ID, options.Plugins.WebSearch)
             .AddPromptExecutionSettings<T>(options.Agents.Model.Parameters, ServiceIds.AGENT_SERVICE_ID)
             .AddScoped<IAgentsService>(x =>
             {
@@ -380,6 +382,12 @@ internal static class ServiceCollectionExtensions
 
     private static IServiceCollection AddTextSearch(this IServiceCollection services, string serviceId, WebSearchPluginOptions webSearchPluginOptions = null)
     {
+        if (services == null) 
+            throw new ArgumentNullException(nameof(services));
+        
+        if (serviceId == null) 
+            throw new ArgumentNullException(nameof(serviceId));
+
         if (webSearchPluginOptions == null)
         {
             return services;
@@ -448,13 +456,15 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddMemoryVectorStore(this IServiceCollection services, EmbeddingMemoryOptions options)
+    private static IServiceCollection AddMemoryVectorStore(this IServiceCollection services, EmbeddingMemoryOptions options = null)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
         if (options == null)
-            throw new ArgumentNullException(nameof(options));
+        {
+            return null;
+        }
 
         services
             .AddVectorStore<Memory>(options.VectorStore);
@@ -481,13 +491,15 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddKnowledgeVectorStore(this IServiceCollection services, EmbeddingKnowledgeOptions options)
+    private static IServiceCollection AddKnowledgeVectorStore(this IServiceCollection services, EmbeddingKnowledgeOptions options = null)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
         if (options == null)
-            throw new ArgumentNullException(nameof(options));
+        {
+            return null;
+        }
 
         services
             .AddVectorStore<Knowledge>(options.VectorStore);

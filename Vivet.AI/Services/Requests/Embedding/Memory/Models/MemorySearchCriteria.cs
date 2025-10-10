@@ -5,8 +5,6 @@ using Vivet.AI.Services.Models;
 
 namespace Vivet.AI.Services.Requests.Embedding.Memory.Models;
 
-// BUG: An error occurred. The binary operator Equal is not defined for the types 'System.String' and 'System.Guid'.
-
 /// <summary>
 /// Represents criteria for filtering memory entries when searching.
 /// </summary>

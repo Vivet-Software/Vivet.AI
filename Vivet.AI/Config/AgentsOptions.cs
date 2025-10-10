@@ -23,8 +23,8 @@ public class AgentsOptions
     public virtual TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);
 
     /// <summary>
-    /// Built-in plugins that can be enabled for the chat model.
+    /// Options for enabling or disabling built-in plugins.
     /// </summary>
     [Required]
-    public virtual PluginsOptions Plugins { get; set; } = new();
+    public virtual PluginsToggleOptions Plugins { get; set; } = new();
 }

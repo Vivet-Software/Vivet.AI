@@ -430,6 +430,13 @@ public class EmbeddingMemoryServiceTests : BaseTests
     }
 
     [TestMethod]
+    public async Task IndexTextWhenConfigOverridesTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
     public async Task QueryTest()
     {
         var threadId = Guid.NewGuid();
@@ -599,6 +606,13 @@ public class EmbeddingMemoryServiceTests : BaseTests
     }
 
     [TestMethod]
+    public async Task QueryWhenConfigOverridesTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
     public async Task SearchTest()
     {
         var scopeId = Guid.NewGuid();
@@ -639,6 +653,42 @@ public class EmbeddingMemoryServiceTests : BaseTests
     }
 
     [TestMethod]
+    public async Task SearchWhenDeduplicationTest()
+    {
+        const string QUESTION = "Never tell me about sweden.";
+        const string ANSWER = "Okay absolutely Sweden is of my mind. I will never tell you anything about Sweden";
+
+        var scopeId = Guid.NewGuid();
+
+        for (var i = 0; i < 2; i++)
+        {
+            await this.EmbeddingMemoryService
+                .IndexAsync(new IndexMemoryRequest
+                {
+                    Question = QUESTION,
+                    Answer = ANSWER,
+                    UserId = this.userId,
+                    ThreadId = Guid.NewGuid(),
+                    ScopeId = scopeId
+                });
+        }
+
+        var response = await this.EmbeddingMemoryService
+            .SearchAsync(new SearchMemoryRequest
+            {
+                Query = "I don't want to hear about Sweden.",
+                Limit = 10,
+                Criteria =
+                {
+                    ScopeId = scopeId
+                }
+            });
+
+        Assert.IsNotNull(response);
+        Assert.AreEqual(1, response.Results.Count());
+    }
+
+    [TestMethod]
     public async Task SearchWhenNoCriteriasTest()
     {
         const string QUESTION = "Never tell me about sweden.";
@@ -664,7 +714,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
             });
 
         Assert.IsNotNull(response);
-        Assert.IsTrue(response.Results.Count() >= 2);
+        Assert.IsTrue(response.Results.Any());
     }
 
     [TestMethod]
@@ -702,7 +752,11 @@ public class EmbeddingMemoryServiceTests : BaseTests
                     UserId = localUserId
                 },
                 CurrentThreadId = sameThreadId,
-                Limit = 4
+                Limit = 4,
+                ConfigOverrides =
+                {
+                    UseQueryDeduplication = false
+                }
             });
 
         var questionResults = searchResponse.Results.Where(x => x.Result.IsQuestion).ToArray();
@@ -777,6 +831,13 @@ public class EmbeddingMemoryServiceTests : BaseTests
         Assert.IsNotNull(result);
         Assert.AreEqual("summary", result.Result.Content);
         Assert.AreEqual("description", result.Result.FullContext);
+    }
+
+    [TestMethod]
+    public async Task SearchWhenConfigOverridesTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
     }
 
     [TestMethod]

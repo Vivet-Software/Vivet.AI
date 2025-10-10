@@ -116,7 +116,7 @@ give format and make it polished. Output the final improved copy as a single tex
                     {
                         Memory =
                         {
-                            SkipMemoryContext = true
+                            EnableMemoryPlugin = false
                         }
                     }
                 }
@@ -157,7 +157,7 @@ give format and make it polished. Output the final improved copy as a single tex
                     {
                         Memory =
                         {
-                            SkipMemoryContext = true
+                            EnableMemoryPlugin = false
                         }
                     }
                 }
@@ -206,7 +206,7 @@ If not, provide insight on how to refine suggested copy without example."
                     { 
                         Memory =
                         {
-                            SkipMemoryContext = true
+                            EnableMemoryPlugin = false
                         }
                     }
                 }
@@ -292,7 +292,7 @@ If not, provide insight on how to refine suggested copy without example."
                     {
                         Memory =
                         {
-                            SkipMemoryContext = true
+                            EnableMemoryPlugin = false
                         }
                     }
                 }

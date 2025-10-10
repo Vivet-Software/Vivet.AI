@@ -161,7 +161,7 @@ public class MetadataServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task GetWhenOverrideModelTest()
+    public async Task GetWhenConfigOverridesTest()
     {
         await Task.CompletedTask;
         Assert.Inconclusive();

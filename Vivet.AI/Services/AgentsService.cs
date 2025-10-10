@@ -35,13 +35,10 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-
-
-// BUG: Plugins
-// Should plugin config be Ai.Plugins?
-// Should request.CustomPlugins.Type be a generic parameters instead
-
 // BUG: Readme:
+// IMPORTANT: How to explain that enabling Embedding Memory/Knowledge will automatically enable the plugins.
+// - Also when WebSearch is configured it's enabled for Chat and Agents automatically.
+
 // PLUGINS:
 // Link to config options in chat settings table
 // Move plugins to own section, re-use in Chat and Agents
@@ -56,7 +53,23 @@ namespace Vivet.AI.Services;
 
 // Document built in filter (PII Detection and PromptCache (coming features)
 
-// If using complex tyoes in plugins, ensure to pass the context as json (parameterName={json})
+// complex types can be usd in plugins, including nested objects.
+
+// Plugins config moved to root "Ai"
+//"Plugins": {
+//    "WebSearch": {
+//        "Provider": "Google",
+//        "Id": null,
+//        "ApiKey": null
+//    }
+//}
+
+// CHat
+//"Plugins": {
+//    "EnableMemoryPlugin": true,
+//    "EnableKnowledgePlugin": true,
+//    "EnableWebSearchPlugin": true
+//}
 
 /// <inheritdoc cref="IAgentsService"/>
 public class AgentsService(AgentsOptions options, IServiceProvider serviceProvider, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null)
@@ -177,7 +190,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
 
         kernel
             .AddDefaultFilters()
-            .RemoveSkippedBuiltInPlugins(agent.ConfigOverrides, parentConfigOverrides)
+            .RemoveSkippedBuiltInPlugins(options.Plugins, agent.ConfigOverrides, parentConfigOverrides)
             .AddCustomPlugins(serviceProvider, agent.Plugins.CustomPlugins);
 
         kernel.Plugins

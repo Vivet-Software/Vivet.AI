@@ -4,7 +4,7 @@ using Vivet.AI.Models.Enums;
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Chat Web Search Plugin Options.
+/// Web Search Plugin Options.
 /// </summary>
 public class WebSearchPluginOptions
 {

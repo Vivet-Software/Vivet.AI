@@ -10,10 +10,10 @@ namespace Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 public class MemoryConfigOverrides
 {
     /// <summary>
-    /// Skips the memory invocaton and context in the prompt for this request.
+    /// Enables or disable the memory invocaton and context in the prompt for this request.
     /// </summary>
     [JsonIgnore]
-    public virtual bool SkipMemoryContext { get; set; } = false;
+    public virtual bool? EnableMemoryPlugin { get; set; }
 
     /// <summary>
     /// Memory search config overrides.

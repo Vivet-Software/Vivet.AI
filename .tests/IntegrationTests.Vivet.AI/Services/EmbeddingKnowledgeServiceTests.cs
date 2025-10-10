@@ -181,6 +181,13 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
     }
 
     [TestMethod]
+    public async Task IndexTextWhenConfigOverridesTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
     public async Task IndexImageTest()
     {
         var scopeId = Guid.NewGuid();
@@ -563,7 +570,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task QueryTextTest()
+    public async Task QueryTest()
     {
         var scopeId = Guid.NewGuid();
         const string TEXT = "The apple is black and old.";
@@ -617,7 +624,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task QueryTextWhenNoCriteriasTest()
+    public async Task QueryWhenNoCriteriasTest()
     {
         const string TEXT = "The apple is black and old.";
 
@@ -642,7 +649,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task QueryTextWhenSkipTest()
+    public async Task QueryWhenSkipTest()
     {
         var localUserId = Guid.NewGuid();
 
@@ -675,7 +682,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task QueryTextWhenOrderByUnixTimeStampTest()
+    public async Task QueryWhenOrderByUnixTimeStampTest()
     {
         var scopeId = Guid.NewGuid();
         const string TEXT = "The apple is black and old.";
@@ -710,6 +717,13 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         var result = results.FirstOrDefault();
         Assert.IsNotNull(result);
         Assert.IsTrue(result.Result.Content.StartsWith("0. "));
+    }
+
+    [TestMethod]
+    public async Task QueryWhenConfigOverridesTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
     }
 
     [TestMethod]
@@ -756,6 +770,38 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
     }
 
     [TestMethod]
+    public async Task SearchWhenDeduplicationTest()
+    {
+        const string TEXT = "The apple is black and old.";
+
+        var scopeId = Guid.NewGuid();
+
+        for (var i = 0; i < 2; i++)
+        {
+            await this.EmbeddingKnowledgeService
+                .IndexAsync(new IndexTextRequest
+                {
+                    Text = TEXT,
+                    ScopeId = scopeId
+                });
+        }
+
+        var response = await this.EmbeddingKnowledgeService
+            .SearchAsync(new SearchKnowledgeRequest
+            {
+                Query = TEXT,
+                Limit = 10,
+                Criteria =
+                {
+                    ScopeId = scopeId
+                }
+            });
+
+        Assert.IsNotNull(response);
+        Assert.AreEqual(1, response.Results.Count());
+    }
+
+    [TestMethod]
     public async Task SearchWhenNoCriteriasTest()
     {
         const string TEXT = "The apple is black and old.";
@@ -778,7 +824,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
             });
 
         Assert.IsNotNull(response);
-        Assert.IsTrue(response.Results.Count() >= 2);
+        Assert.IsTrue(response.Results.Any());
     }
 
     [TestMethod]
@@ -836,6 +882,13 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
 
     [TestMethod]
     public async Task SearchWhenRecencyScoreTest()
+    {
+        await Task.CompletedTask;
+        Assert.Inconclusive();
+    }
+
+    [TestMethod]
+    public async Task SearchWhenConfigOverridesTest()
     {
         await Task.CompletedTask;
         Assert.Inconclusive();

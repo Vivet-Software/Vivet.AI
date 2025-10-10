@@ -10,10 +10,10 @@ namespace Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 public class KnowledgeConfigOverrides
 {
     /// <summary>
-    /// Skips the knowledge plugin invocaton and context in the prompt for this request.
+    /// Enables or disable the knowledge plugin invocaton and context in the prompt for this request.
     /// </summary>
     [JsonIgnore]
-    public virtual bool SkipKnowledgeContext { get; set; } = false;
+    public virtual bool? EnableKnowledgePlugin { get; set; }
 
     /// <summary>
     /// Knowledge search config overrides.

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Vivet.AI.Config;
 using Vivet.AI.Services.Filters;
 using Vivet.AI.Services.Models.ConfigOverrides;
 using Vivet.AI.Services.Models.Plugins;
@@ -57,7 +58,7 @@ internal static class KernelExtensions
         return kernel;
     }
 
-    internal static Kernel RemoveSkippedBuiltInPlugins(this Kernel kernel, BaseChatConfigOverrides configOverrides, BaseChatConfigOverrides parentConfigOverrides = null)
+    internal static Kernel RemoveSkippedBuiltInPlugins(this Kernel kernel, PluginsToggleOptions toggleOptions, BaseChatConfigOverrides configOverrides, BaseChatConfigOverrides parentConfigOverrides = null)
     {
         if (kernel == null)
             throw new ArgumentNullException(nameof(kernel));
@@ -65,19 +66,19 @@ internal static class KernelExtensions
         if (configOverrides == null) 
             throw new ArgumentNullException(nameof(configOverrides));
 
-        if (parentConfigOverrides?.Plugins.Memory.SkipMemoryContext is true || configOverrides.Plugins.Memory.SkipMemoryContext)
+        if (!(configOverrides.Plugins.Memory.EnableMemoryPlugin ?? parentConfigOverrides?.Plugins.Memory.EnableMemoryPlugin ?? toggleOptions.EnableMemoryPlugin))
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.MEMORY_PLUGIN);
         }
 
-        if (parentConfigOverrides?.Plugins.Knowledge.SkipKnowledgeContext is true || configOverrides.Plugins.Knowledge.SkipKnowledgeContext)
+        if (!(configOverrides.Plugins.Knowledge.EnableKnowledgePlugin ?? parentConfigOverrides?.Plugins.Knowledge.EnableKnowledgePlugin ?? toggleOptions.EnableKnowledgePlugin))
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.KNOWLEDGE_PLUGIN);
         }
 
-        if (parentConfigOverrides?.Plugins.WebSearch.SkipWebSearchContext is true || configOverrides.Plugins.WebSearch.SkipWebSearchContext)
+        if (!(configOverrides.Plugins.WebSearch.EnableWebSearchPlugin ?? parentConfigOverrides?.Plugins.WebSearch.EnableWebSearchPlugin ?? toggleOptions.EnableWebSearchPlugin))
         {
             kernel
                 .RemovePlugin(BuiltInPluginNames.WEB_SEARCH_PLUGIN);

@@ -170,7 +170,7 @@ public class SummarizationServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task SummarizeMemoryWhenOverrideModelTest()
+    public async Task SummarizeMemoryWhenConfigOverridesTest()
     {
         await Task.CompletedTask;
         Assert.Inconclusive();

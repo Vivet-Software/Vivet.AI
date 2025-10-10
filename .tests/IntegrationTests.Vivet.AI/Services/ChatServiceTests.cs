@@ -5,11 +5,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Interfaces;
@@ -20,29 +22,12 @@ using Vivet.AI.Services.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Requests.Chat.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
+using Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses;
 
 namespace IntegrationTests.Vivet.AI.Services;
-
-// BUG: 111: Test plugins, all 3 with changes to function parametrs (context)
-// -Tests (with config override) - assert arguments from function calls.
-//MemoryConfigOverrides = new MemorySearchConfigOverrides
-//    {
-//        UseQueryDeduplication = true,
-//        ContextQueryLimit = 5,
-//        RetentionInDays = 180,
-//        CounterpartContextQueryLimit = 3,
-//        Scoring =
-//        {
-//            DeduplicationMatchScoreThreshold = 0.8,
-//            MatchScoreThreshold = 0.91,
-//            RecencyBoostMax = 0.2,
-//            RecencyDecayStrategy = RecencyDecayStrategy.Linear,
-//            ThreadMatchBoost = 0.1,
-//            RecencySigmoidSteepness = 0.4
-//        }
-//    }
 
 [TestClass]
 public class ChatServiceTests : BaseTests
@@ -362,11 +347,11 @@ public class ChatServiceTests : BaseTests
                     {
                         Knowledge =
                         {
-                            SkipKnowledgeContext = true
+                            EnableKnowledgePlugin = false
                         },
                         WebSearch =
                         {
-                            SkipWebSearchContext = true
+                            EnableWebSearchPlugin = false   
                         }
                     }
                 },
@@ -447,7 +432,7 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task ChatWhenSkipMemoryContextTest()
+    public async Task ChatWhenEnableMemoryPluginIsFalseTest()
     {
         var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
 
@@ -481,7 +466,15 @@ public class ChatServiceTests : BaseTests
                     {
                         Memory =
                         {
-                            SkipMemoryContext = true
+                            EnableMemoryPlugin = false
+                        },
+                        Knowledge =
+                        {
+                            EnableKnowledgePlugin = false
+                        },
+                        WebSearch =
+                        {
+                            EnableWebSearchPlugin = false
                         }
                     }
                 }
@@ -494,10 +487,102 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task ChatWhenSkipSaveMemoryContextTest()
+    public async Task ChatWhenMemoryWhenConfigOverridesTest()
     {
-        await Task.CompletedTask;
-        Assert.Inconclusive();
+        var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
+
+        var threadId = Guid.NewGuid();
+        var localUserId = Guid.NewGuid();
+
+        const string QUESTION_INDEXED = "Tell me about Ceasar.";
+        const string ANSWER_INDEXED = "Ceasar was a dictator of rome.";
+
+        var indexRequest = new IndexMemoryRequest
+        {
+            Question = QUESTION_INDEXED,
+            Answer = ANSWER_INDEXED,
+            UserId = localUserId,
+            ThreadId = threadId,
+            Language = this.language
+        };
+
+        await embeddingMemoryService
+            .IndexAsync(indexRequest);
+
+        const string QUESTION = "Yesterday you mentioned that when Ceasar was emporer, can you recall that";
+
+        var request = new ChatRequest
+        {
+            Question = QUESTION,
+            ConfigOverrides =
+            {
+                Plugins =
+                {
+                    Memory =
+                    {
+                        Search =
+                        {
+                            UseQueryDeduplication = true,
+                            ContextQueryLimit = 2,
+                            RetentionInDays = 30,
+                            CounterpartContextQueryLimit = 2,
+                            Scoring =
+                            {
+                                DeduplicationMatchScoreThreshold = 0.7,
+                                MatchScoreThreshold = 0.92,
+                                RecencyBoostMax = 0.3,
+                                RecencyDecayStrategy = RecencyDecayStrategy.Linear,
+                                ThreadMatchBoost = 0.2,
+                                RecencySigmoidSteepness = 0.2
+                            }
+                        }
+                    },
+                    Knowledge =
+                    {
+                        EnableKnowledgePlugin = false
+                    },
+                    WebSearch =
+                    {
+                        EnableWebSearchPlugin = false
+                    }
+                }
+            },
+            Plugins =
+            {
+                Context =
+                {
+                    Memory = new ChatMemoryContext
+                    {
+                        UserId = localUserId,
+                        CurrentThreadId = Guid.NewGuid()
+                    }
+                }
+            }
+        };
+
+        var response = await this.ChatService
+            .ChatAsync(request);
+
+        Assert.IsNotNull(response);
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionResultContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[MEMORY]"));
+        Assert.IsTrue(response.InputPrompt.Contains(QUESTION_INDEXED));
+        Assert.IsTrue(response.InputPrompt.Contains(ANSWER_INDEXED));
+        Assert.IsNotEmpty(response.FunctionCalls);
+
+        var configOverride = (MemorySearchConfigOverrides)response.FunctionCalls.First().Arguments.First(x => x.Key == "configOverrides").Value;
+        Assert.IsNotNull(configOverride);
+        Assert.AreEqual(configOverride.UseQueryDeduplication, request.ConfigOverrides.Plugins.Memory.Search.UseQueryDeduplication);
+        Assert.AreEqual(configOverride.ContextQueryLimit, request.ConfigOverrides.Plugins.Memory.Search.ContextQueryLimit);
+        Assert.AreEqual(configOverride.RetentionInDays, request.ConfigOverrides.Plugins.Memory.Search.RetentionInDays);
+        Assert.AreEqual(configOverride.CounterpartContextQueryLimit, request.ConfigOverrides.Plugins.Memory.Search.CounterpartContextQueryLimit);
+        Assert.AreEqual(configOverride.Scoring.DeduplicationMatchScoreThreshold, request.ConfigOverrides.Plugins.Memory.Search.Scoring.DeduplicationMatchScoreThreshold);
+        Assert.AreEqual(configOverride.Scoring.MatchScoreThreshold, request.ConfigOverrides.Plugins.Memory.Search.Scoring.MatchScoreThreshold);
+        Assert.AreEqual(configOverride.Scoring.RecencyBoostMax, request.ConfigOverrides.Plugins.Memory.Search.Scoring.RecencyBoostMax);
+        Assert.AreEqual(configOverride.Scoring.RecencyDecayStrategy, request.ConfigOverrides.Plugins.Memory.Search.Scoring.RecencyDecayStrategy);
+        Assert.AreEqual(configOverride.Scoring.ThreadMatchBoost, request.ConfigOverrides.Plugins.Memory.Search.Scoring.ThreadMatchBoost);
+        Assert.AreEqual(configOverride.Scoring.RecencySigmoidSteepness, request.ConfigOverrides.Plugins.Memory.Search.Scoring.RecencySigmoidSteepness);
     }
 
     [TestMethod]
@@ -530,11 +615,11 @@ public class ChatServiceTests : BaseTests
                     {
                         Memory =
                         {
-                            SkipMemoryContext = true
+                            EnableMemoryPlugin = false
                         },
                         WebSearch = 
                         {
-                            SkipWebSearchContext = true
+                            EnableWebSearchPlugin = false
                         }
                     }
                 },
@@ -559,7 +644,7 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task ChatWhenSkipKnowledgeContextTest()
+    public async Task ChatWhenEnableKnowledgePluginIsFalseTest()
     {
         var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
@@ -588,11 +673,11 @@ public class ChatServiceTests : BaseTests
                     {
                         Knowledge = 
                         {
-                            SkipKnowledgeContext = true
+                            EnableKnowledgePlugin = false
                         },
                         WebSearch =
                         {
-                            SkipWebSearchContext = true
+                            EnableWebSearchPlugin = false
                         }
                     }
                 },
@@ -616,6 +701,92 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
+    public async Task ChatWhenKnowledgeWhenConfigOverridesTest()
+    {
+        var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
+
+        var scopeId = Guid.NewGuid();
+
+        const string TEXT_INDEXED = "We had 100 orders in 2022.";
+
+        var indexRequest = new IndexTextRequest
+        {
+            Text = TEXT_INDEXED,
+            ScopeId = scopeId
+        };
+
+        await embeddingKnowledgeService
+            .IndexAsync(indexRequest);
+
+        const string QUESTION = "Can you check how many orders we had in 2022?";
+
+        var request = new ChatRequest
+        {
+            Question = QUESTION,
+            ConfigOverrides =
+            {
+                Plugins =
+                {
+                    Memory =
+                    {
+                        EnableMemoryPlugin = false
+                    },
+                    Knowledge =
+                    {
+                        Search =
+                        {
+                            UseQueryDeduplication = true,
+                            ContextQueryLimit = 2,
+                            Scoring =
+                            {
+                                DeduplicationMatchScoreThreshold = 0.7,
+                                MatchScoreThreshold = 0.92,
+                                RecencyBoostMax = 0.3,
+                                RecencyDecayStrategy = RecencyDecayStrategy.Linear,
+                                RecencySigmoidSteepness = 0.2
+                            }
+                        }
+                    },
+                    WebSearch =
+                    {
+                        EnableWebSearchPlugin = false
+                    }
+                }
+            },
+            Plugins =
+            {
+                Context =
+                {
+                    Knowledge = new KnowledgeContext
+                    {
+                        ScopeId = scopeId
+                    }
+                }
+            }
+        };
+
+        var response = await this.ChatService
+            .ChatAsync(request);
+
+        Assert.IsNotNull(response);
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionResultContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[KNOWLEDGE]"));
+        Assert.IsTrue(response.InputPrompt.Contains(TEXT_INDEXED));
+        Assert.IsNotEmpty(response.FunctionCalls);
+
+        var configOverride = (KnowledgeSearchConfigOverrides)response.FunctionCalls.First().Arguments.First(x => x.Key == "configOverrides").Value;
+        Assert.IsNotNull(configOverride);
+        Assert.AreEqual(configOverride.UseQueryDeduplication, request.ConfigOverrides.Plugins.Knowledge.Search.UseQueryDeduplication);
+        Assert.AreEqual(configOverride.ContextQueryLimit, request.ConfigOverrides.Plugins.Knowledge.Search.ContextQueryLimit);
+        Assert.AreEqual(configOverride.Scoring.DeduplicationMatchScoreThreshold, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.DeduplicationMatchScoreThreshold);
+        Assert.AreEqual(configOverride.Scoring.MatchScoreThreshold, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.MatchScoreThreshold);
+        Assert.AreEqual(configOverride.Scoring.RecencyBoostMax, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.RecencyBoostMax);
+        Assert.AreEqual(configOverride.Scoring.RecencyDecayStrategy, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.RecencyDecayStrategy);
+        Assert.AreEqual(configOverride.Scoring.RecencySigmoidSteepness, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.RecencySigmoidSteepness);
+    }
+
+    [TestMethod]
     public async Task ChatWhenWebSearchTest()
     {
         const string QUESTION = "What's the latest with .NET?";
@@ -630,11 +801,11 @@ public class ChatServiceTests : BaseTests
                     {
                         Memory = 
                         {
-                            SkipMemoryContext = true
+                            EnableMemoryPlugin = false
                         },
                         Knowledge = 
                         {
-                            SkipKnowledgeContext = true
+                            EnableKnowledgePlugin = false
                         }
                     }
                 },
@@ -657,7 +828,7 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task ChatWhenWebSearchWhenSkipWebSearchContextTest()
+    public async Task ChatWhenWebSearchWhenEnableWebSearchPluginIsFalseTest()
     {
         const string QUESTION = "What's the latest with .NET?";
 
@@ -671,16 +842,16 @@ public class ChatServiceTests : BaseTests
                     {
                         Memory =
                         {
-                            SkipMemoryContext = true
+                            EnableMemoryPlugin = false
                         },
                         Knowledge =
                         {
-                            SkipKnowledgeContext = true
+                            EnableKnowledgePlugin = false
                         },
                         WebSearch =
                         {
-                            SkipWebSearchContext = true
-                        } 
+                            EnableWebSearchPlugin = false
+                        }
                     }
                 },
                 Plugins =

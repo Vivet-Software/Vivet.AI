@@ -152,7 +152,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
 
         kernel
             .AddDefaultFilters()
-            .RemoveSkippedBuiltInPlugins(request.ConfigOverrides)
+            .RemoveSkippedBuiltInPlugins(this.options.Plugins, request.ConfigOverrides)
             .AddCustomPlugins(serviceProvider, request.Plugins.CustomPlugins);
 
         kernel.Plugins
@@ -202,6 +202,11 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             throw new ArgumentNullException(nameof(response));
 
         if (embeddingMemoryService == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (!(request.ConfigOverrides.Plugins.Memory.EnableMemoryPlugin ?? this.options.Plugins.EnableMemoryPlugin))
         {
             return Task.CompletedTask;
         }
