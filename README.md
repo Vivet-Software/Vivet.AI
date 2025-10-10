@@ -587,6 +587,7 @@ The **Embedding** configuration contains settings shared by both **Memory** and 
 ```
 
 ### 📑 Common Embedding Configuration Details
+
 | Setting                | Type     | Default    | Description                                                                                                   |
 | ---------------------- | -------- | ---------- | ------------------------------------------------------------------------------------------------------------- |
 | `Model`                |          |            | Embedding model configuration.                                                                                |
@@ -637,6 +638,7 @@ Scoring defines the weight configuration for **approximate nearest neighbor sear
     "RecencySigmoidSteepness": 1.0
 }
 ```
+
 | Setting                                            | Type   | Default  | Description                                                                          |
 | -------------------------------------------------- | ------ | -------- | ------------------------------------------------------------------------------------ |
 | `Search.UseQueryDeduplication`                     | bool   | true     | Deduplicate similar memory entries before building context.                          |
@@ -667,6 +669,7 @@ Defines which vector database to use for embedding storage and retrieval.
   "UseHealthCheck": true
 }
 ```
+
 | Setting          | Type     | Default     | Description                                                                                                        |
 | ---------------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
 | `Provider`       | enum     | `None`      | Vector DB provider (`Qdrant`, `Pinecone`, etc.). See [Supported Vector Stores](#%EF%B8%8F-supported-vector-stores) |
@@ -728,6 +731,7 @@ The unique memory-specific setting is:
 ```
 
 ### 📑 Embedding Memory Configuration Details
+
 | Setting                                  | Type    | Default   | Description                                                                                                                 |
 | ---------------------------------------- | ------- | --------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `Indexing`                               |         |           | Memory indexing configuration. [Indexing Configuration](#-indexing)                                                               |
@@ -890,6 +894,7 @@ The unique knowledge-specific setting is:
 ```
 
 ### 📑 Embedding Knowledge Configuration Details
+
 | Setting                                  | Type   | Default | Description                                                                                                                 |
 | ---------------------------------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `Indexing`                               |        |         | Knowledge indexing configuration. [Indexing Configuration](#-indexing)                                                      |
@@ -1057,6 +1062,7 @@ Example `appsettings.json` snippet showing how to configure `IMetadataService` u
 ```
 
 ### 📑 Metadata Configuration Details
+
 | Setting                        | Type     | Default   | Description                                                                                                                                                                                                           |
 | ------------------------------ | -------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Metadata                       |          |           | Metadata service configuration.                                                                                                                                                                                       |
@@ -1149,6 +1155,7 @@ Example `appsettings.json` snippet showing how to configure `ISummarizationServi
 ```
 
 ### 📑 Summarization Configuration Details
+
 | Setting                             | Type     | Default   | Description                                                                                                                                                                                                     |
 | ----------------------------------- | -------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Summarization                       |          |           | Summarization service configuration.                                                                                                                                                                            |
@@ -1185,6 +1192,7 @@ Coming...
 Example `appsettings.json` snippet showing how to configure `IAgentsService` under the `"Ai"` section.
 
 ### 📑 Agents Configuration Details
+
 | Setting                                 | Type  | Default | Description                                                                                                                                                      |
 | --------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Agents`                                |       |         | Agents configuration.                                                                                                                                            |
@@ -1260,6 +1268,7 @@ This plugin can be enabled through either the `Chat` or `Agents` configuration.
   }
 }
 ```
+
 | Setting                     | Type              | Default  | Description                                                         |
 | --------------------------- | ----------------  | -------- | ------------------------------------------------------------------- |
 | Plugins.WebSearch           |                   | null     | Web search plugin. Dafault null, not enabled.                       |
