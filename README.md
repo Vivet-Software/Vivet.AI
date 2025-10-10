@@ -13,7 +13,9 @@ Build **smarter, faster, and context-aware AI experiences** with minimal boilerp
 
 The library supports **all major orchestration frameworks** and a variety of **vector stores** for memory and knowledge management. 
 Every service follows a **request/response pattern**, includes **token and performance tracking**, and allows **per-request 
-configuration overrides**.    
+configuration overrides**.  
+
+_Based on [Microsoft.SemanticKernel](https://learn.microsoft.com/en-us/semantic-kernel/overview/)_.  
 
 ## Table of Contents
 ### 🎛️ [Orchestrations](#%EF%B8%8F-orchestrations-1)
@@ -37,9 +39,9 @@ configuration overrides**.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧩 [Embedding](#-embedding)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧠 [Memory](#-embedding-memory-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📚 [Knowledge](#-embedding-knowledge-service)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗂️ [Metadata Service](#%EF%B8%8F-metadata-service)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✂️ [Summarization Service](#%EF%B8%8F-summarization-service)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🕹️ [Agents Service](#%EF%B8%8F-agents-service)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗂️ [Metadata](#%EF%B8%8F-metadata-service)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✂️ [Summarization](#%EF%B8%8F-summarization-service)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🕹️ [Agents](#%EF%B8%8F-agents-service)  
 
 ### 🔌 [Plugins](#-plugins-1)
 
@@ -356,7 +358,8 @@ https://portal.azure.com ⤴
 <br /><br />
 
 ## ✨ Services
-The library provides a rich set of services including **Chat**, **Embedding**, **Embedding Memory**, **Embedding Knowledge**, **Metadata**, and **Summarization**. Each service is designed to be modular, configurable, and optimized for advanced AI workflows. They can be used independently or combined to build powerful orchestration pipelines. New services and AI model integrations are continuously being added to expand functionality of the library and keep pace with the AI ecosystem.  
+The library provides a rich set of services including **Chat**, **Embedding**, **Embedding Memory**, **Embedding Knowledge**, **Metadata**, 
+**Summarization** and **Agents**. Each service is designed to be modular, configurable, and optimized for advanced AI workflows. They can be used independently or combined to build powerful orchestration pipelines. New services and AI model integrations are continuously being added to expand functionality of the library and keep pace with the AI ecosystem.  
 
 Detailed explanations and usage examples for each service are provided in the following sections.
 <br /><br />
@@ -458,7 +461,7 @@ Example `appsettings.json` snippet showing how to configure `IChatService` under
 | `Chat.Plugins`                             |                   |            | Options for configuring built-in chat plugins. See The [Plugins](#-plugins-1).                                                                                   |
 | `Chat.Plugins.EnableMemoryPlugin`          | bool              |            | Enables or disables the built-in Memory plugin. The [Embedding Memory](#-embedding-memory-service) must be configured for this setting to take effect.           |
 | `Chat.Plugins.EnableKnowledgePlugin`       | bool              |            | Enables or disables the built-in Knowledge plugin. The [Embedding Knowledge](#-embedding-knowledge-service) must be configured for this setting to take effect.  |
-| `Chat.Plugins.EnableWebSearchPlugin`       | bool              |            | Enables or disables the built-in Web Search plugin. The [Embedding Memory](#-web-search) must be configured for this setting to take effect.                     |
+| `Chat.Plugins.EnableWebSearchPlugin`       | bool              |            | Enables or disables the built-in Web Search plugin. The [Web Search](#-web-search) must be configured for this setting to take effect.                     |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -1185,10 +1188,10 @@ Example `appsettings.json` snippet showing how to configure `IAgentsService` und
 | --------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Agents`                                |       |         | Agents configuration.                                                                                                                                            |
 | `Agents.Model`                          |       |         | Chat model configuration for metadata extraction. The model configuration is identical to [Chat Model Configuration](#-chat-configuration-details). _The configured model may be overridden for individual requests._ |
-| `Agents.Plugins`                        |       |         | Options for configuring built-in chat plugins. See The [Plugins](#-plugins-1).                                                                                   |
+| `Agents.Plugins`                        |       |         | Options for configuring built-in agents plugins. See The [Plugins](#-plugins-1).                                                                                 |
 | `Agents.Plugins.EnableMemoryPlugin`     | bool  | `true`  | Enables or disables the built-in Memory plugin. The [Embedding Memory](#-embedding-memory-service) must be configured for this setting to take effect.           |
 | `Agents.Plugins.EnableKnowledgePlugin`  | bool  | `true`  | Enables or disables the built-in Knowledge plugin. The [Embedding Knowledge](#-embedding-knowledge-service) must be configured for this setting to take effect.  |
-| `Agents.Plugins.EnableWebSearchPlugin`  | bool  | `true`  | Enables or disables the built-in Web Search plugin. The [Embedding Memory](#-web-search) must be configured for this setting to take effect.                     |
+| `Agents.Plugins.EnableWebSearchPlugin`  | bool  | `true`  | Enables or disables the built-in Web Search plugin. The [Web Search](#-web-search) must be configured for this setting to take effect.                     |
 
 ### 🚀 Example Usage
 #### Resolve the service from DI
@@ -1219,6 +1222,8 @@ Plugins must have seperate context variables even when they are re-used among se
 // Shoudl we explain that it can be done in request or show it in code? Example Here maybe? e.g. for requests that supports Plugins, do like this:
 // THen link here: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)
 
+// BUG: Finish Plugins section in readme
+// BUG: Also check if config override should have a deeper explanation.
 
 
 
@@ -1370,37 +1375,37 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
 {
   "Ai": {
     "Endpoint": "<your-endpoint>",
-    "ApiKey": "<youe-apikey>",
+    "ApiKey": "<your-apikey>",
     "Chat": {
       "Model": {
-        "Name": "<youe-chat-model>",
+        "Name": "<your-chat-model>",
       }
     },
     "Embedding": {
       "Model": {
-        "Name": "<youe-embedding-model>",
+        "Name": "<your-embedding-model>",
       },
       "Memory": {
         "VectorStore": {
-          "Provider": "Qdrant",
-          "ApiKey": "secret"
+          "Provider": "<your-provider>",
+          "ApiKey": "<your-secret>"
         }
       },
       "Knowledge": {
         "VectorStore": {
-          "Provider": "Qdrant",
-          "ApiKey": "secret"
+          "Provider": "<your-provider>",
+          "ApiKey": "<your-secret>"
         }
       }
     },
     "Metadata": {
       "Model": {
-        "Name": "<youe-chat-model>",
+        "Name": "<your-chat-model>",
       }
     },
     "Summarization": {
       "Model": {
-        "Name": "<youe-chat-model>",
+        "Name": "<your-chat-model>",
       }
     }
   }
@@ -1415,7 +1420,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     "ApiKeyId": null,
     "Chat": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": null,
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
@@ -1440,7 +1445,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     },
     "Embedding": {
       "Model": {
-        "Name": "text-embedding-ada-002",
+        "Name": null,
         "UseHealthCheck": true
       },
       "VectorSize": 1536,
@@ -1475,11 +1480,11 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
           }
         },
         "VectorStore": {
-          "Provider": "Qdrant",
+          "Provider": "None",
           "Host": "localhost",
-          "Port": 6334,
+          "Port": 0,
           "Username": null,
-          "ApiKey": "secret",
+          "ApiKey": null,
           "Timeout": "00:00:30",
           "UseHealthCheck": true
         }
@@ -1509,11 +1514,11 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
           }
         },
         "VectorStore": {
-          "Provider": "Qdrant",
+          "Provider": "None",
           "Host": "localhost",
-          "Port": 6334,
+          "Port": 0,
           "Username": null,
-          "ApiKey": "secret",
+          "ApiKey": null,
           "Timeout": "00:00:30",
           "UseHealthCheck": true
         }
@@ -1521,7 +1526,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     },
     "Metadata": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": null,
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
@@ -1547,7 +1552,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     },
     "Summarization": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": null,
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,
@@ -1572,7 +1577,7 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
     },
     "Agents": {
       "Model": {
-        "Name": "gpt-4.1",
+        "Name": null,
         "UseHealthCheck": true,
         "Parameters": {
           "MaxOuputTokens": 2048,

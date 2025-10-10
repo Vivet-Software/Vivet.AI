@@ -54,8 +54,8 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         var question = summarizationResposne?.QuestionSummarized ?? request.Question;
         var answer = summarizationResposne?.AnswerSummarized ?? JsonConvert.SerializeObject(request.Answer, Formatting.None, Settings.SerializerSettings);
         
-        var minTokens = request.ConfigOverrides.TextChunking.MinTokens ?? this.memoryOptions.TextChunking.MinTokens;
-        var maxTokens = request.ConfigOverrides.TextChunking.MaxTokens ?? this.memoryOptions.TextChunking.MaxTokens;
+        var minTokens = request.ConfigOverrides.TextChunking.MinTokens ?? this.memoryOptions.Indexing.TextChunking.MinTokens;
+        var maxTokens = request.ConfigOverrides.TextChunking.MaxTokens ?? this.memoryOptions.Indexing.TextChunking.MaxTokens;
 
         var questionTextChunks = TextChunking.GetTextChunks(question, minTokens, maxTokens);
         var answerTextChunks = TextChunking.GetTextChunks(answer, minTokens, maxTokens);
@@ -264,7 +264,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         var isSummarization =
             summarizationService != null && 
             (
-                configOverrides.UseAutomaticSummarization ?? this.memoryOptions.UseAutomaticSummarization
+                configOverrides.UseAutomaticSummarization ?? this.memoryOptions.Indexing.UseAutomaticSummarization
             );
 
         if (answer is string stringAnswer)
@@ -319,14 +319,14 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         var memories = embeddings
             .Select((x, i) =>
             {
-                var contextWindow = request.ConfigOverrides.TextChunking.NeighborContext.ContextWindow ?? this.memoryOptions.TextChunking.NeighborContext.ContextWindow;
-                var restrictToSameParagraph = request.ConfigOverrides.TextChunking.NeighborContext.RestrictToSameParagraph ?? this.memoryOptions.TextChunking.NeighborContext.RestrictToSameParagraph;
+                var contextWindow = request.ConfigOverrides.TextChunking.NeighborContext.ContextWindow ?? this.memoryOptions.Indexing.TextChunking.NeighborContext.ContextWindow;
+                var restrictToSameParagraph = request.ConfigOverrides.TextChunking.NeighborContext.RestrictToSameParagraph ?? this.memoryOptions.Indexing.TextChunking.NeighborContext.RestrictToSameParagraph;
 
                 var fullContext = TextChunking.GetTextChunkNeighboringContext(textChunks, i, contextWindow, restrictToSameParagraph);
 
                 string[] counterpartContext = [];
 
-                if (request.ConfigOverrides.UseExtendedMemoryContext ?? this.memoryOptions.UseExtendedMemoryContext)
+                if (request.ConfigOverrides.UseExtendedMemoryContext ?? this.memoryOptions.Indexing.UseExtendedMemoryContext)
                 {
                     counterpartContext = counterpartEmbeddings
                         .Select((y, j) =>
@@ -399,7 +399,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                         Metadata = x.Metadata
                     };
                 }
-                else if (this.metadataService != null && (request.ConfigOverrides.UseAutomaticMetadataRetrieval ?? this.memoryOptions.UseAutomaticMetadataRetrieval))
+                else if (this.metadataService != null && (request.ConfigOverrides.UseAutomaticMetadataRetrieval ?? this.memoryOptions.Indexing.UseAutomaticMetadataRetrieval))
                 {
                     metadataResponse = await this.metadataService
                         .GetAsync(new GetMetadataRequest

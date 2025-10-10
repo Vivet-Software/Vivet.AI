@@ -35,11 +35,7 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// BUG: Finish Plugins section in readme
-
-// BUG: Add References to readme??
-// https://learn.microsoft.com/en-us/semantic-kernel/overview/
-// https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples
+// BUG: Agent Framework
 // https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview
 // https://github.com/microsoft/agent-framework
 
@@ -58,6 +54,7 @@ namespace Vivet.AI.Services;
 // - https://n8n.io - Flexible AI workflow automation for technical teams
 // - PLUGINS: https://modelcontextprotocol.io/docs/getting-started/intro
 
+// BUG: Fine-tune models
 // BUG: Train Your Own LLM: https://www.freecodecamp.org/news/train-your-own-llm/
 // BUG: ML-Ops(Azure AI Foundry tracing and Monitoring, OpenTelemetry)
 

@@ -250,8 +250,8 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
         var scopeId = request.ScopeId?.ToString();
         var userId = request.UserId?.ToString();
 
-        var minTokens = request.ConfigOverrides.TextChunking.MinTokens ?? this.knowledgeOptions.TextChunking.MinTokens;
-        var maxTokens = request.ConfigOverrides.TextChunking.MaxTokens ?? this.knowledgeOptions.TextChunking.MaxTokens;
+        var minTokens = request.ConfigOverrides.TextChunking.MinTokens ?? this.knowledgeOptions.Indexing.TextChunking.MinTokens;
+        var maxTokens = request.ConfigOverrides.TextChunking.MaxTokens ?? this.knowledgeOptions.Indexing.TextChunking.MaxTokens;
 
         var textChunks = TextChunking.GetTextChunks(text, minTokens, maxTokens);
 
@@ -285,8 +285,8 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
         var knowledges = embedTextChunks
             .Select((x, i) =>
             {
-                var contextWindow = request.ConfigOverrides.TextChunking.NeighborContext.ContextWindow ?? this.knowledgeOptions.TextChunking.NeighborContext.ContextWindow;
-                var restrictToSameParagraph = request.ConfigOverrides.TextChunking.NeighborContext.RestrictToSameParagraph ?? this.knowledgeOptions.TextChunking.NeighborContext.RestrictToSameParagraph;
+                var contextWindow = request.ConfigOverrides.TextChunking.NeighborContext.ContextWindow ?? this.knowledgeOptions.Indexing.TextChunking.NeighborContext.ContextWindow;
+                var restrictToSameParagraph = request.ConfigOverrides.TextChunking.NeighborContext.RestrictToSameParagraph ?? this.knowledgeOptions.Indexing.TextChunking.NeighborContext.RestrictToSameParagraph;
 
                 var fullContext = TextChunking.GetTextChunkNeighboringContext(embedTextChunks.ToArray(), i, contextWindow, restrictToSameParagraph);
 
@@ -433,7 +433,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 .GetProperty(nameof(MetadataResponse<dynamic>.AdditionalMetadata))?
                 .SetValue(metadataResponse, requestAdditionalMetadata);
         }
-        else if (this.metadataService != null && (request.ConfigOverrides.UseAutomaticMetadataRetrieval ?? this.knowledgeOptions.UseAutomaticMetadataRetrieval))
+        else if (this.metadataService != null && (request.ConfigOverrides.UseAutomaticMetadataRetrieval ?? this.knowledgeOptions.Indexing.UseAutomaticMetadataRetrieval))
         {
             var metadataMethod = this.metadataService
                 .GetType()

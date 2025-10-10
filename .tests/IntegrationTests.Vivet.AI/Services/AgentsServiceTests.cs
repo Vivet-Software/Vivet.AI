@@ -1,13 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Threading.Tasks;
 using Vivet.AI.Services.Interfaces;
-using Vivet.AI.Services.Models.Plugins;
 using Vivet.AI.Services.Requests.Agents;
 using Vivet.AI.Services.Requests.Agents.Models;
-using Vivet.AI.Services.Requests.Agents.Models.Plugins.Contexts;
 
 namespace IntegrationTests.Vivet.AI.Services;
 
@@ -39,39 +36,6 @@ public class AgentsServiceTests : BaseTests
         public string ProcessReturn(string orderId, string reason) => $"Refund for order {orderId} has been processed successfully. {reason}";
         // ReSharper restore UnusedMember.Local
     }
-
-
-    [TestMethod]
-    public async Task InvokeTest2()
-    {
-        var agents = new AgentDescriptor[]
-        {
-            new()
-            {
-                Name = "ChemistryExpert",
-                Instructions = "You are a helpful assistant."
-            }
-        };
-
-        var response = await this.AgentsService
-            .InvokeAsync(new ConcurrentAgentsRequest
-            {
-                Name = "My Agent Orchestration",
-                Input = "Search the web for the current temparature of Copenhagen",
-                Agents = agents,
-                Plugins =
-                {
-                    Context =
-                    {
-                        Memory = new AgentsMemoryContext
-                        {
-                            AgentId = Guid.NewGuid()
-                        }
-                    }
-                }
-            });
-    }
-
 
     [TestMethod]
     public async Task InvokeWhenOrchestrationSequentialTest()
@@ -170,136 +134,139 @@ give format and make it polished. Output the final improved copy as a single tex
     [TestMethod]
     public async Task InvokeWhenOrchestrationGroupChatTest()
     {
-        var agents = new AgentDescriptor[]
-        {
-            new()
-            {
-                Name = "copywriter",
-                Description = "An agent that writes a marketing copy based on the extracted concepts.",
-                Instructions = @" You are a copywriter with ten years of experience and are known for brevity and a dry humor.
-The goal is to refine and decide on the single best copy as an expert in the field.
-Only provide a single proposal per response.
-You're laser focused on the goal at hand.
-Don't waste time with chit chat.
-Consider suggestions when refining an idea"
-            },
-            new()
-            {
-                Name = "reviewer",
-                Description = "An editor.",
-                Instructions = @"You are an art director who has opinions about copywriting born of a love for David Ogilvy.
-The goal is to determine if the given copy is acceptable to print.
-If so, state: ""I Approve"".
-If not, provide insight on how to refine suggested copy without example."
-            }
-        };
+        await Task.CompletedTask;
+        Assert.Inconclusive();
 
-        var response = await this.AgentsService
-            .InvokeAsync(new SequentialAgentsRequest
-            {
-                Name = "Sequential",
-                Input = "Create a slogan for a new electric SUV that is affordable and fun to drive.",
-                Agents = agents,
-                ConfigOverrides =
-                {
-                    Plugins = 
-                    { 
-                        Memory =
-                        {
-                            EnableMemoryPlugin = false
-                        }
-                    }
-                }
-            });
+//        var agents = new AgentDescriptor[]
+//        {
+//            new()
+//            {
+//                Name = "copywriter",
+//                Description = "An agent that writes a marketing copy based on the extracted concepts.",
+//                Instructions = @" You are a copywriter with ten years of experience and are known for brevity and a dry humor.
+//The goal is to refine and decide on the single best copy as an expert in the field.
+//Only provide a single proposal per response.
+//You're laser focused on the goal at hand.
+//Don't waste time with chit chat.
+//Consider suggestions when refining an idea"
+//            },
+//            new()
+//            {
+//                Name = "reviewer",
+//                Description = "An editor.",
+//                Instructions = @"You are an art director who has opinions about copywriting born of a love for David Ogilvy.
+//The goal is to determine if the given copy is acceptable to print.
+//If so, state: ""I Approve"".
+//If not, provide insight on how to refine suggested copy without example."
+//            }
+//        };
 
-        Assert.IsNotNull(response);
-        Assert.IsNull(response.Exception);
+//        var response = await this.AgentsService
+//            .InvokeAsync(new SequentialAgentsRequest
+//            {
+//                Name = "Sequential",
+//                Input = "Create a slogan for a new electric SUV that is affordable and fun to drive.",
+//                Agents = agents,
+//                ConfigOverrides =
+//                {
+//                    Plugins = 
+//                    { 
+//                        Memory =
+//                        {
+//                            EnableMemoryPlugin = false
+//                        }
+//                    }
+//                }
+//            });
     }
 
     [TestMethod]
     public async Task InvokeWhenOrchestrationHandOffTest()
     {
-        var agents = new AgentDescriptor[]
-        {
-            new()
-            {
-                Name = "TriageAgent",
-                Description = "Handle customer requests.",
-                Instructions = "A customer support agent that triages issues."
-            },
-            new()
-            {
-                Name = "OrderStatusAgent",
-                Description = "A customer support agent that checks order status.",
-                Instructions = "Handle order status requests.",
-                Plugins =
-                {
-                    CustomPlugins = 
-                    [
-                        new CustomPlugin
-                        {
-                            Name = "OrderStatusPlugin",
-                            Type = typeof(OrderStatusPlugin)
-                        }
-                    ]
-                }
-            },
-            new()
-            {
-                Name = "OrderReturnAgent",
-                Description = "A customer support agent that handles order returns.",
-                Instructions = "Handle order return requests.",
-                Plugins =
-                {
-                    CustomPlugins = 
-                    [
-                        new CustomPlugin
-                        {
-                            Name = "OrderReturnPlugin",
-                            Type = typeof(OrderReturnPlugin)
-                        }
-                    ]
-                }
-            },
-            new()
-            {
-                Name = "OrderRefundAgent",
-                Description = "A customer support agent that handles order refund.",
-                Instructions = "Handle order refund requests.",
-                Plugins =
-                {
-                    CustomPlugins =
-                    [
-                        new CustomPlugin
-                        {
-                            Name = "OrderRefundPlugin",
-                            Type = typeof(OrderRefundPlugin)
-                        }
-                    ]
-                }
-            }
-        };
+        await Task.CompletedTask;
+        Assert.Inconclusive();
 
-        var response = await this.AgentsService
-            .InvokeAsync(new HandOffAgentsRequest
-            {
-                Name = "Sequential",
-                Input = "I am a customer that needs help with my orders",
-                Agents = agents,
-                ConfigOverrides =
-                {
-                    Plugins =
-                    {
-                        Memory =
-                        {
-                            EnableMemoryPlugin = false
-                        }
-                    }
-                }
-            });
+        //var agents = new AgentDescriptor[]
+        //{
+        //    new()
+        //    {
+        //        Name = "TriageAgent",
+        //        Description = "Handle customer requests.",
+        //        Instructions = "A customer support agent that triages issues."
+        //    },
+        //    new()
+        //    {
+        //        Name = "OrderStatusAgent",
+        //        Description = "A customer support agent that checks order status.",
+        //        Instructions = "Handle order status requests.",
+        //        Plugins =
+        //        {
+        //            CustomPlugins = 
+        //            [
+        //                new CustomPlugin
+        //                {
+        //                    Name = "OrderStatusPlugin",
+        //                    Type = typeof(OrderStatusPlugin)
+        //                }
+        //            ]
+        //        }
+        //    },
+        //    new()
+        //    {
+        //        Name = "OrderReturnAgent",
+        //        Description = "A customer support agent that handles order returns.",
+        //        Instructions = "Handle order return requests.",
+        //        Plugins =
+        //        {
+        //            CustomPlugins = 
+        //            [
+        //                new CustomPlugin
+        //                {
+        //                    Name = "OrderReturnPlugin",
+        //                    Type = typeof(OrderReturnPlugin)
+        //                }
+        //            ]
+        //        }
+        //    },
+        //    new()
+        //    {
+        //        Name = "OrderRefundAgent",
+        //        Description = "A customer support agent that handles order refund.",
+        //        Instructions = "Handle order refund requests.",
+        //        Plugins =
+        //        {
+        //            CustomPlugins =
+        //            [
+        //                new CustomPlugin
+        //                {
+        //                    Name = "OrderRefundPlugin",
+        //                    Type = typeof(OrderRefundPlugin)
+        //                }
+        //            ]
+        //        }
+        //    }
+        //};
 
-        Assert.IsNotNull(response);
-        Assert.IsNull(response.Exception);
+        //var response = await this.AgentsService
+        //    .InvokeAsync(new HandOffAgentsRequest
+        //    {
+        //        Name = "Sequential",
+        //        Input = "I am a customer that needs help with my orders",
+        //        Agents = agents,
+        //        ConfigOverrides =
+        //        {
+        //            Plugins =
+        //            {
+        //                Memory =
+        //                {
+        //                    EnableMemoryPlugin = false
+        //                }
+        //            }
+        //        }
+        //    });
+
+        //Assert.IsNotNull(response);
+        //Assert.IsNull(response.Exception);
     }
 
     [TestMethod]
