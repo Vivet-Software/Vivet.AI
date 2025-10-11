@@ -44,6 +44,8 @@ _Based on [Microsoft.SemanticKernel](https://learn.microsoft.com/en-us/semantic-
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🕹️ [Agents](#%EF%B8%8F-agents-service)  
 
 ### 🔌 [Plugins](#-plugins-1)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧩 [Built-In Plugins](#-built-in-plugins)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧰 [Custom Plugins](#-custom-plugins)  
 
 ### ⚡ [Core Service Concepts](#-core-service-concepts-1)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📩 [Request/Response Pattern](#-requestresponse-pattern)  
@@ -406,7 +408,7 @@ When plugins are available, the chat model automatically decides whether to invo
 - For custom plugins, if you require a plugin to **always** be invoked, call it manually in your application and include its result in the system message of the request.  
 - Custom plugin parameters should be passed in the `SystemMessage` of the `ChatRequest`, or derived from existing context in the request (`UserId`, `TenantId`, etc.).
 
-- 📖 See [Plugins](#-plugins-1)
+- 📖 Read more about [Plugins](#-plugins-1)
 
 ### ⚙️ Chat Configuration
 Example `appsettings.json` snippet showing how to configure `IChatService` under the `"Ai"` section:
@@ -1216,30 +1218,27 @@ var agentsService = serviceProvider.GetService<IAgentsService>();
 <br /><br />
 
 ## 🔌 Plugins
-Plugins (also called *tools*) are sets of related functions that can be exposed to a chat model. 
-They allow the model to integrate with external services and invoke custom functionality
+**Plugins** (also called *tools*) are sets of related functions that can be exposed to a chat model.  
+They allow the model to integrate with external services or invoke custom functionality dynamically.
 
+> ⚠️ **Reserved Names:**  
+> The built-in plugin names — `memory`, `knowledge`, and `web_search` — are **reserved** and must not be reused for custom plugins.
 
+<br />
 
-complex types supported in custom plugins, including nested objects. Pass the context matching the parameter model of you kernel function and as JSON
+### 🧩 Built-In Plugins
+Several **built-in plugins** are supported and configured under the `Ai.Plugins` section in your `appsettings.json`.  
 
-Emphasize the the build-in plugins must have context variables in request or an exception is thrown
-Same type of custom plugins is allowed, as long as they have different names. Mention the built-in plugin names (memory, knowledge, web_search)
-a plugin name can contain only ASCII letters, digits, and underscores
-Plugins must have seperate context variables even when they are re-used among several plugins
+When invoking a service method that supports plugins, **required and optional context variables** are passed through the request.
+If any required context variable is missing, an exception is thrown — ensuring that a plugin is never invoked without essential parameters.  
 
-// BUG: PLUGIN EXAMPLES - Make request examples with plugins (built-in / Custom) and with context
-// Shoudl we explain that it can be done in request or show it in code? Example Here maybe? e.g. for requests that supports Plugins, do like this:
-// THen link here: [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)
-
-// BUG: Finish Plugins section in readme
-// BUG: Also check if config override should have a deeper explanation.
-
- 
+Although plugins are configured **globally**, each service (such as `Chat` or `Agents`) includes **enablement toggles** for every built-in plugin.  
+This allows you to control precisely when each plugin is active. Configuration overrides on individual requests can also be used to enable or disable specific plugins per request.
 
 #### 🧠 Memory
-There is currently no configuration for then built-in memory plugin.  
-Memory is configured through the [Embedding Memory](#-embedding-memory-service), and enabled through either `Chat` or `Agents` configuration.  
+The **Memory Plugin** allows the model to access and interact with vector-based memory.  
+It does not require direct configuration — memory is set up via the [Embedding Memory](#-embedding-memory-service) configuration,  
+and enabled through either the `Chat` or `Agents` configuration sections.
 ```json
 "Plugins": {
   "Memory": {
@@ -1248,9 +1247,9 @@ Memory is configured through the [Embedding Memory](#-embedding-memory-service),
 ```
 
 #### 📚 Knowledge
-Memory is configured through the [Embedding Memory](#-embedding-memory-service), and enabled through either `Chat` or `Agents` configuration.  
-There is currently no configuration for then built-in memory plugin.  
-##### Configuration
+The **Knowledge Plugin** provides access to stored knowledge using embeddings.  
+Like the memory plugin, it is configured through the [Embedding Knowledge](#-embedding-knowledge-service) section,  
+and enabled via the `Chat` or `Agents` configuration.  
 ```json
 "Plugins": {
   "Knowledge": {
@@ -1259,7 +1258,9 @@ There is currently no configuration for then built-in memory plugin.
 ```
 
 #### 🌐 Web Search
-This plugin can be enabled through either the `Chat` or `Agents` configuration.  
+The **Web Search Plugin** enables models to perform live web searches.  
+It supports multiple search providers and offers three functions that vary in the amount of detail returned for search results.  
+This plugin can be enabled via either the `Chat` or `Agents` configuration.
 ```json
 "Plugins": {
   "WebSearch": {
@@ -1283,6 +1284,54 @@ The table below shows the supported providers and their required configuration v
 | --------- | ------------------------ | ---- |  
 | `Id`      | ✅ (`Search Engine ID`)  | ❌   |  
 | `ApiKey`  | ✅                       | ✅   |  
+
+<br />
+
+### 🧰 Custom Plugins
+Custom plugins are user-defined integrations that extend the system’s capabilities beyond the built-in plugins.  
+They allow you to expose your own functions, APIs, or services to the model, giving it access to entirely new tools at runtime.
+
+Custom plugins are implemented using [Microsoft.SemanticKernel](https://learn.microsoft.com/en-us/semantic-kernel).  
+📖 **Learn more about implementing custom plguins:** [Semantic Kernel Plugins (C#)](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/?pivots=programming-language-csharp)
+
+Custom plugins are **not configured globally** in the app configuration.  
+Instead, they are **attached to individual requests** at runtime — giving you full control over which plugins are available for specific operations or users.
+
+When adding a custom plugin to a request, the plugin must have a unique name. Also specify the `Type` of the plugin and amke make sure it has been 
+added to the `IServiceCollection`, including any dependencies it might rely on. Last, the context variables must be passed in the plugin of the request as well. 
+
+Each custom plugin consists of:
+- A **name** — the unique identifier of the plugin.  
+- A **type** — The type (class) of the plugin. 
+- One or more **key/value argument pairs** — defining the input parameters required by the plugin.
+
+##### Example: request plugin
+```csharp
+var customPlugin = new CustomPlugin
+{
+    Name = "myPlugin",
+    Type = typeof(MyPluginType),
+    Context =
+    {
+        { "context", new MyPluginContext }
+    }
+};
+
+```
+
+#### 🧩 Complex Argument Support
+Plugins fully support **complex argument types**, including nested objects.  
+You can pass an instance of a complex object as a value in the argument list, and use the **same complex type** in your Semantic Kernel function’s parameter.  
+The binding between the provided object and the function parameter is handled automatically.
+
+This approach simplifies implementing complex functions that take many parameters — avoiding manual parsing or serialization.
+
+#### ⚠️ Context Variable Isolation
+Even if multiple plugins use some of the same context variables,  they must still be added **individually** to each plugin definition.  
+This prevents accidental cross-plugin data sharing and ensures that each plugin’s execution context is explicit and predictable.
+
+#### 🧱 Naming Rules
+Plugin names may include only **ASCII letters, digits, and underscores**.
 
 <br /><br />
 
