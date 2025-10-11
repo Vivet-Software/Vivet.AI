@@ -1,9 +1,11 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
+using Vivet.AI.Services.Models;
 
 namespace Vivet.AI.Services.Responses.Chat;
 
 /// <summary>
-/// Represents a chat response from the model with a default generic type of <see cref="object"/>.
+/// Represents a chat response from the model with a default generic type of <see cref="string"/>.
 /// </summary>
 public class ChatResponse : ChatResponse<string>;
 
@@ -53,4 +55,9 @@ public class ChatResponse<T> : BaseResponse
     /// Its presence is model-dependent and may not always be available.
     /// </summary>
     public virtual string ExternalId { get; set; }
+
+    /// <summary>
+    /// The function calls invoked during the request.
+    /// </summary>
+    public virtual IEnumerable<FunctionCall> FunctionCalls { get; set; } = [];
 }

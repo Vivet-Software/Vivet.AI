@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Models.Blobs;
-using Vivet.AI.Services.Requests.Embedding.Knowledge.Models;
+using Vivet.AI.Services.Models.MimeTypes;
+using Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Embedding.Knowledge;
 

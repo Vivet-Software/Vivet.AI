@@ -1,17 +1,16 @@
-﻿using System;
+﻿using Microsoft.Extensions.AI;
+using Microsoft.Extensions.VectorData;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.AI;
-using Microsoft.Extensions.VectorData;
-using Newtonsoft.Json;
 using Vivet.AI.Config;
 using Vivet.AI.Data.Models;
 using Vivet.AI.Data.Stores;
-using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Helpers;
 using Vivet.AI.Services.Helpers.Models;
@@ -19,9 +18,10 @@ using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.ConfigOverrides;
+using Vivet.AI.Services.Models.MimeTypes;
 using Vivet.AI.Services.Requests.Embedding;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
-using Vivet.AI.Services.Requests.Embedding.Knowledge.Models;
+using Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Metadata;
 using Vivet.AI.Services.Responses.Embeddings.Knowledge;
 using Vivet.AI.Services.Responses.Embeddings.Knowledge.Models;
@@ -35,10 +35,10 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
     : BaseEmbeddingService(options, embeddingGenerator, metadataService), IEmbeddingKnowledgeService
 {
     private readonly KnowledgeVectorStore vectorStore = vectorStore ?? throw new ArgumentNullException(nameof(vectorStore));
-    private readonly EmbeddingOptions.KnowledgeOptions knowledgeOptions = options.Knowledge ?? throw new ArgumentNullException(nameof(options.Knowledge));
+    private readonly EmbeddingKnowledgeOptions knowledgeOptions = options.Knowledge ?? throw new ArgumentNullException(nameof(options.Knowledge));
 
     /// <inheritdoc />
-    public virtual Task<IndexKnowledgeResponse> IndexAsync<TOverrides>(BaseIndexKnowledgeRequst<TOverrides> request, CancellationToken cancellationToken = default)
+    public virtual async Task<IndexKnowledgeResponse> IndexAsync<TOverrides>(BaseIndexKnowledgeRequst<TOverrides> request, CancellationToken cancellationToken = default)
         where TOverrides : BaseConfigOverrides, new()
     {
         if (request == null) 
@@ -47,19 +47,30 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
         request
             .Validate();
 
-        return request switch
-        {
-            BaseIndexKnowledgeRequst<KnowledgeConfigOverrides> genericRequest
-                when genericRequest.GetType().IsGenericType && genericRequest.GetType().GetGenericTypeDefinition() == typeof(IndexTextRequest<>)
-                => this.IndexTextReflectionAsync(genericRequest, cancellationToken),
+        var stopwatch = new Stopwatch();
+        stopwatch
+            .Start();
 
-            IndexTextRequest textRequest => this.IndexTextAsync(textRequest, cancellationToken),
-            IndexImageRequest imageRequest => this.IndexBlobAsync(imageRequest, cancellationToken),
-            IndexAudioRequest videoRequest => this.IndexBlobAsync(videoRequest, cancellationToken),
-            IndexVideoRequest videoRequest => this.IndexBlobAsync(videoRequest, cancellationToken),
-            IndexDocumentRequest documentRequest => this.IndexBlobAsync(documentRequest, cancellationToken),
+        var response = request switch
+        {
+            BaseIndexKnowledgeRequst<KnowledgeIndexConfigOverrides> genericRequest
+                when genericRequest.GetType().IsGenericType && genericRequest.GetType().GetGenericTypeDefinition() == typeof(IndexTextRequest<>)
+                => await this.IndexTextReflectionAsync(genericRequest, cancellationToken),
+
+            IndexTextRequest textRequest => await this.IndexTextAsync(textRequest, cancellationToken),
+            IndexImageRequest imageRequest => await this.IndexBlobAsync(imageRequest, cancellationToken),
+            IndexAudioRequest videoRequest => await this.IndexBlobAsync(videoRequest, cancellationToken),
+            IndexVideoRequest videoRequest => await this.IndexBlobAsync(videoRequest, cancellationToken),
+            IndexDocumentRequest documentRequest => await this.IndexBlobAsync(documentRequest, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(request))
         };
+
+        stopwatch
+            .Stop();
+
+        response.ElapsedTime = stopwatch.Elapsed;
+
+        return response;
     }
 
     /// <inheritdoc />
@@ -81,15 +92,22 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 .BuildFilter()
         };
 
+        var useQueryDeduplication = request.ConfigOverrides.UseQueryDeduplication ?? this.knowledgeOptions.Search.UseQueryDeduplication;
+        var contextQueryLimit = request.ConfigOverrides.ContextQueryLimit ?? this.knowledgeOptions.Search.ContextQueryLimit;
+
+        var limit = request.Limit ?? (useQueryDeduplication
+            ? contextQueryLimit * 2
+            : contextQueryLimit);
+
         var knowledges = this.vectorStore.Collection
-            .SearchAsync(request.Query, request.Limit, vectorSearchOptions, cancellationToken);
+            .SearchAsync(request.Query, limit, vectorSearchOptions, cancellationToken);
 
         var results = await knowledges
             .Select(result =>
             {
                 var baseScore = result.Score ?? 0.0;
                 var recencyScore = result.Record
-                    .GetRecencyScore(this.knowledgeOptions.Scoring);
+                    .GetRecencyScore(this.knowledgeOptions.Search.Scoring, request.ConfigOverrides.Scoring);
 
                 var adjustedScore = baseScore + recencyScore;
 
@@ -100,7 +118,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                     Result = result
                 };
             })
-            .Where(x => x.AdjustedScore >= this.options.MatchScoreThreashold)
+            .Where(x => x.AdjustedScore >= knowledgeOptions.Search.Scoring.MatchScoreThreshold)
             .OrderByDescending(x => x.AdjustedScore)
             .Select(x => new SearchKnowledgeResult
             {
@@ -109,6 +127,16 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             })
             .ToArrayAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        if (useQueryDeduplication)
+        {
+            var deduplicationMatchScoreThreshold = request.ConfigOverrides.Scoring.DeduplicationMatchScoreThreshold ?? this.knowledgeOptions.Search.Scoring.DeduplicationMatchScoreThreshold;
+            var deduplicatedResults = ContextDeduplicator.DeduplicateKnowledgeResults(results, deduplicationMatchScoreThreshold);
+
+            results = deduplicatedResults
+                .Take(contextQueryLimit)
+                .ToArray();
+        }
 
         stopwatch
             .Stop();
@@ -217,7 +245,15 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             _ => JsonConvert.SerializeObject(request.Text, Formatting.None, Settings.SerializerSettings)
         };
 
-        var textChunks = TextChunking.GetTextChunks(text, this.knowledgeOptions.TextChunking.MinTokens, this.knowledgeOptions.TextChunking.MaxTokens);
+        var tenantId = request.TenantId?.ToString();
+        var subTenantId = request.SubTenantId?.ToString();
+        var scopeId = request.ScopeId?.ToString();
+        var userId = request.UserId?.ToString();
+
+        var minTokens = request.ConfigOverrides.TextChunking.MinTokens ?? this.knowledgeOptions.Indexing.TextChunking.MinTokens;
+        var maxTokens = request.ConfigOverrides.TextChunking.MaxTokens ?? this.knowledgeOptions.Indexing.TextChunking.MaxTokens;
+
+        var textChunks = TextChunking.GetTextChunks(text, minTokens, maxTokens);
 
         var embedTextChunks = new List<TextChunk>();
         foreach (var textChunk in textChunks)
@@ -228,10 +264,11 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             var existingEmbedding = await this.vectorStore.Collection
                 .GetAsync(x =>
                         x.ContentHash == contentHash &&
-                        x.TenantId == request.TenantId &&
-                        x.SubTenantId == request.SubTenantId &&
-                        x.ScopeId == request.ScopeId,
-                    1, cancellationToken: cancellationToken)
+                        x.TenantId == tenantId &&
+                        x.SubTenantId == subTenantId &&
+                        x.ScopeId == scopeId &&
+                        x.UserId == userId,
+                    1, cancellationToken: cancellationToken)    
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -248,7 +285,10 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
         var knowledges = embedTextChunks
             .Select((x, i) =>
             {
-                var fullContext = TextChunking.GetTextChunkNeighboringContext(embedTextChunks.ToArray(), i, this.knowledgeOptions.TextChunking.NeighborContext.ContextWindow, this.knowledgeOptions.TextChunking.NeighborContext.RestrictToSameParagraph);
+                var contextWindow = request.ConfigOverrides.TextChunking.NeighborContext.ContextWindow ?? this.knowledgeOptions.Indexing.TextChunking.NeighborContext.ContextWindow;
+                var restrictToSameParagraph = request.ConfigOverrides.TextChunking.NeighborContext.RestrictToSameParagraph ?? this.knowledgeOptions.Indexing.TextChunking.NeighborContext.RestrictToSameParagraph;
+
+                var fullContext = TextChunking.GetTextChunkNeighboringContext(embedTextChunks.ToArray(), i, contextWindow, restrictToSameParagraph);
 
                 return new Knowledge
                 {
@@ -258,9 +298,10 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                     Order = i,
                     Language = request.Language,
                     EmbeddingModel = this.options.Model.Name,
-                    TenantId = request.TenantId,
-                    SubTenantId = request.SubTenantId,
-                    ScopeId = request.ScopeId,
+                    TenantId = tenantId,
+                    SubTenantId = subTenantId,
+                    ScopeId = scopeId,
+                    UserId = userId,
                     Source = request.Source,
                     CreatedBy = request.CreatedBy,
                     Tags = request.Tags
@@ -297,7 +338,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             .GetBlobData(cancellationToken)
             .ConfigureAwait(false);
 
-        var metadataResponse = await this.GetBlobMetadata(request, cancellationToken).ConfigureAwait(false);
+        var metadataResponse = await this.CreateBlobMetadata(request, cancellationToken).ConfigureAwait(false);
         var embeddings = await this.GenerateEmbeddings([metadataResponse.Metadata.Summary], request.ConfigOverrides, cancellationToken).ConfigureAwait(false);
 
         var embedding = embeddings
@@ -308,6 +349,11 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             throw new NullReferenceException(nameof(embedding));
         }
 
+        var tenantId = request.TenantId?.ToString();
+        var subTenantId = request.SubTenantId?.ToString();
+        var scopeId = request.ScopeId?.ToString();
+        var userId = request.UserId?.ToString();
+
         await this.vectorStore.Collection
             .UpsertAsync(new Knowledge
             {
@@ -317,9 +363,10 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 Order = 0,
                 Language = request.Language,
                 EmbeddingModel = this.options.Model.Name,
-                TenantId = request.TenantId,
-                SubTenantId = request.SubTenantId,
-                ScopeId = request.ScopeId,
+                TenantId = tenantId,
+                SubTenantId = subTenantId,
+                ScopeId = scopeId,
+                UserId = userId,
                 Source = request.Source,
                 CreatedBy = request.CreatedBy,
                 Tags = request.Tags,
@@ -349,7 +396,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             MetadataTokenUsage = metadataResponse.TokenUsage
         };
     }
-    private async Task<dynamic> GetBlobMetadata<TMimeType>(BaseIndexBlobRequest<TMimeType> request, CancellationToken cancellationToken = default)
+    private async Task<dynamic> CreateBlobMetadata<TMimeType>(BaseIndexBlobRequest<TMimeType> request, CancellationToken cancellationToken = default)
         where TMimeType : BaseMimeType
     {
         var blobType = request.Blob
@@ -370,7 +417,6 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             ? typeof(object)
             : additionalMetadataType ?? typeof(object);
 
-
         dynamic metadataResponse = null;
         if (requestMetadata != null && (requestAdditionalMetadata != null || additionalMetadataType == typeof(object)))
         {
@@ -387,7 +433,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
                 .GetProperty(nameof(MetadataResponse<dynamic>.AdditionalMetadata))?
                 .SetValue(metadataResponse, requestAdditionalMetadata);
         }
-        else if (this.metadataService != null && ((request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval ?? false) || (this.knowledgeOptions.UseAutomaticMetadataRetrieval && request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval != false))) 
+        else if (this.metadataService != null && (request.ConfigOverrides.UseAutomaticMetadataRetrieval ?? this.knowledgeOptions.Indexing.UseAutomaticMetadataRetrieval))
         {
             var metadataMethod = this.metadataService
                 .GetType()
@@ -397,11 +443,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
             var metadataRequest = new GetMetadataRequest
             {
                 Blob = request.Blob,
-                ConfigOverrides =
-                {
-                    SummaryMaxWords = request.ConfigOverrides.Metadata.SummaryMaxWords,
-                    DescriptionMaxWords = request.ConfigOverrides.Metadata.DescriptionMaxWords
-                }
+                ConfigOverrides = request.ConfigOverrides.Metadata
             };
 
             var task = (Task)metadataMethod?
@@ -440,7 +482,12 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
 
         if (metadataResponse == null)
         {
-            throw new AiException("No metadata available. Either include metadata in the request, or enable automatic metadata retrieval in the configuration or for this request."); 
+            throw new InvalidOperationException("No metadata available. Either include metadata in the request, or enable automatic metadata retrieval in the configuration or for this request.");
+        }
+
+        if (metadataResponse.Exception != null)
+        {
+            throw metadataResponse.Exception;
         }
 
         return metadataResponse;

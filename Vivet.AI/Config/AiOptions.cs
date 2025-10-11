@@ -1,4 +1,6 @@
-﻿namespace Vivet.AI.Config;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Vivet.AI.Config;
 
 /// <summary>
 /// AI Options.
@@ -73,4 +75,15 @@ public class AiOptions
     /// Summarization.
     /// </summary>
     public virtual SummarizationOptions Summarization { get; set; }
+
+    /// <summary>
+    /// Agents.
+    /// </summary>
+    public virtual AgentsOptions Agents { get; set; }
+
+    /// <summary>
+    /// Built-in plugins that can be enabled for the chat model.
+    /// </summary>
+    [Required]
+    public virtual PluginsOptions Plugins { get; set; } = new();
 }

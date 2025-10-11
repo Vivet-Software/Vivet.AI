@@ -91,7 +91,7 @@ internal static class ParameterExpressionExtensions
         return parameterExpression;
     }
 
-    internal static ParameterExpression AddDateRangeExpression(this ParameterExpression parameterExpression, DateRange dateRange, ref Expression body)
+    internal static ParameterExpression AddDateRangeExpression(this ParameterExpression parameterExpression, string name, DateRange dateRange, ref Expression body)
     {
         if (parameterExpression == null)
             throw new ArgumentNullException(nameof(parameterExpression));
@@ -106,7 +106,7 @@ internal static class ParameterExpressionExtensions
             var unixTimestampStart = dateRange.From.Value
                 .ToUnixTimeSeconds();
 
-            var propertyExpression = Expression.Property(parameterExpression, nameof(BaseEmbedding.UnixTimestamp));
+            var propertyExpression = Expression.Property(parameterExpression, name);
             var valueExpression = Expression.Constant(unixTimestampStart);
             var greaterThanOrEqualExpression = Expression.GreaterThanOrEqual(propertyExpression, valueExpression);
 
@@ -120,7 +120,7 @@ internal static class ParameterExpressionExtensions
             var unixTimestampEnd = dateRange.To.Value
                 .ToUnixTimeSeconds();
 
-            var propertyExpression = Expression.Property(parameterExpression, nameof(BaseEmbedding.UnixTimestamp));
+            var propertyExpression = Expression.Property(parameterExpression, name);
             var valueExpression = Expression.Constant(unixTimestampEnd);
             var lessThanOrEqualExpression = Expression.LessThanOrEqual(propertyExpression, valueExpression);
 

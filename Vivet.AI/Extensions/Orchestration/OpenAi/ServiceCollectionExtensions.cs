@@ -69,7 +69,8 @@ public static class ServiceCollectionExtensions
             .AddOpenAiChatServices(options)
             .AddOpenAiEmbeddingServices(options)
             .AddOpenAiMetadataServices(options)
-            .AddOpenAiSummarizationServices(options);
+            .AddOpenAiSummarizationServices(options)
+            .AddOpenAiAgentServices(options);
 
         return services;
     }
@@ -161,6 +162,29 @@ public static class ServiceCollectionExtensions
 
         services
             .AddSummarizationServices<OpenAIPromptExecutionSettings>(options);
+
+        return services;
+    }
+    private static IServiceCollection AddOpenAiAgentServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Agents == null)
+        {
+            return services;
+        }
+
+        services
+            .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
+            .AddOpenAIChatClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
+            .AddOpenAIChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.AGENT_SERVICE_ID);
+
+        services
+            .AddAgentsServices<OpenAIPromptExecutionSettings>(options);
 
         return services;
     }

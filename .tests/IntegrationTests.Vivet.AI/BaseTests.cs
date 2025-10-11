@@ -15,9 +15,9 @@ public class BaseTests
 
     protected IServiceProvider ServiceProvider => this.services.BuildServiceProvider();
 
-    protected readonly string tenantId = "5232f275-40e2-4d18-9dce-d619b6180b40";
-    protected readonly string subTenantId = "bed6e482-6bcb-447b-b509-65d7c833e698a";
-    protected readonly string userId = "a823dd01-4734-44bb-9402-29c7813652a4";
+    protected readonly Guid tenantId = Guid.Parse("5232f275-40e2-4d18-9dce-d619b6180b40");
+    protected readonly Guid subTenantId = Guid.Parse("bed6e482-6bcb-447b-b509-65d7c833e698");
+    protected readonly Guid userId = Guid.Parse("a823dd01-4734-44bb-9402-29c7813652a4");
     protected readonly string language = "en";
     protected readonly string createdBy = "createdBy";
     protected readonly string source = "source";
@@ -34,7 +34,11 @@ public class BaseTests
 
         this.services
             .AddSingleton<IConfiguration>(configuration)
-            .AddLogging(x => x.AddConsole());
+            .AddLogging(x =>
+            {
+                x.SetMinimumLevel(LogLevel.Trace);
+                x.AddConsole();
+            });
 
         this.services
             .AddVivetAzureOpenAi();

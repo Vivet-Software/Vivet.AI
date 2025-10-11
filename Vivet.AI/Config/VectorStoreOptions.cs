@@ -5,7 +5,7 @@ using Vivet.AI.Config.Enums;
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Vector Database Options (nested class).
+/// Options for vector store.
 /// </summary>
 public class VectorStoreOptions
 {
@@ -26,8 +26,8 @@ public class VectorStoreOptions
     /// The Port of your vector database.
     /// </summary>
     [Required]
-    [Range(1, 65535)]
-    public virtual int Port { get; set; } = 6334;
+    [Range(0, 65535)]
+    public virtual int Port { get; set; } = 0;
 
     /// <summary>
     /// The username for the vector store.

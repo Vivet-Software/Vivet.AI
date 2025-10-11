@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Data.Models;
 using Vivet.AI.Data.Stores;
-using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Helpers;
 using Vivet.AI.Services.Helpers.Models;
@@ -18,7 +17,7 @@ using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
 using Vivet.AI.Services.Requests.Embedding;
 using Vivet.AI.Services.Requests.Embedding.Memory;
-using Vivet.AI.Services.Requests.Embedding.Memory.Models;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Metadata;
 using Vivet.AI.Services.Requests.Summarization;
 using Vivet.AI.Services.Responses.Embeddings.Memory;
@@ -34,7 +33,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
     : BaseEmbeddingService(options, embeddingGenerator, metadataService), IEmbeddingMemoryService
 {
     private readonly MemoryVectorStore vectorStore = vectorStore ?? throw new ArgumentNullException(nameof(vectorStore));
-    private readonly EmbeddingOptions.MemoryOptions memoryOptions = options.Memory ?? throw new ArgumentNullException(nameof(options.Memory));
+    private readonly EmbeddingMemoryOptions memoryOptions = options.Memory ?? throw new ArgumentNullException(nameof(options.Memory));
 
     /// <inheritdoc />
     public virtual async Task<IndexMemoryResponse> IndexAsync<T>(IndexMemoryRequest<T> request, CancellationToken cancellationToken = default) 
@@ -54,9 +53,12 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         var question = summarizationResposne?.QuestionSummarized ?? request.Question;
         var answer = summarizationResposne?.AnswerSummarized ?? JsonConvert.SerializeObject(request.Answer, Formatting.None, Settings.SerializerSettings);
+        
+        var minTokens = request.ConfigOverrides.TextChunking.MinTokens ?? this.memoryOptions.Indexing.TextChunking.MinTokens;
+        var maxTokens = request.ConfigOverrides.TextChunking.MaxTokens ?? this.memoryOptions.Indexing.TextChunking.MaxTokens;
 
-        var questionTextChunks = TextChunking.GetTextChunks(question, this.memoryOptions.TextChunking.MinTokens, this.memoryOptions.TextChunking.MaxTokens);
-        var answerTextChunks = TextChunking.GetTextChunks(answer, this.memoryOptions.TextChunking.MinTokens, this.memoryOptions.TextChunking.MaxTokens);
+        var questionTextChunks = TextChunking.GetTextChunks(question, minTokens, maxTokens);
+        var answerTextChunks = TextChunking.GetTextChunks(answer, minTokens, maxTokens);
 
         var questionEmbeddingsTask = this.GenerateEmbeddings(questionTextChunks.Select(x => x.Text).ToArray(), request.ConfigOverrides, cancellationToken);
         var answerEmbeddingsTask = this.GenerateEmbeddings(answerTextChunks.Select(x => x.Text).ToArray(), request.ConfigOverrides, cancellationToken);
@@ -66,9 +68,9 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         var questionAnswerId = Guid.NewGuid().ToString();
 
-        var questionMemories = this.GetMemories(request, questionAnswerId, questionTextChunks, questionEmbeddings, answerTextChunks, answerEmbeddings, true);
-        var answerMemories = this.GetMemories(request, questionAnswerId, answerTextChunks, answerEmbeddings, questionTextChunks, questionEmbeddings, false);
-        var (memories, blobsUsage, metadataUsage) = await this.GetBlobMemories(request, questionAnswerId, cancellationToken).ConfigureAwait(false);
+        var questionMemories = this.CreateMemories(request, questionAnswerId, questionTextChunks, questionEmbeddings, answerTextChunks, answerEmbeddings, true);
+        var answerMemories = this.CreateMemories(request, questionAnswerId, answerTextChunks, answerEmbeddings, questionTextChunks, questionEmbeddings, false);
+        var (memories, blobsUsage, metadataUsage) = await this.CreateBlobMemories(request, questionAnswerId, cancellationToken).ConfigureAwait(false);
 
         var embeddings = questionMemories
             .Union(answerMemories)
@@ -81,15 +83,17 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         var tokenUsage = EmbeddingMemoryService.GetTokenUsageOrDefault(questionEmbeddings.Usage, answerEmbeddings.Usage, blobsUsage);
 
+        var totalEmbeddings = embeddings
+            .Select(x => x.Content)
+            .Sum(x => x.GetUtf8ByteCount());
+
         stopwatch
             .Stop();
 
         return new IndexMemoryResponse
         {
             TotalEmbeddings = embeddings.Length,
-            TotalEmbeddingsSize = embeddings
-                .Select(x => x.Content)
-                .Sum(x => x.GetUtf8ByteCount()),
+            TotalEmbeddingsSize = totalEmbeddings,
             ElapsedTime = stopwatch.Elapsed,
             TokenUsage = tokenUsage,
             MetadataTokenUsage = metadataUsage,
@@ -110,23 +114,32 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         request
             .Validate();
 
+        request.Criteria.RetentionInDays ??= this.memoryOptions.Search.RetentionInDays;
+
         var vectorSearchOptions = new VectorSearchOptions<Memory>
         {
             Filter = request.Criteria
                 .BuildFilter()
         };
 
+        var useQueryDeduplication = request.ConfigOverrides.UseQueryDeduplication ?? this.memoryOptions.Search.UseQueryDeduplication;
+        var contextQueryLimit = request.ConfigOverrides.ContextQueryLimit ?? this.memoryOptions.Search.ContextQueryLimit;
+
+        var limit = request.Limit ?? (useQueryDeduplication
+            ? contextQueryLimit * 2
+            : contextQueryLimit);
+
         var memories = this.vectorStore.Collection
-            .SearchAsync(request.Query, request.Limit, vectorSearchOptions, cancellationToken);
+            .SearchAsync(request.Query, limit, vectorSearchOptions, cancellationToken);
 
         var results = await memories
             .Select(result =>
             {
                 var baseScore = result.Score ?? 0.0;
 
-                var sameThreadScore = this.GetSameThreadScore(result, request.CurrentThreadId);
+                var sameThreadScore = this.GetSameThreadScore(result, request.ConfigOverrides.Scoring, request.CurrentThreadId);
                 var recencyScore = result.Record
-                    .GetRecencyScore(this.memoryOptions.Scoring);
+                    .GetRecencyScore(this.memoryOptions.Search.Scoring, request.ConfigOverrides.Scoring);
 
                 var adjustedScore = baseScore + sameThreadScore + recencyScore;
 
@@ -137,7 +150,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     Result = result
                 };
             })
-            .Where(x => x.AdjustedScore >= this.options.MatchScoreThreashold)
+            .Where(x => x.AdjustedScore >= (request.ConfigOverrides.Scoring.MatchScoreThreshold ?? this.memoryOptions.Search.Scoring.MatchScoreThreshold))
             .OrderByDescending(x => x.AdjustedScore)
             .Select(x => new SearchMemoryResult
             {
@@ -146,6 +159,26 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
             })
             .ToArrayAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        if (useQueryDeduplication)
+        {
+            var deduplicationMatchScoreThreshold = request.ConfigOverrides.Scoring.DeduplicationMatchScoreThreshold ?? this.memoryOptions.Search.Scoring.DeduplicationMatchScoreThreshold;
+
+            var deduplicatedResults = ContextDeduplicator.DeduplicateMemoryResults(results, deduplicationMatchScoreThreshold);
+
+            results = deduplicatedResults
+                .Take(contextQueryLimit)
+                .ToArray();
+        }
+
+        foreach (var searchMemoryResult in results)
+        {
+            var counterpartContextQueryLimit = request.ConfigOverrides.CounterpartContextQueryLimit ?? this.memoryOptions.Search.CounterpartContextQueryLimit;
+
+            searchMemoryResult.Result.CounterpartContext = searchMemoryResult.Result.CounterpartContext
+                .Take(counterpartContextQueryLimit)
+                .ToArray();
+        }
 
         stopwatch
             .Stop();
@@ -216,7 +249,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
     }
 
 
-    private async Task<SummarizationMemoryResponse> SummarizeQuestionAndAnswer<T>(string question, T answer, MemoryConfigOverrides configOverrides, CancellationToken cancellationToken = default)
+    private async Task<SummarizationMemoryResponse> SummarizeQuestionAndAnswer<T>(string question, T answer, MemoryIndexConfigOverrides configOverrides, CancellationToken cancellationToken = default)
         where T : class
     {
         if (question == null)
@@ -225,17 +258,13 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         if (answer == null)
             throw new ArgumentNullException(nameof(answer));
 
-        if (configOverrides == null)
+        if (configOverrides == null) 
             throw new ArgumentNullException(nameof(configOverrides));
 
         var isSummarization =
             summarizationService != null && 
             (
-                (configOverrides.Summarization.UseAutomaticSummarization ?? false) || 
-                (
-                    this.memoryOptions.UseAutomaticSummarization &&
-                    configOverrides.Summarization.UseAutomaticSummarization != false
-                )
+                configOverrides.UseAutomaticSummarization ?? this.memoryOptions.Indexing.UseAutomaticSummarization
             );
 
         if (answer is string stringAnswer)
@@ -247,10 +276,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     {
                         Question = question,
                         Answer = stringAnswer,
-                        ConfigOverrides =
-                        {
-                            SummarizationDegree = configOverrides.Summarization.SummarizationDegree
-                        }
+                        ConfigOverrides = configOverrides.Summarization
                     }, cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -264,7 +290,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         return null;
     }
-    private IEnumerable<Memory> GetMemories<T>(IndexMemoryRequest<T> request, string questionAnswerId, TextChunk[] textChunks, GeneratedEmbeddings<Embedding<float>> embeddings, TextChunk[] counterPartTextChunks, GeneratedEmbeddings<Embedding<float>> counterpartEmbeddings, bool isQuestion) 
+    private IEnumerable<Memory> CreateMemories<T>(IndexMemoryRequest<T> request, string questionAnswerId, TextChunk[] textChunks, GeneratedEmbeddings<Embedding<float>> embeddings, TextChunk[] counterPartTextChunks, GeneratedEmbeddings<Embedding<float>> counterpartEmbeddings, bool isQuestion) 
         where T : class
     {
         if (request == null) 
@@ -285,21 +311,29 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
         if (counterpartEmbeddings == null) 
             throw new ArgumentNullException(nameof(counterpartEmbeddings));
 
+        var userId = request.UserId?.ToString();
+        var agentId = request.AgentId?.ToString();
+        var scopeId = request.ScopeId?.ToString();
+        var threadId = request.ThreadId.ToString();
+
         var memories = embeddings
             .Select((x, i) =>
             {
-                var fullContext = TextChunking.GetTextChunkNeighboringContext(textChunks, i, this.memoryOptions.TextChunking.NeighborContext.ContextWindow, this.memoryOptions.TextChunking.NeighborContext.RestrictToSameParagraph);
+                var contextWindow = request.ConfigOverrides.TextChunking.NeighborContext.ContextWindow ?? this.memoryOptions.Indexing.TextChunking.NeighborContext.ContextWindow;
+                var restrictToSameParagraph = request.ConfigOverrides.TextChunking.NeighborContext.RestrictToSameParagraph ?? this.memoryOptions.Indexing.TextChunking.NeighborContext.RestrictToSameParagraph;
+
+                var fullContext = TextChunking.GetTextChunkNeighboringContext(textChunks, i, contextWindow, restrictToSameParagraph);
 
                 string[] counterpartContext = [];
 
-                if (this.memoryOptions.UseExtendedMemoryContext)
+                if (request.ConfigOverrides.UseExtendedMemoryContext ?? this.memoryOptions.Indexing.UseExtendedMemoryContext)
                 {
                     counterpartContext = counterpartEmbeddings
                         .Select((y, j) =>
                         {
                             var score = CosineSimilarity.GetMatches(x.Vector.ToArray(), y.Vector.ToArray());
 
-                            if (score >= this.options.MatchScoreThreashold)
+                            if (score >= this.memoryOptions.Search.Scoring.MatchScoreThreshold)
                             {
                                 var fullContextCounterpart = counterPartTextChunks[j].Text;
 
@@ -324,9 +358,11 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     Order = i,
                     Language = request.Language,
                     EmbeddingModel = this.options.Model.Name,
-                    ThreadId = request.ThreadId,
+                    UserId = userId,
+                    AgentId = agentId,
+                    ScopeId = scopeId,
+                    ThreadId = threadId,
                     QuestionAnswerId = questionAnswerId,
-                    UserId = request.UserId,
                     IsQuestion = isQuestion,
                     IsAnswer = !isQuestion
                 };
@@ -335,7 +371,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         return memories;
     }
-    private async Task<(IEnumerable<Memory> Memories, TokenUsage tokenUsage, TokenUsage MetadataTokenUsage)> GetBlobMemories<T>(IndexMemoryRequest<T> request, string questionAnswerId, CancellationToken cancellationToken = default)
+    private async Task<(IEnumerable<Memory> Memories, TokenUsage tokenUsage, TokenUsage MetadataTokenUsage)> CreateBlobMemories<T>(IndexMemoryRequest<T> request, string questionAnswerId, CancellationToken cancellationToken = default)
         where T : class
     {
         if (request == null)
@@ -343,6 +379,11 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         if (questionAnswerId == null)
             throw new ArgumentNullException(nameof(questionAnswerId));
+
+        var userId = request.UserId?.ToString();
+        var agentId = request.AgentId?.ToString();
+        var scopeId = request.ScopeId?.ToString();
+        var threadId = request.ThreadId.ToString();
 
         TokenUsage tokenUsage = null;
         TokenUsage metadataTokenUsage = null;
@@ -358,24 +399,25 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                         Metadata = x.Metadata
                     };
                 }
-                else if (this.metadataService != null && ((request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval ?? false) || (this.memoryOptions.UseAutomaticMetadataRetrieval && request.ConfigOverrides.Metadata.UseAutomaticMetadataRetrieval != false)))
+                else if (this.metadataService != null && (request.ConfigOverrides.UseAutomaticMetadataRetrieval ?? this.memoryOptions.Indexing.UseAutomaticMetadataRetrieval))
                 {
                     metadataResponse = await this.metadataService
                         .GetAsync(new GetMetadataRequest
                         {
                             Blob = x,
-                            ConfigOverrides =
-                            {
-                                SummaryMaxWords = request.ConfigOverrides.Metadata.SummaryMaxWords,
-                                DescriptionMaxWords = request.ConfigOverrides.Metadata.DescriptionMaxWords
-                            }
+                            ConfigOverrides = request.ConfigOverrides.Metadata
                         }, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
                 if (metadataResponse == null)
                 {
-                    throw new AiException("No metadata available. Either include metadata in the request, or enable automatic metadata retrieval in the configuration or for this request.");
+                    throw new InvalidOperationException("No metadata available. Either include metadata in the request, or enable automatic metadata retrieval in the configuration or for this request.");
+                }
+
+                if (metadataResponse.Exception != null)
+                {
+                    throw metadataResponse.Exception;
                 }
 
                 var blobData = await x
@@ -401,9 +443,11 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
                     Order = 0,
                     Language = request.Language,
                     EmbeddingModel = this.options.Model.Name,
-                    ThreadId = request.ThreadId,
+                    UserId = userId,
+                    AgentId = agentId,
+                    ScopeId = scopeId,
+                    ThreadId = threadId,
                     QuestionAnswerId = questionAnswerId,
-                    UserId = request.UserId,
                     IsQuestion = true,
                     BlobBase64 = blobData.Base64,
                     BlobMimeType = blobData.MimeType
@@ -431,7 +475,7 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
 
         return (blobMemories, tokenUsage, metadataTokenUsage);
     }
-    private double GetSameThreadScore(VectorSearchResult<Memory> result, string currentThreadId = null)
+    private double GetSameThreadScore(VectorSearchResult<Memory> result, MemoryScoringConfigOverrides scoringOerrides, Guid? currentThreadId = null)
     {
         if (result == null) 
             throw new ArgumentNullException(nameof(result));
@@ -441,9 +485,9 @@ public class EmbeddingMemoryService(EmbeddingOptions options, IEmbeddingGenerato
             return 0.00D;
         }
 
-        if (result.Record.ThreadId == currentThreadId)
+        if (result.Record.ThreadId == currentThreadId.ToString())
         {
-            return this.memoryOptions.Scoring.ThreadMatchBoost;
+            return scoringOerrides.ThreadMatchBoost ?? this.memoryOptions.Search.Scoring.ThreadMatchBoost;
         }
 
         return 0.00D;

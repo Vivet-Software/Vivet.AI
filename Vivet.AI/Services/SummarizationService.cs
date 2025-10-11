@@ -1,18 +1,18 @@
-﻿using System;
-using System.Threading.Tasks;
-using System.Threading;
-using Microsoft.SemanticKernel;
+﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Vivet.AI.Services.Interfaces;
-using Vivet.AI.Services.Extensions;
-using Vivet.AI.Services.Requests.Summarization;
-using Vivet.AI.Services.Responses.Summarization;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
-using System.Diagnostics;
-using Newtonsoft.Json.Linq;
+using Vivet.AI.Services.Extensions;
+using Vivet.AI.Services.Interfaces;
+using Vivet.AI.Services.Requests.Summarization;
+using Vivet.AI.Services.Requests.Summarization.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses;
-using Vivet.AI.Services.Exceptions;
+using Vivet.AI.Services.Responses.Summarization;
 
 namespace Vivet.AI.Services;
 
@@ -37,82 +37,113 @@ public class SummarizationService(SummarizationOptions summarizationOptions, ICh
         request
             .Validate();
 
-        SummarizationMemoryResponse response;
-        ChatMessageContent chatMessageContent = null;
-
         var summarizationDegree = request.ConfigOverrides.SummarizationDegree ?? this.summarizationOptions.SummarizationDegree;
 
         if (summarizationDegree > 0)
         {
-            var chatHistory = new ChatHistory();
+            var kernel = this.GetKernel();
+            var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
+            var chatHistory = this.GetChatHistory(request);
 
-            chatHistory
-                .AddSummarizationMemoryPrompt(request.Question, request.Answer, summarizationDegree);
-
-            var executionSettings = this.promptExecutionSettings
-                .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
-
-            executionSettings.ModelId = request.ConfigOverrides.ModelName;
-
-            var kernel = kernelBuilder
-                .Build();
-
-            chatMessageContent = await this.chatCompletionService
+            var chatMessageContent = await this.chatCompletionService
                 .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
                 .ConfigureAwait(false);
 
-            var answer = chatMessageContent.Content
-                .GetChatResponseAnswer();
+            stopwatch
+                .Stop();
 
-            response = SummarizationService.GetResponseOrDefault(answer);
-
-            if (response == null)
-            {
-                return null;
-            }
-        }
-        else
-        {
-            response = new SummarizationMemoryResponse
-            {
-                QuestionSummarized = request.Question,
-                AnswerSummarized = request.Answer
-            };
+            return SummarizationService.GetResponse(chatMessageContent, stopwatch.Elapsed);
         }
 
         stopwatch
             .Stop();
 
-        response.ElapsedTime = stopwatch.Elapsed;
-        response.TokenUsage = chatMessageContent?
-            .GetTokenUsage();
-
-        return response;
+        return new SummarizationMemoryResponse
+        {
+            QuestionSummarized = request.Question,
+            AnswerSummarized = request.Answer,
+            ElapsedTime = stopwatch.Elapsed
+        };
     }
 
-    private static SummarizationMemoryResponse GetResponseOrDefault(string content)
+
+    private Kernel GetKernel()
     {
-        if (content == null)
+        var kernel = kernelBuilder
+            .Build();
+
+        return kernel;
+    }
+    private PromptExecutionSettings GetPromptExecutionSettings(SummarizationConfigOverrides configOverrides)
+    {
+        if (configOverrides == null)
+            throw new NullReferenceException(nameof(configOverrides));
+
+        var executionSettings = this.promptExecutionSettings
+            .GetOverridePromptExecutionSettings(configOverrides.ModelParameters);
+
+        executionSettings.ModelId = configOverrides.ModelName;
+
+        return executionSettings;
+    }
+    private ChatHistory GetChatHistory(SummarizeMemoryRequest request)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var chatHistory = new ChatHistory();
+
+        var summarizationDegree = request.ConfigOverrides.SummarizationDegree ?? this.summarizationOptions.SummarizationDegree;
+
+        chatHistory
+            .AddSummarizationMemoryPrompt(request.Question, request.Answer, summarizationDegree);
+
+        return chatHistory;
+    }
+
+    private static SummarizationMemoryResponse GetResponse(ChatMessageContent chatMessageContent, TimeSpan elapsedTime)
+    {
+        if (chatMessageContent == null) 
+            throw new ArgumentNullException(nameof(chatMessageContent));
+
+        var tokenUsage = chatMessageContent
+            .GetTokenUsage();
+
+        var externalId = chatMessageContent
+            .GetExternalId();
+
+        if (string.IsNullOrEmpty(chatMessageContent.Content))
         {
-            return null;
+            var noContentException = BaseService.GetResponseExceptionOrDefault("No Content returned by the request.");
+
+            return new SummarizationMemoryResponse
+            {
+                ElapsedTime = elapsedTime,
+                TokenUsage = tokenUsage,
+                ExternalId = externalId,
+                Exception = noContentException
+            };
         }
 
-        var jObject = JObject.Parse(content);
+        var answer = chatMessageContent.Content
+            .GetChatResponseAnswer();
+
+        var jObject = JObject.Parse(answer);
 
         var errorMessage = jObject[nameof(BaseResponse.ErrorMessage)]?.ToString();
-
-        if (errorMessage != null)
-        {
-            throw new AiException(errorMessage);
-        }
-
         var questionSummarized = jObject[nameof(SummarizationMemoryResponse.QuestionSummarized)]?.ToString();
         var answerSummarized = jObject[nameof(SummarizationMemoryResponse.AnswerSummarized)]?.ToString();
+
+        var exception = BaseService.GetResponseExceptionOrDefault(errorMessage);
 
         return new SummarizationMemoryResponse
         {
             QuestionSummarized = questionSummarized,
-            AnswerSummarized = answerSummarized
+            AnswerSummarized = answerSummarized,
+            TokenUsage = tokenUsage,
+            ExternalId = externalId,
+            ElapsedTime = elapsedTime,
+            Exception = exception
         };
     }
 }

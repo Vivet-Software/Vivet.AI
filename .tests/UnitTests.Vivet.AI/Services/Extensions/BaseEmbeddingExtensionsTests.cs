@@ -1,9 +1,10 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Vivet.AI.Config;
-using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Models;
+using Vivet.AI.Models.Enums;
 using Vivet.AI.Services.Extensions;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 
 namespace UnitTests.Vivet.AI.Services.Extensions;
 
@@ -19,7 +20,7 @@ public class BaseEmbeddingExtensionsTests
     }
 
     private sealed class TestScoringOptions : BaseScoringOptions;
-   
+
     private static TestScoringOptions DefaultOptions(RecencyDecayStrategy strategy) =>
         new()
         {
@@ -81,6 +82,23 @@ public class BaseEmbeddingExtensionsTests
     }
 
     [TestMethod]
+    public void GetRecencyScoreWhenConfigOverridesTest()
+    {
+        var recordTime = DateTimeOffset.UtcNow.AddDays(-5).ToUnixTimeSeconds();
+        var record = new TestEmbedding(recordTime);
+        var options = DefaultOptions(RecencyDecayStrategy.Linear);
+        var configOverrides = new MemoryScoringConfigOverrides
+        {
+            RecencyDecayStrategy = RecencyDecayStrategy.Sigmoid
+        };
+
+        var score = record.GetRecencyScore(options, configOverrides);
+        var expected = options.RecencyBoostMax / 2.0;
+
+        Assert.AreEqual(expected, score, 1e-3);
+    }
+
+    [TestMethod]
     public void GetRecencyScoreWhenUnsupportedStrategyTest()
     {
         var record = new TestEmbedding(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
@@ -92,7 +110,7 @@ public class BaseEmbeddingExtensionsTests
     }
 
     [TestMethod]
-    public void GetRecencyScoreWhenRecordIsNullThrowsArgumentNullExceptionTest()
+    public void GetRecencyScoreWhenRecordIsNullTest()
     {
         TestEmbedding record = null;
         var options = DefaultOptions(RecencyDecayStrategy.Linear);
@@ -103,7 +121,7 @@ public class BaseEmbeddingExtensionsTests
     }
 
     [TestMethod]
-    public void GetRecencyScoreWhenOptionsIsNullThrowsArgumentNullExceptionTest()
+    public void GetRecencyScoreWhenOptionsIsNullTest()
     {
         var record = new TestEmbedding(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 

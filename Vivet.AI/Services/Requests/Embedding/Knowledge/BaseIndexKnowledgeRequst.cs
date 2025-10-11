@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using Vivet.AI.Services.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Embedding.Knowledge;
@@ -13,17 +14,17 @@ public abstract class BaseIndexKnowledgeRequst<TOverrides> : BaseIndexRequest<TO
     /// <summary>
     /// Gets or sets the tenant identifier.
     /// </summary>
-    public virtual string TenantId { get; set; }
+    public virtual Guid? TenantId { get; set; }
 
     /// <summary>
     /// Gets or sets the sub-tenant identifier.
     /// </summary>
-    public virtual string SubTenantId { get; set; }
+    public virtual Guid? SubTenantId { get; set; }
 
     /// <summary>
-    /// Gets or sets the scope identifier.
+    /// Gets or sets the user identifier.
     /// </summary>
-    public virtual string ScopeId { get; set; }
+    public virtual Guid? UserId { get; set; }
 
     /// <summary>
     /// Gets or sets the source of the knowledge content.

@@ -6,7 +6,7 @@ namespace Vivet.AI.Extensions;
 
 internal static class PromptExecutionSettingsExtensions
 {
-    internal static PromptExecutionSettings GetOverridePromptExecutionSettings(this PromptExecutionSettings promptExecutionSettings, ChatModelParameters chatModelParameters)
+    internal static PromptExecutionSettings GetOverridePromptExecutionSettings(this PromptExecutionSettings promptExecutionSettings, ChatModelParameters chatModelParameters = null)
     {
         if (promptExecutionSettings == null) 
             throw new ArgumentNullException(nameof(promptExecutionSettings));

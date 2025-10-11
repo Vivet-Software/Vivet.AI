@@ -19,14 +19,6 @@ public class ParameterExpressionExtensionsTests
     }
 
     [TestMethod]
-    public void AddExpressionEqualThrowsArgumentNullExceptionTest()
-    {
-        Expression body = null;
-        Assert.ThrowsException<ArgumentNullException>(() =>
-            ((ParameterExpression)null).AddExpressionEqual("IntProp", 5, ref body));
-    }
-
-    [TestMethod]
     public void AddExpressionEqualTest()
     {
         Expression body = null;
@@ -73,7 +65,7 @@ public class ParameterExpressionExtensionsTests
             From = DateTimeOffset.UtcNow.AddDays(-1)
         };
 
-        param.AddDateRangeExpression(range, ref body);
+        param.AddDateRangeExpression(nameof(BaseEmbedding.UnixTimestamp), range, ref body);
 
         Assert.IsNotNull(body);
         Assert.AreEqual(ExpressionType.GreaterThanOrEqual, body.NodeType);
@@ -90,7 +82,7 @@ public class ParameterExpressionExtensionsTests
             To = DateTimeOffset.UtcNow
         };
 
-        param.AddDateRangeExpression(range, ref body);
+        param.AddDateRangeExpression(nameof(BaseEmbedding.UnixTimestamp), range, ref body);
 
         Assert.IsNotNull(body);
         Assert.AreEqual(ExpressionType.LessThanOrEqual, body.NodeType);
@@ -121,11 +113,19 @@ public class ParameterExpressionExtensionsTests
     }
 
     [TestMethod]
-    public void AddExpressionSearchForThrowsArgumentOutOfRangeExceptionTest()
+    public void AddExpressionSearchForWhenEnumIsOutOfRangeTest()
     {
         Expression body = null;
         var param = Expression.Parameter(typeof(Knowledge), "k");
 
         Assert.ThrowsException<ArgumentOutOfRangeException>(() => param.AddExpressionSearchFor((SearchFor)999, ref body));
+    }
+
+    [TestMethod]
+    public void AddExpressionEqualWhenExpressionIsNullTest()
+    {
+        Expression body = null;
+
+        Assert.ThrowsException<ArgumentNullException>(() => ((ParameterExpression)null).AddExpressionEqual("IntProp", 5, ref body));
     }
 }

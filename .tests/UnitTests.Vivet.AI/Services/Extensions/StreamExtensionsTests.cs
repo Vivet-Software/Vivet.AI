@@ -9,7 +9,6 @@ namespace UnitTests.Vivet.AI.Services.Extensions;
 [TestClass]
 public class StreamExtensionsTests
 {
-    // Helper class for non-seekable stream
     private sealed class NonSeekableMemoryStream(byte[] buffer) : MemoryStream(buffer)
     {
         public override bool CanSeek => false;

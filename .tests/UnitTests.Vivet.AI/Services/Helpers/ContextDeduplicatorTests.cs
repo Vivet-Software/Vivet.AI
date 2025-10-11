@@ -17,19 +17,22 @@ public class ContextDeduplicatorTests
         const string QUESTION = "Q";
         const string ANSWER = "A";
 
-        var question = new MemoryResult
+        var question = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION,
-            CounterpartContext = [ANSWER]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION,
+                CounterpartContext = [ANSWER]
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question]);
         Assert.AreEqual(1, results.Length);
 
-        Assert.IsTrue(results[0].IsQuestion);
-        Assert.AreEqual(question.FullContext, results[0].FullContext);
-        Assert.AreEqual(question.CounterpartContext[0], results[0].CounterpartContext[0]);
+        Assert.IsTrue(results[0].Result.IsQuestion);
+        Assert.AreEqual(question.Result.FullContext, results[0].Result.FullContext);
+        Assert.AreEqual(question.Result.CounterpartContext[0], results[0].Result.CounterpartContext[0]);
     }
 
     [TestMethod]
@@ -44,19 +47,22 @@ public class ContextDeduplicatorTests
         const string QUESTION = "Q";
         const string ANSWER = "A";
 
-        var question = new MemoryResult
+        var question = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION,
-            CounterpartContext = [ANSWER]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION,
+                CounterpartContext = [ANSWER]
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question]);
         Assert.AreEqual(1, results.Length);
 
-        Assert.IsTrue(results[0].IsQuestion);
-        Assert.AreEqual(question.FullContext, results[0].FullContext);
-        Assert.AreEqual(question.CounterpartContext[0], results[0].CounterpartContext[0]);
+        Assert.IsTrue(results[0].Result.IsQuestion);
+        Assert.AreEqual(question.Result.FullContext, results[0].Result.FullContext);
+        Assert.AreEqual(question.Result.CounterpartContext[0], results[0].Result.CounterpartContext[0]);
     }
 
     [TestMethod]
@@ -65,19 +71,22 @@ public class ContextDeduplicatorTests
         const string QUESTION = "Q";
         const string ANSWER = "A";
 
-        var answer = new MemoryResult
+        var answer = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER,
-            CounterpartContext = [QUESTION]
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER,
+                CounterpartContext = [QUESTION]
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([answer]);
         Assert.AreEqual(1, results.Length);
 
-        Assert.IsTrue(results[0].IsAnswer);
-        Assert.AreEqual(answer.FullContext, results[0].FullContext);
-        Assert.AreEqual(answer.CounterpartContext[0], results[0].CounterpartContext[0]);
+        Assert.IsTrue(results[0].Result.IsAnswer);
+        Assert.AreEqual(answer.Result.FullContext, results[0].Result.FullContext);
+        Assert.AreEqual(answer.Result.CounterpartContext[0], results[0].Result.CounterpartContext[0]);
     }
 
     [TestMethod]
@@ -86,26 +95,32 @@ public class ContextDeduplicatorTests
         const string QUESTION = "Q";
         const string ANSWER = "A";
 
-        var question = new MemoryResult
+        var question = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION,
-            CounterpartContext = [ANSWER]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION,
+                CounterpartContext = [ANSWER]
+            }
         };
 
-        var answer = new MemoryResult
+        var answer = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER,
-            CounterpartContext = [QUESTION]
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER,
+                CounterpartContext = [QUESTION]
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question, answer]);
         Assert.AreEqual(1, results.Length);
 
-        Assert.IsTrue(results[0].IsQuestion);
-        Assert.AreEqual(question.FullContext, results[0].FullContext);
-        Assert.AreEqual(answer.FullContext, results[0].CounterpartContext[0]);
+        Assert.IsTrue(results[0].Result.IsQuestion);
+        Assert.AreEqual(question.Result.FullContext, results[0].Result.FullContext);
+        Assert.AreEqual(answer.Result.FullContext, results[0].Result.CounterpartContext[0]);
     }
 
     [TestMethod]
@@ -117,44 +132,56 @@ public class ContextDeduplicatorTests
         const string QUESTION_2 = "Q2";
         const string ANSWER_2 = "A2";
 
-        var question1 = new MemoryResult
+        var question1 = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION_1,
-            CounterpartContext = [ANSWER_1]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION_1,
+                CounterpartContext = [ANSWER_1]
+            }
         };
 
-        var answer1 = new MemoryResult
+        var answer1 = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER_1,
-            CounterpartContext = [QUESTION_1]
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER_1,
+                CounterpartContext = [QUESTION_1]
+            }
         };
 
-        var question2 = new MemoryResult
+        var question2 = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION_2,
-            CounterpartContext = [ANSWER_2]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION_2,
+                CounterpartContext = [ANSWER_2]
+            }
         };
 
-        var answer2 = new MemoryResult
+        var answer2 = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER_2,
-            CounterpartContext = [QUESTION_2]
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER_2,
+                CounterpartContext = [QUESTION_2]
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question1, answer1, question2, answer2]);
         Assert.AreEqual(2, results.Length);
 
-        Assert.IsTrue(results[0].IsQuestion);
-        Assert.AreEqual(question1.FullContext, results[0].FullContext);
-        Assert.AreEqual(answer1.FullContext, results[0].CounterpartContext[0]);
+        Assert.IsTrue(results[0].Result.IsQuestion);
+        Assert.AreEqual(question1.Result.FullContext, results[0].Result.FullContext);
+        Assert.AreEqual(answer1.Result.FullContext, results[0].Result.CounterpartContext[0]);
 
-        Assert.IsTrue(results[1].IsQuestion);
-        Assert.AreEqual(question2.FullContext, results[1].FullContext);
-        Assert.AreEqual(answer2.FullContext, results[1].CounterpartContext[0]);
+        Assert.IsTrue(results[1].Result.IsQuestion);
+        Assert.AreEqual(question2.Result.FullContext, results[1].Result.FullContext);
+        Assert.AreEqual(answer2.Result.FullContext, results[1].Result.CounterpartContext[0]);
     }
 
     [TestMethod]
@@ -164,27 +191,33 @@ public class ContextDeduplicatorTests
         const string ANSWER_1 = "A1";
         const string ANSWER_2 = "A2";
 
-        var question1 = new MemoryResult
+        var question1 = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION_1,
-            CounterpartContext = [ANSWER_1]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION_1,
+                CounterpartContext = [ANSWER_1]
+            }
         };
 
-        var question2 = new MemoryResult
+        var question2 = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION_1,
-            CounterpartContext = [ANSWER_2]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION_1,
+                CounterpartContext = [ANSWER_2]
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question1, question2]);
         Assert.AreEqual(1, results.Length);
 
-        Assert.IsTrue(results[0].IsQuestion);
-        Assert.AreEqual(question1.FullContext, results[0].FullContext);
-        Assert.AreEqual(question1.CounterpartContext[0], results[0].CounterpartContext[0]);
-        Assert.AreEqual(question2.CounterpartContext[0], results[0].CounterpartContext[1]);
+        Assert.IsTrue(results[0].Result.IsQuestion);
+        Assert.AreEqual(question1.Result.FullContext, results[0].Result.FullContext);
+        Assert.AreEqual(question1.Result.CounterpartContext[0], results[0].Result.CounterpartContext[0]);
+        Assert.AreEqual(question2.Result.CounterpartContext[0], results[0].Result.CounterpartContext[1]);
     }
 
     [TestMethod]
@@ -192,24 +225,31 @@ public class ContextDeduplicatorTests
     {
         const string QUESTION = "Q";
 
-        var question1 = new MemoryResult
+        var question1 = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            }
         };
-        var question2 = new MemoryResult
+
+        var question2 = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION,
-            CreatedAt = DateTime.UtcNow
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION,
+                CreatedAt = DateTime.UtcNow
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question1, question2]);
 
         Assert.AreEqual(1, results.Length);
-        Assert.IsTrue(results[0].IsQuestion);
-        Assert.AreEqual(question2.FullContext, results[0].FullContext);
+        Assert.IsTrue(results[0].Result.IsQuestion);
+        Assert.AreEqual(question2.Result.FullContext, results[0].Result.FullContext);
     }
 
     [TestMethod]
@@ -219,27 +259,33 @@ public class ContextDeduplicatorTests
         const string QUESTION_2 = "Q2";
         const string ANSWER_1 = "A1";
 
-        var answer1 = new MemoryResult
+        var answer1 = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER_1,
-            CounterpartContext = [QUESTION_1]
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER_1,
+                CounterpartContext = [QUESTION_1]
+            }
         };
 
-        var answer2 = new MemoryResult
+        var answer2 = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER_1,
-            CounterpartContext = [QUESTION_2]
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER_1,
+                CounterpartContext = [QUESTION_2]
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([answer1, answer2]);
         Assert.AreEqual(1, results.Length);
 
-        Assert.IsTrue(results[0].IsAnswer);
-        Assert.AreEqual(answer1.FullContext, results[0].FullContext);
-        Assert.AreEqual(answer1.CounterpartContext[0], results[0].CounterpartContext[0]);
-        Assert.AreEqual(answer2.CounterpartContext[0], results[0].CounterpartContext[1]);
+        Assert.IsTrue(results[0].Result.IsAnswer);
+        Assert.AreEqual(answer1.Result.FullContext, results[0].Result.FullContext);
+        Assert.AreEqual(answer1.Result.CounterpartContext[0], results[0].Result.CounterpartContext[0]);
+        Assert.AreEqual(answer2.Result.CounterpartContext[0], results[0].Result.CounterpartContext[1]);
     }
 
     [TestMethod]
@@ -247,27 +293,33 @@ public class ContextDeduplicatorTests
     {
         const string ANSWER = "Q";
 
-        var answer1 = new MemoryResult
+        var answer1 = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER,
-            CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER,
+                CreatedAt = DateTime.UtcNow.AddMinutes(-5)
+            }
         };
 
-        var answer2 = new MemoryResult
+        var answer2 = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER,
-            CreatedAt = DateTime.UtcNow
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER,
+                CreatedAt = DateTime.UtcNow
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([answer1, answer2]);
 
         Assert.AreEqual(1, results.Length);
-        Assert.IsTrue(results[0].IsAnswer);
-        Assert.AreEqual(answer2.FullContext, results[0].FullContext);
+        Assert.IsTrue(results[0].Result.IsAnswer);
+        Assert.AreEqual(answer2.Result.FullContext, results[0].Result.FullContext);
     }
-    
+
     [TestMethod]
     public void DeduplicateMemoryResultsWhenDuplicateQuestionsAndAnswersTest()
     {
@@ -276,42 +328,51 @@ public class ContextDeduplicatorTests
         const string ANSWER_1 = "A1";
         const string ANSWER_2 = "A2";
 
-        var question1 = new MemoryResult
+        var question1 = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION_1,
-            CounterpartContext = [ANSWER_1, ANSWER_2]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION_1,
+                CounterpartContext = [ANSWER_1, ANSWER_2]
+            }
         };
 
-        var question2 = new MemoryResult
+        var question2 = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = QUESTION_2,
-            CounterpartContext = [ANSWER_1]
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = QUESTION_2,
+                CounterpartContext = [ANSWER_1]
+            }
         };
 
-        var answer1 = new MemoryResult
+        var answer1 = new SearchMemoryResult
         {
-            IsAnswer = true,
-            FullContext = ANSWER_2,
-            CounterpartContext = [QUESTION_1]
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = ANSWER_2,
+                CounterpartContext = [QUESTION_1]
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question1, question2, answer1]);
         Assert.AreEqual(3, results.Length);
 
-        Assert.IsTrue(results[0].IsQuestion);
-        Assert.AreEqual(question1.FullContext, results[0].FullContext);
-        Assert.AreEqual(question1.CounterpartContext[0], results[0].CounterpartContext[0]);
-        Assert.AreEqual(question1.CounterpartContext[1], results[0].CounterpartContext[1]);
+        Assert.IsTrue(results[0].Result.IsQuestion);
+        Assert.AreEqual(question1.Result.FullContext, results[0].Result.FullContext);
+        Assert.AreEqual(question1.Result.CounterpartContext[0], results[0].Result.CounterpartContext[0]);
+        Assert.AreEqual(question1.Result.CounterpartContext[1], results[0].Result.CounterpartContext[1]);
 
-        Assert.IsTrue(results[1].IsQuestion);
-        Assert.AreEqual(question2.FullContext, results[1].FullContext);
-        Assert.AreEqual(question2.CounterpartContext[0], results[1].CounterpartContext[0]);
+        Assert.IsTrue(results[1].Result.IsQuestion);
+        Assert.AreEqual(question2.Result.FullContext, results[1].Result.FullContext);
+        Assert.AreEqual(question2.Result.CounterpartContext[0], results[1].Result.CounterpartContext[0]);
 
-        Assert.IsTrue(results[2].IsAnswer);
-        Assert.AreEqual(answer1.FullContext, results[2].FullContext);
-        Assert.AreEqual(answer1.CounterpartContext[0], results[2].CounterpartContext[0]);
+        Assert.IsTrue(results[2].Result.IsAnswer);
+        Assert.AreEqual(answer1.Result.FullContext, results[2].Result.FullContext);
+        Assert.AreEqual(answer1.Result.CounterpartContext[0], results[2].Result.CounterpartContext[0]);
     }
 
     [TestMethod]
@@ -320,24 +381,30 @@ public class ContextDeduplicatorTests
         var now = DateTime.UtcNow;
         var questions = new[]
         {
-            new MemoryResult
+            new SearchMemoryResult
             {
-                FullContext = "Q1", 
-                IsQuestion = true, 
-                CreatedAt = now, 
-                Blob = new BlobResponse
+                Result = new MemoryResult
                 {
-                    Hash = "h1"
+                    FullContext = "Q1",
+                    IsQuestion = true,
+                    CreatedAt = now,
+                    Blob = new BlobResponse
+                    {
+                        Hash = "h1"
+                    }
                 }
             },
-            new MemoryResult
+            new SearchMemoryResult
             {
-                FullContext = "Q1 again", 
-                IsQuestion = true, 
-                CreatedAt = now.AddMinutes(1), 
-                Blob = new BlobResponse
+                Result = new MemoryResult
                 {
-                    Hash = "h1"
+                    FullContext = "Q1 again",
+                    IsQuestion = true,
+                    CreatedAt = now.AddMinutes(1),
+                    Blob = new BlobResponse
+                    {
+                        Hash = "h1"
+                    }
                 }
             }
         };
@@ -345,7 +412,7 @@ public class ContextDeduplicatorTests
         var results = ContextDeduplicator.DeduplicateMemoryResults(questions);
 
         Assert.AreEqual(1, results.Length);
-        Assert.AreEqual("h1", results[0].Blob.Hash);
+        Assert.AreEqual("h1", results[0].Result.Blob.Hash);
     }
 
     [TestMethod]
@@ -354,17 +421,23 @@ public class ContextDeduplicatorTests
         var now = DateTime.UtcNow;
         var questions = new[]
         {
-            new MemoryResult
+            new SearchMemoryResult
             {
-                FullContext = "What is AI?", 
-                IsQuestion = true, 
-                CreatedAt = now
+                Result = new MemoryResult
+                {
+                    FullContext = "What is AI?",
+                    IsQuestion = true,
+                    CreatedAt = now
+                }
             },
-            new MemoryResult
+            new SearchMemoryResult
             {
-                FullContext = "What is A.I.?", 
-                IsQuestion = true, 
-                CreatedAt = now.AddMinutes(1)
+                Result = new MemoryResult
+                {
+                    FullContext = "What is A.I.?",
+                    IsQuestion = true,
+                    CreatedAt = now.AddMinutes(1)
+                }
             }
         };
 
@@ -379,17 +452,23 @@ public class ContextDeduplicatorTests
         var now = DateTime.UtcNow;
         var questions = new[]
         {
-            new MemoryResult
+            new SearchMemoryResult
             {
-                FullContext = "What is AI?", 
-                IsQuestion = true, 
-                CreatedAt = now
+                Result = new MemoryResult
+                {
+                    FullContext = "What is AI?",
+                    IsQuestion = true,
+                    CreatedAt = now
+                }
             },
-            new MemoryResult
+            new SearchMemoryResult
             {
-                FullContext = "What is Artificial Intelligence?", 
-                IsQuestion = true, 
-                CreatedAt = now.AddMinutes(1)
+                Result = new MemoryResult
+                {
+                    FullContext = "What is Artificial Intelligence?",
+                    IsQuestion = true,
+                    CreatedAt = now.AddMinutes(1)
+                }
             }
         };
 
@@ -401,73 +480,96 @@ public class ContextDeduplicatorTests
     public void DeduplicateMemoryResultsCaseInsensitiveTest()
     {
         var now = DateTime.UtcNow;
-        var questions = new MemoryResult
+
+        var question = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = "Never tell me about Sweden.", 
-            CreatedAt = now
-        };
-        var questionLowercase = new MemoryResult
-        {
-            IsQuestion = true,
-            FullContext = "never tell me about sweden.", 
-            CreatedAt = now.AddMinutes(1)
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = "Never tell me about Sweden.",
+                CreatedAt = now
+            }
         };
 
-        var results = ContextDeduplicator.DeduplicateMemoryResults([questions, questionLowercase]);
+        var questionLowercase = new SearchMemoryResult
+        {
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = "never tell me about sweden.",
+                CreatedAt = now.AddMinutes(1)
+            }
+        };
+
+        var results = ContextDeduplicator.DeduplicateMemoryResults([question, questionLowercase]);
 
         Assert.AreEqual(1, results.Length);
-        Assert.AreEqual(questionLowercase.FullContext, results[0].FullContext);
+        Assert.AreEqual(questionLowercase.Result.FullContext, results[0].Result.FullContext);
     }
 
     [TestMethod]
     public void DeduplicateMemoryResultsWhitespaceNormalizedTest()
     {
         var now = DateTime.UtcNow;
-        var question = new MemoryResult
+
+        var question = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = "What is AI?",
-            CreatedAt = now
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = "What is AI?",
+                CreatedAt = now
+            }
         };
-        var questionWhitespace = new MemoryResult
+
+        var questionWhitespace = new SearchMemoryResult
         {
-            IsQuestion = true,
-            FullContext = "What is AI? ", 
-            CreatedAt = now.AddMinutes(1)
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = "What is AI? ",
+                CreatedAt = now.AddMinutes(1)
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question, questionWhitespace]);
 
         Assert.AreEqual(1, results.Length);
-        Assert.AreEqual(questionWhitespace.FullContext, results[0].FullContext);
+        Assert.AreEqual(questionWhitespace.Result.FullContext, results[0].Result.FullContext);
     }
 
     [TestMethod]
     public void DeduplicateMemoryResultsWithNullOrEmptyCounterpartContextTest()
     {
         var now = DateTime.UtcNow;
-        var question = new MemoryResult
+
+        var question = new SearchMemoryResult
         {
-            IsQuestion = true, 
-            FullContext = "Q1", 
-            CounterpartContext = null, 
-            CreatedAt = now
+            Result = new MemoryResult
+            {
+                IsQuestion = true,
+                FullContext = "Q1",
+                CounterpartContext = null,
+                CreatedAt = now
+            }
         };
 
-        var answer = new MemoryResult
+        var answer = new SearchMemoryResult
         {
-            IsAnswer = true, 
-            FullContext = "A1", 
-            CounterpartContext = [], 
-            CreatedAt = now
+            Result = new MemoryResult
+            {
+                IsAnswer = true,
+                FullContext = "A1",
+                CounterpartContext = [],
+                CreatedAt = now
+            }
         };
 
         var results = ContextDeduplicator.DeduplicateMemoryResults([question, answer]);
 
         Assert.AreEqual(2, results.Length);
-        Assert.IsTrue(results.Any(x => x.IsQuestion));
-        Assert.IsTrue(results.Any(x => x.IsAnswer));
+        Assert.IsTrue(results.Any(x => x.Result.IsQuestion));
+        Assert.IsTrue(results.Any(x => x.Result.IsAnswer));
     }
 
 
@@ -476,15 +578,21 @@ public class ContextDeduplicatorTests
     {
         var knowledges = new[]
         {
-            new KnowledgeResult
+            new SearchKnowledgeResult
             {
-                FullContext = "Document A",
-                CreatedAt = DateTime.UtcNow
+                Result = new KnowledgeResult
+                {
+                    FullContext = "Document A",
+                    CreatedAt = DateTime.UtcNow
+                }
             },
-            new KnowledgeResult
+            new SearchKnowledgeResult
             {
-                FullContext = "Totally unrelated content",
-                CreatedAt = DateTime.UtcNow
+                Result = new KnowledgeResult
+                {
+                    FullContext = "Totally unrelated content",
+                    CreatedAt = DateTime.UtcNow
+                }
             }
         };
 
@@ -505,22 +613,28 @@ public class ContextDeduplicatorTests
         var now = DateTime.UtcNow;
         var knowledges = new[]
         {
-            new KnowledgeResult
+            new SearchKnowledgeResult
             {
-                FullContext = "Doc1",
-                CreatedAt = now,
-                Blob = new BlobResponse
+                Result = new KnowledgeResult
                 {
-                    Hash = "hash123"
+                    FullContext = "Doc1",
+                    CreatedAt = now,
+                    Blob = new BlobResponse
+                    {
+                        Hash = "hash123"
+                    }
                 }
             },
-            new KnowledgeResult
+            new SearchKnowledgeResult
             {
-                FullContext = "Doc1 newer",
-                CreatedAt = now.AddMinutes(5),
-                Blob = new BlobResponse
+                Result = new KnowledgeResult
                 {
-                    Hash = "hash123"
+                    FullContext = "Doc1 newer",
+                    CreatedAt = now.AddMinutes(5),
+                    Blob = new BlobResponse
+                    {
+                        Hash = "hash123"
+                    }
                 }
             }
         };
@@ -528,7 +642,7 @@ public class ContextDeduplicatorTests
         var results = ContextDeduplicator.DeduplicateKnowledgeResults(knowledges);
 
         Assert.AreEqual(1, results.Length);
-        Assert.AreEqual("hash123", results[0].Blob.Hash);
+        Assert.AreEqual("hash123", results[0].Result.Blob.Hash);
     }
 
     [TestMethod]
@@ -537,15 +651,21 @@ public class ContextDeduplicatorTests
         var now = DateTime.UtcNow;
         var knowledges = new[]
         {
-            new KnowledgeResult
+            new SearchKnowledgeResult
             {
-                FullContext = "AI is awesome",
-                CreatedAt = now
+                Result = new KnowledgeResult
+                {
+                    FullContext = "AI is awesome",
+                    CreatedAt = now
+                }
             },
-            new KnowledgeResult
+            new SearchKnowledgeResult
             {
-                FullContext = "AI is awsome",
-                CreatedAt = now.AddMinutes(1)
+                Result = new KnowledgeResult
+                {
+                    FullContext = "AI is awsome",
+                    CreatedAt = now.AddMinutes(1)
+                }
             }
         };
 
@@ -560,15 +680,21 @@ public class ContextDeduplicatorTests
         var now = DateTime.UtcNow;
         var knowledges = new[]
         {
-            new KnowledgeResult
+            new SearchKnowledgeResult
             {
-                FullContext = "AI is awesome",
-                CreatedAt = now
+                Result = new KnowledgeResult
+                {
+                    FullContext = "AI is awesome",
+                    CreatedAt = now
+                }
             },
-            new KnowledgeResult
+            new SearchKnowledgeResult
             {
-                FullContext = "AI is so awsome",
-                CreatedAt = now.AddMinutes(1)
+                Result = new KnowledgeResult
+                {
+                    FullContext = "AI is so awsome",
+                    CreatedAt = now.AddMinutes(1)
+                }
             }
         };
 

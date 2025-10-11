@@ -1,10 +1,10 @@
-﻿using System;
+﻿using IntegrationTests.Vivet.AI.Services.data;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.SemanticKernel;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Azure;
-using IntegrationTests.Vivet.AI.Services.data;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.Blobs.Data;
 using Vivet.AI.Services.Models.MimeTypes;
@@ -161,7 +161,7 @@ public class MetadataServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task GetWhenOverrideModelTest()
+    public async Task GetWhenConfigOverridesTest()
     {
         await Task.CompletedTask;
         Assert.Inconclusive();
@@ -172,7 +172,7 @@ public class MetadataServiceTests : BaseTests
     {
         const string BASE64 = "TVqQAAMAAAAEAAAA//8AALgAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"; // invalid
 
-        await Assert.ThrowsAsync<RequestFailedException>(async () => await this.MetadataService
+        await Assert.ThrowsAsync<HttpOperationException>(async () => await this.MetadataService
             .GetAsync<ImageMetaData>(new GetMetadataRequest
             {
                 Blob = new ImageBlob
@@ -205,7 +205,7 @@ public class MetadataServiceTests : BaseTests
             }));
 
         Assert.IsNotNull(exception);
-        Assert.IsTrue(exception.Message.ToLower().Contains("no") || exception.Message.ToLower().Contains("not"));
-        Assert.IsTrue(exception.Message.ToLower().Contains("binary data") || exception.Message.ToLower().Contains("binary content"));
+        Assert.IsTrue(exception.Message.ToLower().Contains("unsupported mime type 'video/x-matroska'"));
+        Assert.IsTrue(exception.Message.ToLower().Contains("expected a base64-encoded data url with"));
     }
 }

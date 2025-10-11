@@ -17,13 +17,14 @@ public class ChatOptions
     public virtual ChatModel Model { get; set; } = new();
 
     /// <summary>
-    /// Timeout in seconds before requests are aborted.
+    /// Timeout before requests are aborted.
     /// Defailt to 60 seconds.
     /// </summary>
     public virtual TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(60);
 
     /// <summary>
-    /// Options for configuring chat plugins.
+    /// Options for enabling or disabling built-in plugins.
     /// </summary>
-    public virtual ChatPluginsOptions Plugins { get; set; } = new();
+    [Required]
+    public virtual PluginsToggleOptions Plugins { get; set; } = new();
 }

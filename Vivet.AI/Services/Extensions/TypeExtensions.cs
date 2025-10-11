@@ -8,6 +8,29 @@ namespace Vivet.AI.Services.Extensions;
 
 internal static class TypeExtensions
 {
+    internal static bool IsSimple(this Type type)
+    {
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+
+        return type.IsPrimitive
+               || type.IsEnum
+               || type == typeof(string)
+               || type == typeof(Guid)
+               || type == typeof(Guid?)
+               || type == typeof(TimeSpan)
+               || type == typeof(TimeSpan?)
+               || type == typeof(TimeOnly)
+               || type == typeof(TimeOnly?)
+               || type == typeof(DateOnly)
+               || type == typeof(DateOnly?)
+               || type == typeof(DateTime)
+               || type == typeof(DateTime?)
+               || type == typeof(DateTimeOffset)
+               || type == typeof(DateTimeOffset?)
+               || type == typeof(Nullable<>);
+    }
+
     internal static Type GetMetadataType(this Type type)
     {
         if (type == null)

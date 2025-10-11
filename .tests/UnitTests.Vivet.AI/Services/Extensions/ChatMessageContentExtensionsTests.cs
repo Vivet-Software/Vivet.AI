@@ -11,6 +11,229 @@ namespace UnitTests.Vivet.AI.Services.Extensions;
 public class ChatMessageContentExtensionsTests
 {
     [TestMethod]
+    public void GetAgentIdTest()
+    {
+        var id = Guid.NewGuid();
+        const string NAME = "name";
+
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = $"{NAME} [{id}]"
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNotNull(agentId);
+        Assert.AreEqual(id, agentId);
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenBracketStartIsMissingTest()
+    {
+        var id = Guid.NewGuid().ToString();
+        const string NAME = "name";
+
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = $"{NAME} {id}]"
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNull(agentId);
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenBracketEndIsMissingTest()
+    {
+        var id = Guid.NewGuid().ToString();
+        const string NAME = "name";
+
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = $"{NAME} [{id}"
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNull(agentId);
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenBracketStartIsAfterBracketEndTest()
+    {
+        var id = Guid.NewGuid().ToString();
+        const string NAME = "name";
+
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = $"{NAME} ]{id}["
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNull(agentId);
+    }
+
+    [TestMethod]
+    public void GetAgentIdWhenAuthorNameIsNullTest()
+    {
+        var chatMessageContent = new ChatMessageContent
+        {
+            AuthorName = null
+        };
+
+        var agentId = chatMessageContent
+            .GetAgentId();
+
+        Assert.IsNull(agentId);
+    }
+
+
+    [TestMethod]
+    public void GetExternalIdTest()
+    {
+        const string EXPECTED = "id";
+
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["Id"] = EXPECTED
+            }
+        };
+
+        var result = content.GetExternalId();
+        Assert.AreEqual(EXPECTED, result);
+    }
+
+    [TestMethod]
+    public void GetExternalIdWhenChatMessageContentIsNullTest()
+    {
+        ChatMessageContent content = null;
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(content.GetExternalId);
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void GetExternalIdWhenMetadataIsNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = null
+        };
+
+        var result = content.GetExternalId();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetExternalIdWhenIdKeyIsMissingTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>()
+        };
+
+        var result = content.GetExternalId();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetExternalIdWhenWhenNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["Id"] = null
+            }
+        };
+
+        var result = content.GetExternalId();
+
+        Assert.IsNull(result);
+    }
+
+
+    [TestMethod]
+    public void GetCreatedAtTest()
+    {
+        var expected = DateTimeOffset.UtcNow;
+
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["CreatedAt"] = expected.ToString()
+            }
+        };
+
+        var result = content.GetCreatedAt();
+        Assert.IsNotNull(result);
+        Assert.AreEqual(expected.ToString(), result.Value.ToString());
+    }
+
+    [TestMethod]
+    public void GetCreatedAtWhenChatMessageContentIsNullTest()
+    {
+        ChatMessageContent content = null;
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(() => content.GetCreatedAt());
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void GetCreatedAtWhenMetadataIsNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = null
+        };
+
+        var result = content.GetCreatedAt();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetCreatedAtWhenCreatedAtKeyIsMissingTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>()
+        };
+
+        var result = content.GetCreatedAt();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetCreatedAtWhenWhenNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["CreatedAt"] = null
+            }
+        };
+
+        var result = content.GetCreatedAt();
+
+        Assert.IsNull(result);
+    }
+
+
+    [TestMethod]
     public void GetTokenUsageTest()
     {
         // Arrange: use ExpandoObject so dynamic binding works
@@ -33,7 +256,7 @@ public class ChatMessageContentExtensionsTests
     }
 
     [TestMethod]
-    public void GetTokenUsageThrowsArgumentNullExceptionTest()
+    public void GetTokenUsageWhenChatMessageContentIsNullTest()
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
@@ -79,6 +302,75 @@ public class ChatMessageContentExtensionsTests
         };
 
         var result = content.GetTokenUsage();
+
+        Assert.IsNull(result);
+    }
+
+
+    [TestMethod]
+    public void GetFinishReasonIdTest()
+    {
+        const string EXPECTED = "finish";
+
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["FinishReason"] = EXPECTED
+            }
+        };
+
+        var result = content.GetFinishReason();
+        Assert.AreEqual(EXPECTED, result);
+    }
+
+    [TestMethod]
+    public void GetFinishReasonlIdWhenChatMessageContentIsNullTest()
+    {
+        ChatMessageContent content = null;
+        // ReSharper disable ExpressionIsAlwaysNull
+        Assert.ThrowsException<ArgumentNullException>(content.GetFinishReason);
+        // ReSharper restore ExpressionIsAlwaysNull
+    }
+
+    [TestMethod]
+    public void GetFinishReasonlIdWhenMetadataIsNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = null
+        };
+
+        var result = content.GetFinishReason();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetFinishReasonlIdWhenIdKeyIsMissingTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>()
+        };
+
+        var result = content.GetFinishReason();
+
+        Assert.IsNull(result);
+    }
+
+    [TestMethod]
+    public void GetFinishReasonlIdWhenWhenFinishReasonIsNullTest()
+    {
+        var content = new ChatMessageContent
+        {
+            Metadata = new Dictionary<string, object>
+            {
+                ["FinishReason"] = null
+            }
+        };
+
+        var result = content.GetFinishReason();
 
         Assert.IsNull(result);
     }

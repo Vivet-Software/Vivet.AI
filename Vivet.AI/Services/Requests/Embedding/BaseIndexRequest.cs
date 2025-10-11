@@ -1,4 +1,6 @@
-﻿using Vivet.AI.Services.Models.ConfigOverrides;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using Vivet.AI.Services.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Embedding;
 
@@ -10,6 +12,11 @@ public abstract class BaseIndexRequest<TOverrides>
     where TOverrides : BaseConfigOverrides, new()
 {
     /// <summary>
+    /// Gets or sets the scope identifier.
+    /// </summary>
+    public virtual Guid? ScopeId { get; set; }
+
+    /// <summary>
     /// Gets or sets the language associated with the request.
     /// </summary>
     public virtual string Language { get; set; }
@@ -17,5 +24,6 @@ public abstract class BaseIndexRequest<TOverrides>
     /// <summary>
     /// Gets or sets the configuration overrides for the request.
     /// </summary>
+    [Required]
     public virtual TOverrides ConfigOverrides { get; set; } = new();
 }

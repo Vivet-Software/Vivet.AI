@@ -18,6 +18,7 @@ using Vivet.AI.Extensions.Embeddings.Postgres;
 using Vivet.AI.Extensions.Embeddings.Qdrant;
 using Vivet.AI.Extensions.Embeddings.Weaviate;
 using Vivet.AI.Models;
+using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
 using Vivet.AI.Services.Interfaces;
 using ChatOptions = Vivet.AI.Config.ChatOptions;
@@ -32,10 +33,12 @@ internal static class ServiceCollectionExtensions
             throw new ArgumentNullException(nameof(services));
 
         services
-            .AddSingleton(options);
+            .AddSingleton(options)
+            .AddSingleton(options.Plugins);
 
         return services;
     }
+
     internal static IServiceCollection AddConfigOptions(this IServiceCollection services, out AiOptions options)
     {
         if (services == null)
@@ -49,6 +52,7 @@ internal static class ServiceCollectionExtensions
 
         services
             .AddSingleton(options)
+            .AddSingleton(options.Plugins)
             .Configure<AiOptions>(section);
 
         return services;
@@ -66,27 +70,26 @@ internal static class ServiceCollectionExtensions
         services
             .AddKeyedSingleton(ServiceIds.CHAT_SERVICE_ID, (x, _) =>
             {
+                var pluginsOptions = x
+                    .GetService<PluginsOptions>();
+
+                var chatCompletionService = x
+                    .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.CHAT_SERVICE_ID);
+
                 var builder = Kernel.CreateBuilder();
 
-                builder
-                    .AddLoggerFactory(services);
-
-                // TODO: Exception Handling (Function Invocation Filter, e.g. Logging)
-                // TODO: Prompt Caching (Prompt Render Filter - https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Caching/SemanticCachingWithFilters.cs)
-                // TODO: PII Identification (Prompt Render Filter - http://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/Concepts/Filtering/PIIDetection.cs)
+                builder.Services
+                    .AddScoped(_ => chatCompletionService);
 
                 builder
-                    .AddFilters<IFunctionInvocationFilter>(services)
-                    .AddFilters<IAutoFunctionInvocationFilter>(services)
-                    .AddFilters<IPromptRenderFilter>(services);
+                    .AddLoggerFactory(x)
+                    .AddChatBuiltInPlugins(x, pluginsOptions);
 
-                builder
-                    .AddChatPluginsFromConfiguration(x);
-                
                 return builder;
             });
 
         services
+            .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Plugins.WebSearch)
             .AddPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
             .AddScoped<IChatService>(x =>
             {
@@ -105,7 +108,7 @@ internal static class ServiceCollectionExtensions
                 var embeddingMemoryService = x
                     .GetService<IEmbeddingMemoryService>();
 
-                return new ChatService(chatOptions, chatCompletionService, kernelBuilder, promptExecutionSettings, embeddingMemoryService);
+                return new ChatService(chatOptions, chatCompletionService, kernelBuilder, x, promptExecutionSettings, embeddingMemoryService);
             });
 
         services
@@ -115,6 +118,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+    
     internal static IServiceCollection AddEmbeddingServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
@@ -193,6 +197,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+    
     internal static IServiceCollection AddMetadataServices<T>(this IServiceCollection services, AiOptions options)
         where T : PromptExecutionSettings, new()
     {
@@ -203,12 +208,12 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Metadata);
 
         services
-            .AddKeyedSingleton(ServiceIds.METADATA_SERVICE_ID, (_, _) =>
+            .AddKeyedSingleton(ServiceIds.METADATA_SERVICE_ID, (x, _) =>
             {
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddLoggerFactory(services);
+                    .AddLoggerFactory(x);
 
                 return builder;
             });
@@ -239,6 +244,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+    
     internal static IServiceCollection AddSummarizationServices<T>(this IServiceCollection services, AiOptions options)
         where T : PromptExecutionSettings, new()
     {
@@ -252,12 +258,12 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Summarization);
 
         services
-            .AddKeyedSingleton(ServiceIds.SUMMARIZATION_SERVICE_ID, (_, _) =>
+            .AddKeyedSingleton(ServiceIds.SUMMARIZATION_SERVICE_ID, (x, _) =>
             {
                 var builder = Kernel.CreateBuilder();
 
                 builder
-                    .AddLoggerFactory(services);
+                    .AddLoggerFactory(x);
 
                 return builder;
             });
@@ -289,6 +295,64 @@ internal static class ServiceCollectionExtensions
         return services;
     }
 
+    internal static IServiceCollection AddAgentsServices<T>(this IServiceCollection services, AiOptions options)
+        where T : PromptExecutionSettings, new()
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        services
+            .AddSingleton(options.Agents);
+
+        services
+            .AddKeyedSingleton(ServiceIds.AGENT_SERVICE_ID, (x, _) =>
+            {
+                var pluginsOptions = x
+                    .GetService<PluginsOptions>();
+
+                var chatCompletionService = x
+                    .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.AGENT_SERVICE_ID);
+
+                var builder = Kernel.CreateBuilder();
+
+                builder.Services
+                    .AddScoped(_ => chatCompletionService);
+
+                builder
+                    .AddLoggerFactory(x)
+                    .AddAgentsBuiltInPlugins(x, pluginsOptions);
+
+                return builder;
+            });
+
+        services
+            .AddTextSearch(ServiceIds.AGENT_SERVICE_ID, options.Plugins.WebSearch)
+            .AddPromptExecutionSettings<T>(options.Agents.Model.Parameters, ServiceIds.AGENT_SERVICE_ID)
+            .AddScoped<IAgentsService>(x =>
+            {
+                var agentOptions = x
+                    .GetRequiredService<AgentsOptions>();
+
+                var kernelBuilder = x
+                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.AGENT_SERVICE_ID);
+
+                var promptExecutionSettings = x
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.AGENT_SERVICE_ID);
+
+                var embeddingMemoryService = x
+                    .GetService<IEmbeddingMemoryService>();
+
+                return new AgentsService(agentOptions, x, kernelBuilder, promptExecutionSettings, embeddingMemoryService);
+            });
+
+        services
+            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_AGENT_SERVICE_ID)
+            .AddHealthChecks()
+            .AddChatModelCheck(ServiceIds.AGENT_SERVICE_ID, ServiceIds.HEALTH_AGENT_SERVICE_ID);
+
+        return services;
+    }
+
     internal static IServiceCollection AddHttpClient(this IServiceCollection services, string name, string baseAddress, TimeSpan timeout, out HttpClient httpClient)
     {
         if (services == null)
@@ -314,7 +378,40 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    internal static IServiceCollection AddPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
+
+
+    private static IServiceCollection AddTextSearch(this IServiceCollection services, string serviceId, WebSearchPluginOptions webSearchPluginOptions = null)
+    {
+        if (services == null) 
+            throw new ArgumentNullException(nameof(services));
+        
+        if (serviceId == null) 
+            throw new ArgumentNullException(nameof(serviceId));
+
+        if (webSearchPluginOptions == null)
+        {
+            return services;
+        }
+
+        switch (webSearchPluginOptions.Provider)
+        {
+            case WebSearchProvider.Google:
+                services
+                    .AddGoogleTextSearch(webSearchPluginOptions.Id, webSearchPluginOptions.ApiKey, serviceId: serviceId);
+                break;
+
+            case WebSearchProvider.Bing:
+                services
+                    .AddBingTextSearch(webSearchPluginOptions.ApiKey, serviceId: serviceId);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(webSearchPluginOptions.Provider), webSearchPluginOptions.Provider, $"The provider '{webSearchPluginOptions.Provider}' is not suppoprted.");
+        }
+
+        return services;
+    }
+    private static IServiceCollection AddPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
         where T : PromptExecutionSettings, new()
     {
         if (services == null) 
@@ -337,7 +434,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    internal static IServiceCollection AddHealthCheckPromptExecutionSettings<T>(this IServiceCollection services, string serviceId)
+    private static IServiceCollection AddHealthCheckPromptExecutionSettings<T>(this IServiceCollection services, string serviceId)
         where T : PromptExecutionSettings, new()
     {
         if (services == null)
@@ -359,15 +456,15 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-
-
-    private static IServiceCollection AddMemoryVectorStore(this IServiceCollection services, EmbeddingOptions.MemoryOptions options)
+    private static IServiceCollection AddMemoryVectorStore(this IServiceCollection services, EmbeddingMemoryOptions options = null)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
         if (options == null)
-            throw new ArgumentNullException(nameof(options));
+        {
+            return null;
+        }
 
         services
             .AddVectorStore<Memory>(options.VectorStore);
@@ -394,13 +491,15 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddKnowledgeVectorStore(this IServiceCollection services, EmbeddingOptions.KnowledgeOptions options)
+    private static IServiceCollection AddKnowledgeVectorStore(this IServiceCollection services, EmbeddingKnowledgeOptions options = null)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
         if (options == null)
-            throw new ArgumentNullException(nameof(options));
+        {
+            return null;
+        }
 
         services
             .AddVectorStore<Knowledge>(options.VectorStore);
@@ -501,6 +600,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
+    
     private static void EnsureCreated<TCollection>(this IServiceCollection services)
         where TCollection : BaseEmbedding
     {

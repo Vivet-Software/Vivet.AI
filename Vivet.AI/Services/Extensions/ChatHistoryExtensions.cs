@@ -1,12 +1,15 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using Vivet.AI.Services.Models;
+using Vivet.AI.Services.Plugins.Consts;
+using Vivet.AI.Services.Requests.Agents;
+using Vivet.AI.Services.Requests.Agents.Models;
 using Vivet.AI.Services.Requests.Chat;
 using Vivet.AI.Services.Responses;
 using Vivet.AI.Services.Responses.Metadata;
@@ -20,8 +23,16 @@ internal static class ChatHistoryExtensions
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
 
-        const string BASE_PROMPT = @$"
-You are an assistant that always responds in strict JSON format.
+        var stringBuilder = new StringBuilder();
+
+        if (additionalSystemMessage != null)
+        {
+            stringBuilder
+                .AppendLine(additionalSystemMessage);
+        }
+
+        stringBuilder
+            .AppendLine(@$"You always respond in strict JSON format.
 The JSON response must contain:
 {{
   ""Reasoning"": ""Internal reasoning, thinking or planning"",
@@ -33,189 +44,136 @@ Rules:
 - Do not include code fences (```json).
 - Do not add extra commentary or text outside of the JSON.
 - Inline JSON inside the ""Answer"" must be properly escaped.
-
 - if you are unable complete the request, add a property called {nameof(BaseResponse.ErrorMessage)}, 
-containing a meaningful error message, describing why the request could not be completed."";
-";
-
-        chatHistory
-            .AddSystemMessage(BASE_PROMPT);
-
-        if (additionalSystemMessage != null)
-        {
-            chatHistory
-                .AddSystemMessage(additionalSystemMessage);
-        }
+containing a meaningful error message, describing why the request could not be completed.");
 
         if (typeof(T) != typeof(string))
         {
             var schema = typeof(T).GenerateJsonMap();
-            var serializedSchema = JsonSerializer.Serialize(schema, new JsonSerializerOptions { WriteIndented = true });
+            var serializedSchema = JsonConvert.SerializeObject(schema, new JsonSerializerSettings { Formatting = Formatting.Indented });
+
+            stringBuilder
+                .AppendLine($"Please respond using the following JSON schema: {serializedSchema}");
+        }
+
+        var content = stringBuilder
+            .ToString();
+
+        chatHistory
+            .AddSystemMessage(content);
+
+        return chatHistory;
+    }
+
+    internal static ChatHistory AddChatPluginsContextPrompt(this ChatHistory chatHistory, Kernel kernel, ChatRequest request)
+    {
+        if (chatHistory == null)
+            throw new ArgumentNullException(nameof(chatHistory));
+
+        if (kernel == null) 
+            throw new ArgumentNullException(nameof(kernel));
+
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var stringBuilder = new StringBuilder();
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.MEMORY_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.MEMORY_PLUGIN, request.Plugins.Context.Memory, request.ConfigOverrides.Plugins.Memory.Search);
+        }
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.KNOWLEDGE_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.KNOWLEDGE_PLUGIN, request.Plugins.Context.Knowledge, request.ConfigOverrides.Plugins.Knowledge.Search);
+        }
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.WEB_SEARCH_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.WEB_SEARCH_PLUGIN, request.Plugins.Context.WebSearch, request.ConfigOverrides.Plugins.WebSearch);
+        }
+
+        stringBuilder
+            .AppendCustomPluginsContext(request.Plugins.CustomPlugins);
+
+        var content = stringBuilder
+            .ToString();
+
+        if (!string.IsNullOrEmpty(content))
+        {
+            content = @$"[PLUGIN CONTEXT]
+{content}";
 
             chatHistory
-                .AddUserMessage($"Please respond using the following JSON schema: {serializedSchema}");
+                .AddSystemMessage(content);
         }
 
         return chatHistory;
     }
 
-    internal static ChatHistory AddChatPluginContextPrompt(this ChatHistory chatHistory, ChatRequest request)
+    internal static ChatHistory AddAgentPluginsContextPrompt(this ChatHistory chatHistory, Kernel kernel, AgentDescriptor agentDescriptor, BaseAgentsRequest agentsRequest)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
 
-        if (request == null) 
-            throw new ArgumentNullException(nameof(request));
+        if (kernel == null)
+            throw new ArgumentNullException(nameof(kernel));
 
-        chatHistory
-            .AddSystemMessage(@$"Context: 
-UserId={request.UserId}, 
-ScopeId={request.ScopeId}, 
-AgentId={request.AgentId}, 
-ThreadId={request.CurrentThreadId}, 
-TenantId={request.TenantId}, 
-SubTenantId={request.SubTenantId}");
+        if (agentDescriptor == null) 
+            throw new ArgumentNullException(nameof(agentDescriptor));
+        
+        if (agentsRequest == null) 
+            throw new ArgumentNullException(nameof(agentsRequest));
+
+        var stringBuilder = new StringBuilder();
+
+        var contextMemory = agentDescriptor.Plugins.Context.Memory ?? agentsRequest.Plugins.Context?.Memory;
+        var contextKnowledge = agentDescriptor.Plugins.Context.Knowledge ?? agentsRequest.Plugins.Context?.Knowledge;
+        var contextWebSearch = agentDescriptor.Plugins.Context.WebSearch ?? agentsRequest.Plugins.Context?.WebSearch;
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.MEMORY_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.MEMORY_PLUGIN, contextMemory, agentsRequest.ConfigOverrides.Plugins.Memory.Search);
+        }
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.KNOWLEDGE_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.KNOWLEDGE_PLUGIN, contextKnowledge, agentsRequest.ConfigOverrides.Plugins.Knowledge.Search);
+        }
+
+        if (kernel.Plugins.Any(x => x.Name == BuiltInPluginNames.WEB_SEARCH_PLUGIN))
+        {
+            stringBuilder
+                .AppendBuiltInPluginContext(BuiltInPluginNames.WEB_SEARCH_PLUGIN, contextWebSearch, agentsRequest.ConfigOverrides.Plugins.WebSearch);
+        }
+
+        var customPlugins = agentDescriptor.Plugins.CustomPlugins
+            .Concat(agentsRequest.Plugins.CustomPlugins)
+            .DistinctBy(x => x.Name);
+
+        stringBuilder
+            .AppendCustomPluginsContext(customPlugins);
+
+        var content = stringBuilder
+            .ToString();
+
+        if (!string.IsNullOrEmpty(content))
+        {
+            content = @$"[PLUGIN CONTEXT]
+{content}";
+
+            chatHistory
+                .AddSystemMessage(content);
+        }
 
         return chatHistory;
     }
-    
-    // TODO: Remove
-    //internal static ChatHistory AddChatMemoryPrompt(this ChatHistory chatHistory, MemoryResult[] memoryResults, int counterpartContextQueryLimit)
-    //{
-    //    if (chatHistory == null)
-    //        throw new ArgumentNullException(nameof(chatHistory));
 
-    //    if (memoryResults == null)
-    //        throw new ArgumentNullException(nameof(memoryResults));
-
-    //    if (memoryResults.Any())
-    //    {
-    //        chatHistory
-    //            .AddSystemMessage("[MEMORY]");
-    //    }
-
-    //    foreach (var memoryResult in memoryResults)
-    //    {
-    //        if (memoryResult.IsQuestion)
-    //        {
-    //            chatHistory
-    //                .AddUserMessage($"Q: {memoryResult.FullContext}");
-
-    //            if (memoryResult.Blob != null)
-    //            {
-    //                var dataUri = memoryResult.Blob
-    //                    .GetDataUri();
-
-    //                chatHistory
-    //                    .AddUserMessage([new BinaryContent(dataUri)]);
-    //            }
-
-    //            var counterpartContexts = memoryResult.CounterpartContext
-    //                .Take(counterpartContextQueryLimit);
-
-    //            foreach (var counterPartContext in counterpartContexts)
-    //            {
-    //                chatHistory
-    //                    .AddAssistantMessage($"A: {counterPartContext}");
-    //            }
-
-    //            chatHistory
-    //                .AddSystemMessage($"(Date: {memoryResult.CreatedAt:D})");
-    //        }
-    //        else if (memoryResult.IsAnswer)
-    //        {
-    //            var counterpartContexts = memoryResult.CounterpartContext
-    //                .Take(counterpartContextQueryLimit);
-
-    //            foreach (var counterpartContext in counterpartContexts)
-    //            {
-    //                chatHistory
-    //                    .AddUserMessage($"Q: {counterpartContext}");
-    //            }
-
-    //            chatHistory
-    //                .AddAssistantMessage($"A: {memoryResult.FullContext}");
-
-    //            if (memoryResult.Blob != null)
-    //            {
-    //                var dataUri = memoryResult.Blob
-    //                    .GetDataUri();
-
-    //                chatHistory
-    //                    .AddUserMessage([new BinaryContent(dataUri)]);
-    //            }
-
-    //            chatHistory
-    //                .AddSystemMessage($"(Date: {memoryResult.CreatedAt:D})");
-    //        }
-    //    }
-
-    //    return chatHistory;
-    //}
-    //internal static ChatHistory AddChatKnowledgePrompt(this ChatHistory chatHistory, KnowledgeResult[] knowledgeResults)
-    //{
-    //    if (chatHistory == null) 
-    //        throw new ArgumentNullException(nameof(chatHistory));
-
-    //    if (knowledgeResults == null)
-    //        throw new ArgumentNullException(nameof(knowledgeResults));
-
-    //    if (knowledgeResults.Any())
-    //    {
-    //        chatHistory
-    //            .AddSystemMessage("[KNOWLEDGE]");
-    //    }
-
-    //    foreach (var knowledgeResult in knowledgeResults)
-    //    {
-    //        if (knowledgeResult.Source != null)
-    //        {
-    //            chatHistory
-    //                .AddSystemMessage($"{knowledgeResult.Source}");
-    //        }
-
-    //        if (knowledgeResult.Blob == null)
-    //        {
-    //            chatHistory
-    //                .AddAssistantMessage(knowledgeResult.FullContext);
-    //        }
-    //        else
-    //        {
-    //            chatHistory
-    //                .AddAssistantMessage(knowledgeResult.FullContext);
-
-    //            var dataUri = knowledgeResult.Blob
-    //                .GetDataUri();
-
-    //            chatHistory
-    //                .AddUserMessage([new BinaryContent(dataUri)]);
-
-    //            if (knowledgeResult.BlobMetadata != null)
-    //            {
-    //                var metadataProperties = knowledgeResult.BlobMetadata
-    //                    .GetType()
-    //                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-    //                    .Select(x => new
-    //                    {
-    //                        Key = x.Name,
-    //                        Value = x.GetValue(knowledgeResult.BlobMetadata)
-    //                    })
-    //                    .Select(x => $"{x.Key}={x.Value ?? "N/A"}");
-
-    //                var metadataContent = string.Join(", ", metadataProperties);
-
-    //                chatHistory
-    //                    .AddAssistantMessage(metadataContent);
-    //            }
-    //        }
-
-    //        chatHistory
-    //            .AddSystemMessage($"{knowledgeResult.CreatedAt:D}");
-    //    }
-
-    //    return chatHistory;
-    //}
-    
     internal static ChatHistory AddChatUserPrompt(this ChatHistory chatHistory, string question, IEnumerable<KernelContent> blobContents)
     {
         if (chatHistory == null)
@@ -227,10 +185,13 @@ SubTenantId={request.SubTenantId}");
         if (blobContents == null)
             throw new ArgumentNullException(nameof(blobContents));
 
-        chatHistory
-            .AddUserMessage($"question: {question}");
+        var textContent = new TextContent(@$"[QUESTION]
+{question}");
 
-        var messageContentItemCollection = new ChatMessageContentItemCollection();
+        var messageContentItemCollection = new ChatMessageContentItemCollection
+        {
+            textContent
+        };
 
         foreach (var binaryContent in blobContents)
         {
@@ -238,15 +199,12 @@ SubTenantId={request.SubTenantId}");
                 .Add(binaryContent);
         }
 
-        if (messageContentItemCollection.Any())
-        {
-            chatHistory
-                .AddUserMessage(messageContentItemCollection);
-        }
+        chatHistory
+            .AddUserMessage(messageContentItemCollection);
 
         return chatHistory;
     }
-    
+
     internal static ChatHistory AddMetadataPrompt<T>(this ChatHistory chatHistory, KernelContent blobContent, int summaryMaxWords, int descriptionMaxWords)
         where T : class, new()
     {
@@ -256,21 +214,19 @@ SubTenantId={request.SubTenantId}");
         if (blobContent == null)
             throw new ArgumentNullException(nameof(blobContent));
 
-        chatHistory
-            .AddSystemMessage("You are a metadata extraction assistant.");
+        var stringBuilder = new StringBuilder();
 
-        chatHistory
-            .AddUserMessage(
-                "Analyze the binary content provided and respond strictly in JSON format with extracted metadata. " +
-                "Don't include ```json or any other code fences, and don't add explanations or extra text. " +
-                $"Return a JSON object with a property called {nameof(MetadataResponse<T>.Metadata)}, containing these nested properties: " +
-                $"{nameof(Metadata.Summary)} (max {summaryMaxWords} words), {nameof(Metadata.Description)} (max {descriptionMaxWords} words).");
+        stringBuilder
+            .AppendLine(@$"You are a metadata extraction assistant.
+You always respond in strict JSON format.
+Return a JSON object with a property called {nameof(MetadataResponse<T>.Metadata)}, containing these nested properties:
+{nameof(Metadata.Summary)} (max {summaryMaxWords} words), {nameof(Metadata.Description)} (max {descriptionMaxWords} words).");
 
         if (typeof(T) != typeof(object))
         {
             var properties = typeof(T)
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Select(p => p.Name)
+                .Select(x => x.Name)
                 .ToArray();
 
             if (properties.Any())
@@ -292,19 +248,32 @@ SubTenantId={request.SubTenantId}");
                 [nameof(MetadataResponse<T>.AdditionalMetadata)] = propertiesDictionary
             };
 
-            var serializedTemplate = JsonSerializer.Serialize(metadataResponseTemplate, new JsonSerializerOptions { WriteIndented = true });
+            var serializedTemplate = JsonConvert.SerializeObject(metadataResponseTemplate, new JsonSerializerSettings { Formatting = Formatting.Indented });
 
             chatHistory
                 .AddSystemMessage(serializedTemplate);
         }
 
-        chatHistory
-            .AddUserMessage([blobContent]);
+        stringBuilder
+            .AppendLine($@"Rules:
+-Do not include code fences(```json).
+-Do not add extra commentary or text outside of the JSON.
+-If you are unable to read or understand the binary content, add a property called {nameof(BaseResponse.ErrorMessage)},
+containing a meaningful error message describing why the metadata retrieval could not be completed.");
 
         chatHistory
-            .AddUserMessage(
-                $"If you are unable to read or understand the binary content, add a property called {nameof(BaseResponse.ErrorMessage)}, " +
-                "containing a meaningful error message describing why the metadata retrieval could not be completed.");
+            .AddSystemMessage(stringBuilder.ToString());
+
+        var textContent = new TextContent("Analyze the binary content provided and respond with extracted metadata");
+
+        var messageContentItemCollection = new ChatMessageContentItemCollection
+        {
+            textContent,
+            blobContent
+        };
+
+        chatHistory
+            .AddUserMessage(messageContentItemCollection);
 
         return chatHistory;
     }
@@ -321,11 +290,7 @@ SubTenantId={request.SubTenantId}");
             throw new ArgumentNullException(nameof(answer));
 
         chatHistory
-            .AddSystemMessage("You are a text summarization assistant.");
-
-        chatHistory
-            .AddUserMessage($@"
-Summarize the following question-and-answer pair using the summarization level provided. 
+            .AddSystemMessage(@$"You are a text summarization assistant.
 Summarization Level: {summarizationDegree}.
 
 Use the scale to control how much detail is preserved.
@@ -342,18 +307,22 @@ Return the output in the following JSON format:
   ""QuestionSummarized"": ""summarized question here"",
   ""AnswerSummarized"": ""summarized answer here""
 }}
-Any inline JSON in QuestionSummarized or AnswerSummarized must be properly escaped.
-Don't include ```json or any other code fences, and don't add explanations or extra text.
 
-If you are unable to complete the request, add a property called {nameof(BaseResponse.ErrorMessage)}, containing a meaningful error message describing 
-why the summarization could not be completed.
+Rules:
+- Do not include code fences (```json).
+- Do not add extra commentary or text outside of the JSON.
+- Inline JSON inside the """"QuestionSummarized"""" or """"AnswerSummarized"""" must be properly escaped.
+- if you are unable complete the request, add a property called {nameof(BaseResponse.ErrorMessage)}, 
+containing a meaningful error message, describing why the request could not be completed."");
 
 IMPORTANT: DO NOT change, summarize, or remove any JSON or XML in the Question or Answer.
 - JSON is any text between `{{` and `}}`.
 - XML is any text between `<` and `>`.
 - Copy JSON/XML exactly as it appears.
-- Only summarize the natural language outside these snippets.
+- Only summarize the natural language outside these snippets.");
 
+        chatHistory
+            .AddUserMessage(@$"Summarize the following question-and-answer pair using the summarization level provided.
 [Q&A]
 Q: {question}
 A: {answer}
@@ -362,7 +331,7 @@ A: {answer}
         return chatHistory;
     }
     
-    internal static string GetPromptAsText(this ChatHistory chatHistory)
+    internal static string GetPromptAsText(this ChatHistory chatHistory, bool outputBinary = false)
     {
         if (chatHistory == null)
             throw new ArgumentNullException(nameof(chatHistory));
@@ -376,37 +345,24 @@ A: {answer}
 
             foreach (var item in message.Items)
             {
-                switch (item)
+                var value = item switch
                 {
-                    case TextContent text:
-                        stringBuilder
-                            .AppendLine(text.Text);
-                        break;
+                    TextContent text => text.Text,
+                    AudioContent audioContent => outputBinary
+                        ? $"[{audioContent.DataUri}]"
+                        : $"[{audioContent.GetType().Name}]",
+                    ImageContent imageContent => outputBinary
+                        ? $"[{imageContent.DataUri}]"
+                        : $"[{imageContent.GetType().Name}]",
+                    BinaryContent binaryContent => outputBinary
+                        ? $"[{binaryContent.DataUri}]"
+                        : $"[{binaryContent.GetType().Name}]",
+                    _ => $"[{item.GetType().Name}]"
+                };
 
-                    case AudioContent:
-                        stringBuilder
-                            .AppendLine("[AudioContent]");
-                        break;
-
-                    case ImageContent:
-                        stringBuilder
-                            .AppendLine("[ImageContent]");
-                        break;
-                    
-                    case BinaryContent:
-                        stringBuilder
-                            .AppendLine("[BinaryContent]");
-                        break;
-
-                    default:
-                        stringBuilder
-                            .AppendLine($"[{item.GetType().Name}]");
-                        break;
-                }
+                stringBuilder
+                    .AppendLine(value);
             }
-
-            stringBuilder
-                .AppendLine();
         }
 
         return stringBuilder

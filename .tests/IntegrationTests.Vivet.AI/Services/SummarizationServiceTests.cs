@@ -16,7 +16,7 @@ public class SummarizationServiceTests : BaseTests
     [TestMethod]
     public async Task SummarizeMemoryWhenDefaultTest()
     {
-        const string QUESTION = "A girl, mistreated by her stepmother and stepsisters, dreams of a better life." +
+        const string QUESTION = "A girl, treated bad by her stepmother and stepsisters, dreams of a better life." +
                                 "With magical help, she attends the royal ball, captivating the prince but fleeing at midnight, leaving behind a glass slipper." +
                                 "The prince searches the kingdom, finds her, and they live happily ever after. what story is that";
 
@@ -53,7 +53,7 @@ public class SummarizationServiceTests : BaseTests
     [TestMethod]
     public async Task SummarizeMemoryWhenSummarizationDegreeIsHighTest()
     {
-        const string QUESTION = "A girl, mistreated by her stepmother and stepsisters, dreams of a better life." +
+        const string QUESTION = "A girl, treated bad by her stepmother and stepsisters, dreams of a better life." +
                                 "With magical help, she attends the royal ball, captivating the prince but fleeing at midnight, leaving behind a glass slipper." +
                                 "The prince searches the kingdom, finds her, and they live happily ever after. what story is that";
 
@@ -170,7 +170,7 @@ public class SummarizationServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task SummarizeMemoryWhenOverrideModelTest()
+    public async Task SummarizeMemoryWhenConfigOverridesTest()
     {
         await Task.CompletedTask;
         Assert.Inconclusive();
@@ -179,14 +179,18 @@ public class SummarizationServiceTests : BaseTests
     [TestMethod]
     public async Task SummarizeMemoryWhenErrorMessageTest()
     {
-        const string QUESTION = $"This is a test request, where I want you to respond with an {nameof(BaseResponse.ErrorMessage)}.";
+        const string QUESTION = $"DON'T Summarize the question and instead. Instead, simulate an error message response to simulate inability to complete the request. So ONLY respond with an {nameof(BaseResponse.ErrorMessage)}, as per the rules.";
         const string ANSWER = "N/A";
 
-        await Assert.ThrowsAsync<AiException>(async () => await this.SummarizationService
+        var response = await this.SummarizationService
             .SummarizeMemoryAsync(new SummarizeMemoryRequest
             {
                 Question = QUESTION,
                 Answer = ANSWER
-            }));
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsNotNull(response.Exception);
+        Assert.AreEqual(typeof(AiException), response.Exception.GetType());
     }
 }

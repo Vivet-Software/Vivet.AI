@@ -1,24 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
 using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.Blobs.Data;
 using Vivet.AI.Services.Models.MimeTypes;
+using Vivet.AI.Services.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Chat;
+using Vivet.AI.Services.Requests.Chat.Models.Plugins.Contexts;
 using Vivet.AI.Services.Requests.Embedding.Knowledge;
+using Vivet.AI.Services.Requests.Embedding.Knowledge.Models.ConfigOverrides;
 using Vivet.AI.Services.Requests.Embedding.Memory;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses;
 
 namespace IntegrationTests.Vivet.AI.Services;
@@ -46,8 +52,17 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }
+                    }
+                }
             }, memoryResponse =>
             {
                 try
@@ -99,8 +114,6 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString(),
                 Blobs = new List<BaseBlobMetadata>
                 {
                     new ImageBlob
@@ -110,6 +123,17 @@ public class ChatServiceTests : BaseTests
                             Base64 = BASE64
                         },
                         MimeType = ImageMimeType.Jpg
+                    }
+                },
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }
                     }
                 }
             }, memoryResponse =>
@@ -143,8 +167,17 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }
+                    }
+                }
             }, async memoryResponse =>
             {
                 await Task.CompletedTask;
@@ -181,8 +214,17 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }
+                    }
+                }
             }, async memoryResponse =>
             {
                 await Task.CompletedTask;
@@ -209,8 +251,17 @@ public class ChatServiceTests : BaseTests
         {
             SystemMessage = SYSTEM_MESSAGE,
             Question = QUESTION,
-            UserId = this.userId,
-            CurrentThreadId = Guid.NewGuid().ToString()
+            Plugins =
+            {
+                Context =
+                {
+                    Memory = new ChatMemoryContext
+                    {
+                        UserId = this.userId,
+                        CurrentThreadId = Guid.NewGuid()
+                    }
+                }
+            }
         };
 
         var streamedResults = new List<string>();
@@ -262,19 +313,12 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task ChatWhenWebSearchPluginTest()
-    {
-        await Task.CompletedTask;
-        Assert.Inconclusive();
-    }
-
-    [TestMethod]
     public async Task ChatWhenMemoryTest()
     {
         var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
 
-        var threadId = Guid.NewGuid().ToString();
-        var localUserId = Guid.NewGuid().ToString();
+        var threadId = Guid.NewGuid();
+        var localUserId = Guid.NewGuid();
 
         const string QUESTION_INDEXED = "Tell me about Ceasar.";
         const string ANSWER_INDEXED = "Ceasar was a dictator of rome.";
@@ -297,14 +341,40 @@ public class ChatServiceTests : BaseTests
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                UserId = localUserId,
-                CurrentThreadId = threadId
+                ConfigOverrides =
+                {
+                    Plugins =
+                    {
+                        Knowledge =
+                        {
+                            EnableKnowledgePlugin = false
+                        },
+                        WebSearch =
+                        {
+                            EnableWebSearchPlugin = false   
+                        }
+                    }
+                },
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = localUserId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }
+                    }
+                }
             });
 
         Assert.IsNotNull(response);
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionResultContent]"));
         Assert.IsTrue(response.InputPrompt.Contains("[MEMORY]"));
         Assert.IsTrue(response.InputPrompt.Contains(QUESTION_INDEXED));
         Assert.IsTrue(response.InputPrompt.Contains(ANSWER_INDEXED));
+        Assert.IsNotEmpty(response.FunctionCalls);
     }
 
     [TestMethod]
@@ -312,8 +382,8 @@ public class ChatServiceTests : BaseTests
     {
         var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
 
-        var threadId = Guid.NewGuid().ToString();
-        var localUserId = Guid.NewGuid().ToString();
+        var threadId = Guid.NewGuid();
+        var localUserId = Guid.NewGuid();
 
         const string QUESTION_INDEXED = "Tell me about Ceasar.";
         const string ANSWER_INDEXED = "Ceasar was a dictator of rome.";
@@ -339,8 +409,17 @@ public class ChatServiceTests : BaseTests
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                UserId = localUserId,
-                CurrentThreadId = threadId
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = localUserId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }   
+                    }
+                }
             });
 
         Assert.IsNotNull(response);
@@ -353,17 +432,157 @@ public class ChatServiceTests : BaseTests
     }
 
     [TestMethod]
-    public async Task ChatWhenSkipMemoryContextTest()
+    public async Task ChatWhenEnableMemoryPluginIsFalseTest()
     {
-        await Task.CompletedTask;
-        Assert.Inconclusive();
+        var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
+
+        var threadId = Guid.NewGuid();
+        var localUserId = Guid.NewGuid();
+
+        const string QUESTION_INDEXED = "Tell me about Ceasar.";
+        const string ANSWER_INDEXED = "Ceasar was a dictator of rome.";
+
+        var indexRequest = new IndexMemoryRequest
+        {
+            Question = QUESTION_INDEXED,
+            Answer = ANSWER_INDEXED,
+            UserId = localUserId,
+            ThreadId = threadId,
+            Language = this.language
+        };
+
+        await embeddingMemoryService
+            .IndexAsync(indexRequest);
+
+        const string QUESTION = "Yesterday you mentioned that when Ceasar was emporer, can you recall that";
+
+        var response = await this.ChatService
+            .ChatAsync(new ChatRequest
+            {
+                Question = QUESTION,
+                ConfigOverrides =
+                {
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            EnableMemoryPlugin = false
+                        },
+                        Knowledge =
+                        {
+                            EnableKnowledgePlugin = false
+                        },
+                        WebSearch =
+                        {
+                            EnableWebSearchPlugin = false
+                        }
+                    }
+                }
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsFalse(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsFalse(response.InputPrompt.Contains("[FunctionResultContent]"));
+        Assert.IsFalse(response.InputPrompt.Contains("[MEMORY]"));
     }
 
     [TestMethod]
-    public async Task ChatWhenSkipSaveMemoryContextTest()
+    public async Task ChatWhenMemoryWhenConfigOverridesTest()
     {
-        await Task.CompletedTask;
-        Assert.Inconclusive();
+        var embeddingMemoryService = this.ServiceProvider.GetService<IEmbeddingMemoryService>();
+
+        var threadId = Guid.NewGuid();
+        var localUserId = Guid.NewGuid();
+
+        const string QUESTION_INDEXED = "Tell me about Ceasar.";
+        const string ANSWER_INDEXED = "Ceasar was a dictator of rome.";
+
+        var indexRequest = new IndexMemoryRequest
+        {
+            Question = QUESTION_INDEXED,
+            Answer = ANSWER_INDEXED,
+            UserId = localUserId,
+            ThreadId = threadId,
+            Language = this.language
+        };
+
+        await embeddingMemoryService
+            .IndexAsync(indexRequest);
+
+        const string QUESTION = "Yesterday you mentioned that when Ceasar was emporer, can you recall that";
+
+        var request = new ChatRequest
+        {
+            Question = QUESTION,
+            ConfigOverrides =
+            {
+                Plugins =
+                {
+                    Memory =
+                    {
+                        Search =
+                        {
+                            UseQueryDeduplication = true,
+                            ContextQueryLimit = 2,
+                            RetentionInDays = 30,
+                            CounterpartContextQueryLimit = 2,
+                            Scoring =
+                            {
+                                DeduplicationMatchScoreThreshold = 0.7,
+                                MatchScoreThreshold = 0.92,
+                                RecencyBoostMax = 0.3,
+                                RecencyDecayStrategy = RecencyDecayStrategy.Linear,
+                                ThreadMatchBoost = 0.2,
+                                RecencySigmoidSteepness = 0.2
+                            }
+                        }
+                    },
+                    Knowledge =
+                    {
+                        EnableKnowledgePlugin = false
+                    },
+                    WebSearch =
+                    {
+                        EnableWebSearchPlugin = false
+                    }
+                }
+            },
+            Plugins =
+            {
+                Context =
+                {
+                    Memory = new ChatMemoryContext
+                    {
+                        UserId = localUserId,
+                        CurrentThreadId = Guid.NewGuid()
+                    }
+                }
+            }
+        };
+
+        var response = await this.ChatService
+            .ChatAsync(request);
+
+        Assert.IsNotNull(response);
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionResultContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[MEMORY]"));
+        Assert.IsTrue(response.InputPrompt.Contains(QUESTION_INDEXED));
+        Assert.IsTrue(response.InputPrompt.Contains(ANSWER_INDEXED));
+        Assert.IsNotEmpty(response.FunctionCalls);
+
+        var configOverride = (MemorySearchConfigOverrides)response.FunctionCalls.First().Arguments.First(x => x.Key == "configOverrides").Value;
+        Assert.IsNotNull(configOverride);
+        Assert.AreEqual(configOverride.UseQueryDeduplication, request.ConfigOverrides.Plugins.Memory.Search.UseQueryDeduplication);
+        Assert.AreEqual(configOverride.ContextQueryLimit, request.ConfigOverrides.Plugins.Memory.Search.ContextQueryLimit);
+        Assert.AreEqual(configOverride.RetentionInDays, request.ConfigOverrides.Plugins.Memory.Search.RetentionInDays);
+        Assert.AreEqual(configOverride.CounterpartContextQueryLimit, request.ConfigOverrides.Plugins.Memory.Search.CounterpartContextQueryLimit);
+        Assert.AreEqual(configOverride.Scoring.DeduplicationMatchScoreThreshold, request.ConfigOverrides.Plugins.Memory.Search.Scoring.DeduplicationMatchScoreThreshold);
+        Assert.AreEqual(configOverride.Scoring.MatchScoreThreshold, request.ConfigOverrides.Plugins.Memory.Search.Scoring.MatchScoreThreshold);
+        Assert.AreEqual(configOverride.Scoring.RecencyBoostMax, request.ConfigOverrides.Plugins.Memory.Search.Scoring.RecencyBoostMax);
+        Assert.AreEqual(configOverride.Scoring.RecencyDecayStrategy, request.ConfigOverrides.Plugins.Memory.Search.Scoring.RecencyDecayStrategy);
+        Assert.AreEqual(configOverride.Scoring.ThreadMatchBoost, request.ConfigOverrides.Plugins.Memory.Search.Scoring.ThreadMatchBoost);
+        Assert.AreEqual(configOverride.Scoring.RecencySigmoidSteepness, request.ConfigOverrides.Plugins.Memory.Search.Scoring.RecencySigmoidSteepness);
     }
 
     [TestMethod]
@@ -371,9 +590,9 @@ public class ChatServiceTests : BaseTests
     {
         var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
-        var scopeId = Guid.NewGuid().ToString();
+        var scopeId = Guid.NewGuid();
 
-        const string TEXT_INDEXED = "We had 100 orders last year.";
+        const string TEXT_INDEXED = "We had 100 orders in 2022.";
 
         var indexRequest = new IndexTextRequest
         {
@@ -384,26 +603,52 @@ public class ChatServiceTests : BaseTests
         await embeddingKnowledgeService
             .IndexAsync(indexRequest);
 
-        const string QUESTION = "Can you look up how many orders did we have last year?";
+        const string QUESTION = "Can you look up how many orders we had in 2022?";
 
         var response = await this.ChatService
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                ScopeId = scopeId
+                ConfigOverrides =
+                {
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            EnableMemoryPlugin = false
+                        },
+                        WebSearch = 
+                        {
+                            EnableWebSearchPlugin = false
+                        }
+                    }
+                },
+                Plugins =
+                {
+                    Context =
+                    {
+                        Knowledge = new KnowledgeContext
+                        {
+                            ScopeId = scopeId
+                        }
+                    }
+                }
             });
 
         Assert.IsNotNull(response);
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionResultContent]"));
         Assert.IsTrue(response.InputPrompt.Contains("[KNOWLEDGE]"));
         Assert.IsTrue(response.InputPrompt.Contains(TEXT_INDEXED));
+        Assert.IsNotEmpty(response.FunctionCalls);
     }
 
     [TestMethod]
-    public async Task ChatWhenMemoryAndKnowledgeAndDeplicationTest()
+    public async Task ChatWhenEnableKnowledgePluginIsFalseTest()
     {
         var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
 
-        var scopeId = Guid.NewGuid().ToString();
+        var scopeId = Guid.NewGuid();
 
         const string TEXT_INDEXED = "We had 100 orders last year.";
 
@@ -416,29 +661,215 @@ public class ChatServiceTests : BaseTests
         await embeddingKnowledgeService
             .IndexAsync(indexRequest);
 
-        await embeddingKnowledgeService
-            .IndexAsync(indexRequest);
-
         const string QUESTION = "Can you look up how many orders did we have last year?";
 
         var response = await this.ChatService
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                ScopeId = scopeId
+                ConfigOverrides =
+                {
+                    Plugins =
+                    {
+                        Knowledge = 
+                        {
+                            EnableKnowledgePlugin = false
+                        },
+                        WebSearch =
+                        {
+                            EnableWebSearchPlugin = false
+                        }
+                    }
+                },
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }
+                    }
+                }
             });
 
         Assert.IsNotNull(response);
-
-        var occurrences = Regex.Matches(response.InputPrompt, Regex.Escape(TEXT_INDEXED)).Count;
-        Assert.AreEqual(1, occurrences, $"Expected '{TEXT_INDEXED}' to appear only once, but found {occurrences} times.");
+        Assert.IsFalse(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsFalse(response.InputPrompt.Contains("[FunctionResultContent]"));
+        Assert.IsFalse(response.InputPrompt.Contains("[KNOWLEDGE]"));
     }
 
     [TestMethod]
-    public async Task ChatWhenSkipKnowledgeContextTest()
+    public async Task ChatWhenKnowledgeWhenConfigOverridesTest()
     {
-        await Task.CompletedTask;
-        Assert.Inconclusive();
+        var embeddingKnowledgeService = this.ServiceProvider.GetService<IEmbeddingKnowledgeService>();
+
+        var scopeId = Guid.NewGuid();
+
+        const string TEXT_INDEXED = "We had 100 orders in 2022.";
+
+        var indexRequest = new IndexTextRequest
+        {
+            Text = TEXT_INDEXED,
+            ScopeId = scopeId
+        };
+
+        await embeddingKnowledgeService
+            .IndexAsync(indexRequest);
+
+        const string QUESTION = "Can you check how many orders we had in 2022?";
+
+        var request = new ChatRequest
+        {
+            Question = QUESTION,
+            ConfigOverrides =
+            {
+                Plugins =
+                {
+                    Memory =
+                    {
+                        EnableMemoryPlugin = false
+                    },
+                    Knowledge =
+                    {
+                        Search =
+                        {
+                            UseQueryDeduplication = true,
+                            ContextQueryLimit = 2,
+                            Scoring =
+                            {
+                                DeduplicationMatchScoreThreshold = 0.7,
+                                MatchScoreThreshold = 0.92,
+                                RecencyBoostMax = 0.3,
+                                RecencyDecayStrategy = RecencyDecayStrategy.Linear,
+                                RecencySigmoidSteepness = 0.2
+                            }
+                        }
+                    },
+                    WebSearch =
+                    {
+                        EnableWebSearchPlugin = false
+                    }
+                }
+            },
+            Plugins =
+            {
+                Context =
+                {
+                    Knowledge = new KnowledgeContext
+                    {
+                        ScopeId = scopeId
+                    }
+                }
+            }
+        };
+
+        var response = await this.ChatService
+            .ChatAsync(request);
+
+        Assert.IsNotNull(response);
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionResultContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[KNOWLEDGE]"));
+        Assert.IsTrue(response.InputPrompt.Contains(TEXT_INDEXED));
+        Assert.IsNotEmpty(response.FunctionCalls);
+
+        var configOverride = (KnowledgeSearchConfigOverrides)response.FunctionCalls.First().Arguments.First(x => x.Key == "configOverrides").Value;
+        Assert.IsNotNull(configOverride);
+        Assert.AreEqual(configOverride.UseQueryDeduplication, request.ConfigOverrides.Plugins.Knowledge.Search.UseQueryDeduplication);
+        Assert.AreEqual(configOverride.ContextQueryLimit, request.ConfigOverrides.Plugins.Knowledge.Search.ContextQueryLimit);
+        Assert.AreEqual(configOverride.Scoring.DeduplicationMatchScoreThreshold, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.DeduplicationMatchScoreThreshold);
+        Assert.AreEqual(configOverride.Scoring.MatchScoreThreshold, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.MatchScoreThreshold);
+        Assert.AreEqual(configOverride.Scoring.RecencyBoostMax, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.RecencyBoostMax);
+        Assert.AreEqual(configOverride.Scoring.RecencyDecayStrategy, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.RecencyDecayStrategy);
+        Assert.AreEqual(configOverride.Scoring.RecencySigmoidSteepness, request.ConfigOverrides.Plugins.Knowledge.Search.Scoring.RecencySigmoidSteepness);
+    }
+
+    [TestMethod]
+    public async Task ChatWhenWebSearchTest()
+    {
+        const string QUESTION = "What's the latest with .NET?";
+
+        var response = await this.ChatService
+            .ChatAsync(new ChatRequest
+            {
+                Question = QUESTION,
+                ConfigOverrides =
+                {
+                    Plugins =
+                    {
+                        Memory = 
+                        {
+                            EnableMemoryPlugin = false
+                        },
+                        Knowledge = 
+                        {
+                            EnableKnowledgePlugin = false
+                        }
+                    }
+                },
+                Plugins =
+                {
+                    Context =
+                    {
+                        WebSearch = new WebSearchContext
+                        {
+                            Site = "microsoft.com",
+                            Limit = 3
+                        }
+                    }
+                }
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsTrue(response.InputPrompt.Contains("[FunctionResultContent]"));
+    }
+
+    [TestMethod]
+    public async Task ChatWhenWebSearchWhenEnableWebSearchPluginIsFalseTest()
+    {
+        const string QUESTION = "What's the latest with .NET?";
+
+        var response = await this.ChatService
+            .ChatAsync(new ChatRequest
+            {
+                Question = QUESTION,
+                ConfigOverrides =
+                {
+                    Plugins =
+                    {
+                        Memory =
+                        {
+                            EnableMemoryPlugin = false
+                        },
+                        Knowledge =
+                        {
+                            EnableKnowledgePlugin = false
+                        },
+                        WebSearch =
+                        {
+                            EnableWebSearchPlugin = false
+                        }
+                    }
+                },
+                Plugins =
+                {
+                    Context =
+                    {
+                        WebSearch = new WebSearchContext
+                        {
+                            Site = "microsoft.com",
+                            Limit = 3
+                        }
+                    }
+                }
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsFalse(response.InputPrompt.Contains("[FunctionCallContent]"));
+        Assert.IsFalse(response.InputPrompt.Contains("[FunctionResultContent]"));
     }
 
     [TestMethod]
@@ -446,13 +877,26 @@ public class ChatServiceTests : BaseTests
     {
         const string QUESTION = $"This is a test request, where I want you to respond with an {nameof(BaseResponse.ErrorMessage)}.";
 
-        await Assert.ThrowsAsync<AiException>(async () => await this.ChatService
+        var response = await this.ChatService
             .ChatAsync(new ChatRequest
             {
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
-            }));
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }
+                    }
+                }
+            });
+
+        Assert.IsNotNull(response);
+        Assert.IsNotNull(response.Exception);
+        Assert.AreEqual(typeof(AiException), response.Exception.GetType());
     }
 
     [TestMethod]
@@ -468,7 +912,7 @@ public class ChatServiceTests : BaseTests
             .Setup(s => s.IndexAsync(It.IsAny<IndexMemoryRequest<string>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Indexing failed"));
 
-        var chatService = new ChatService(chatOptions, chatCompletionService, kernelBuilder, promptExecutionSettings, mockEmbeddingMemoryService.Object);
+        var chatService = new ChatService(chatOptions, chatCompletionService, kernelBuilder, this.ServiceProvider, promptExecutionSettings, mockEmbeddingMemoryService.Object);
 
         const string SYSTEM_MESSAGE = "You are an expert in meteorology.";
         const string QUESTION = "Is it always summer in Denmark?";
@@ -480,8 +924,17 @@ public class ChatServiceTests : BaseTests
             {
                 SystemMessage = SYSTEM_MESSAGE,
                 Question = QUESTION,
-                UserId = this.userId,
-                CurrentThreadId = Guid.NewGuid().ToString()
+                Plugins =
+                {
+                    Context =
+                    {
+                        Memory = new ChatMemoryContext
+                        {
+                            UserId = this.userId,
+                            CurrentThreadId = Guid.NewGuid()
+                        }
+                    }
+                }
             }, memoryResponse =>
             {
                 Assert.IsNotNull(memoryResponse.Exception);

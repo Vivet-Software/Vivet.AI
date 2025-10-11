@@ -7,10 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions;
-using Vivet.AI.Services.Exceptions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Requests.Metadata;
+using Vivet.AI.Services.Requests.Metadata.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses.Metadata;
 using Vivet.AI.Services.Serialization;
 
@@ -33,13 +33,7 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         var response = await this.GetAsync<dynamic>(request, cancellationToken)
             .ConfigureAwait(false);
 
-        return new MetadataResponse
-        {
-            Metadata = response.Metadata,
-            ElapsedTime = response.ElapsedTime,
-            TokenUsage = response.TokenUsage,
-            ErrorMessage = response.ErrorMessage
-        };
+        return response;
     }
 
     /// <inheritdoc />
@@ -56,6 +50,49 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         request
             .Validate();
 
+        var kernel = this.GetKernel();
+        var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
+
+        var chatHistory = await this.BuildChatHistory<T>(request, cancellationToken)
+            .ConfigureAwait(false);
+
+        var chatMessageContent = await this.chatCompletionService
+            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
+            .ConfigureAwait(false);
+
+        stopwatch
+            .Stop();
+
+        var response = MetadataService.GetResponse<T>(chatMessageContent, stopwatch.Elapsed);
+
+        return response;
+    }
+
+    private Kernel GetKernel()
+    {
+        var kernel = kernelBuilder
+            .Build();
+
+        return kernel;
+    }
+    private PromptExecutionSettings GetPromptExecutionSettings(MetadataConfigOverrides configOverrides)
+    {
+        if (configOverrides == null)
+            throw new NullReferenceException(nameof(configOverrides));
+
+        var executionSettings = this.promptExecutionSettings
+            .GetOverridePromptExecutionSettings(configOverrides.ModelParameters);
+
+        executionSettings.ModelId = configOverrides.ModelName;
+
+        return executionSettings;
+    }
+    private async Task<ChatHistory> BuildChatHistory<T>(GetMetadataRequest request, CancellationToken cancellationToken = default) 
+        where T : class, new()
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
         var chatHistory = new ChatHistory();
 
         var blobContent = await request.Blob
@@ -67,53 +104,45 @@ public class MetadataService(MetadataOptions metadataOptions, IChatCompletionSer
         chatHistory
             .AddMetadataPrompt<T>(blobContent, maxWordsSummary, maxWordsDescription);
 
-        var executionSettings = this.promptExecutionSettings
-            .GetOverridePromptExecutionSettings(request.ConfigOverrides.ModelParameters);
+        return chatHistory;
+    }
 
-        executionSettings.ModelId = request.ConfigOverrides.ModelName;
+    private static MetadataResponse<T> GetResponse<T>(ChatMessageContent chatMessageContent, TimeSpan elapsedTime)
+        where T : class, new()
+    {
+        if (chatMessageContent == null) 
+            throw new ArgumentNullException(nameof(chatMessageContent));
 
-        var kernel = kernelBuilder
-            .Build();
+        var tokenUsage = chatMessageContent
+            .GetTokenUsage();
 
-        var chatMessageContent = await this.chatCompletionService
-            .GetChatMessageContentAsync(chatHistory, executionSettings, kernel, cancellationToken)
-            .ConfigureAwait(false);
+        var externalId = chatMessageContent
+            .GetExternalId();
+
+        if (string.IsNullOrEmpty(chatMessageContent.Content))
+        {
+            var noContentException = BaseService.GetResponseExceptionOrDefault("No Content returned by the request.");
+
+            return new MetadataResponse<T>
+            {
+                ElapsedTime = elapsedTime,
+                TokenUsage = tokenUsage,
+                ExternalId = externalId,
+                Exception = noContentException
+            };
+        }
 
         var answer = chatMessageContent.Content
             .GetChatResponseAnswer();
 
-        var response = MetadataService.GetResponseOrDefault<T>(answer);
+        var response = JsonConvert.DeserializeObject<MetadataResponse<T>>(answer, Settings.ResponseSerializerSettings);
 
-        if (response == null)
-        {
-            return null;
-        }
+        var exception = BaseService.GetResponseExceptionOrDefault(response.ErrorMessage);
 
-        stopwatch
-            .Stop();
-
-        response.ElapsedTime = stopwatch.Elapsed;
-        response.TokenUsage = chatMessageContent
-            .GetTokenUsage();
-
-        return response;
-    }
-
-
-    private static MetadataResponse<T> GetResponseOrDefault<T>(string content)
-        where T : class, new()
-    {
-        if (content == null)
-        {
-            return null;
-        }
-
-        var response = JsonConvert.DeserializeObject<MetadataResponse<T>>(content, Settings.ResponseSerializerSettings);
-
-        if (response.ErrorMessage != null)
-        {
-            throw new AiException(response.ErrorMessage);
-        }
+        response.TokenUsage = tokenUsage;
+        response.ExternalId = externalId;
+        response.ElapsedTime = elapsedTime;
+        response.Exception = exception;
 
         return response;
     }

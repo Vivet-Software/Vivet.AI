@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Vivet.AI.Attributes;
 using Vivet.AI.Services.Models.Blobs;
-using Vivet.AI.Services.Requests.Embedding.Memory.Models;
+using Vivet.AI.Services.Requests.Embedding.Memory.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services.Requests.Embedding.Memory;
 
@@ -11,7 +13,7 @@ public class IndexMemoryRequest : IndexMemoryRequest<string>;
 /// <summary>
 /// Represents a request to index a memory entry with optional configuration overrides.
 /// </summary>
-public class IndexMemoryRequest<T> : BaseIndexRequest<MemoryConfigOverrides>
+public class IndexMemoryRequest<T> : BaseIndexRequest<MemoryIndexConfigOverrides>
     where T : class
 {
     /// <summary>
@@ -29,14 +31,20 @@ public class IndexMemoryRequest<T> : BaseIndexRequest<MemoryConfigOverrides>
     /// <summary>
     /// The ID of the user creating the memory entry.
     /// </summary>
-    [Required]
-    public virtual string UserId { get; set; }
+    [RequiredOneOf(nameof(this.UserId))]
+    public virtual Guid? UserId { get; set; }
+
+    /// <summary>
+    /// The ID of the user creating the memory entry.
+    /// </summary>
+    [RequiredOneOf(nameof(this.AgentId))]
+    public virtual Guid? AgentId { get; set; }
 
     /// <summary>
     /// The ID of the thread or conversation.
     /// </summary>
     [Required]
-    public virtual string ThreadId { get; set; }
+    public virtual Guid ThreadId { get; set; }
 
     /// <summary>
     /// The collection of blobs associated with the memory entry.

@@ -12,27 +12,27 @@ public class MemoryResult : BaseResult
     /// <summary>
     /// The scope identifier of the memory entry.
     /// </summary>
-    public string ScopeId { get; set; }
+    public Guid? ScopeId { get; set; }
 
     /// <summary>
     /// The agent identifier associated with the memory entry.
     /// </summary>
-    public string AgentId { get; set; }
+    public Guid? AgentId { get; set; }
 
     /// <summary>
     /// The user identifier associated with the memory entry.
     /// </summary>
-    public string UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     /// <summary>
     /// The thread identifier for the memory entry.
     /// </summary>
-    public string ThreadId { get; set; }
+    public Guid? ThreadId { get; set; }
 
     /// <summary>
     /// The unique identifier for the question-answer pair.
     /// </summary>
-    public string QuestionAnswerId { get; set; }
+    public Guid? QuestionAnswerId { get; set; }
 
     /// <summary>
     /// Indicates whether this entry is a question.
@@ -72,11 +72,21 @@ public class MemoryResult : BaseResult
         if (memory == null)
             throw new ArgumentNullException(nameof(memory));
 
-        this.ScopeId = memory.ScopeId;
-        this.AgentId = memory.AgentId;
-        this.UserId = memory.UserId;
-        this.ThreadId = memory.ThreadId;
-        this.QuestionAnswerId = memory.QuestionAnswerId;
+        this.ScopeId = memory.ScopeId == null 
+            ? null 
+            : Guid.Parse(memory.ScopeId);
+        this.AgentId = memory.AgentId == null 
+            ? null 
+            : Guid.Parse(memory.AgentId);
+        this.UserId = memory.UserId == null 
+            ? null 
+            : Guid.Parse(memory.UserId);
+        this.ThreadId = memory.ThreadId == null 
+            ? null 
+            : Guid.Parse(memory.ThreadId);
+        this.QuestionAnswerId = memory.QuestionAnswerId == null 
+            ? null 
+            : Guid.Parse(memory.QuestionAnswerId);
         this.IsQuestion = memory.IsQuestion;
         this.IsAnswer = memory.IsAnswer;
         this.Blob = memory.BlobBase64 == null

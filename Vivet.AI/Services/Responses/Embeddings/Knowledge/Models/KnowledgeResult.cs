@@ -15,22 +15,22 @@ public class KnowledgeResult : BaseResult
     /// <summary>
     /// The tenant identifier associated with the knowledge entry.
     /// </summary>
-    public string TenantId { get; set; }
+    public Guid? TenantId { get; set; }
 
     /// <summary>
     /// The sub-tenant identifier associated with the knowledge entry.
     /// </summary>
-    public string SubTenantId { get; set; }
+    public Guid? SubTenantId { get; set; }
 
     /// <summary>
     /// The scope identifier of the knowledge entry.
     /// </summary>
-    public string ScopeId { get; set; }
+    public Guid? ScopeId { get; set; }
 
     /// <summary>
     /// The user identifier associated with the knowledge entry.
     /// </summary>
-    public string UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     /// <summary>
     /// The source of the knowledge entry.
@@ -75,9 +75,18 @@ public class KnowledgeResult : BaseResult
         if (knowledge == null)
             throw new ArgumentNullException(nameof(knowledge));
 
-        this.TenantId = knowledge.TenantId;
-        this.SubTenantId = knowledge.SubTenantId;
-        this.ScopeId = knowledge.ScopeId;
+        this.TenantId = knowledge.TenantId == null 
+            ? null 
+            : Guid.Parse(knowledge.TenantId);
+        this.SubTenantId = knowledge.SubTenantId == null 
+            ? null 
+            : Guid.Parse(knowledge.SubTenantId);
+        this.ScopeId = knowledge.ScopeId == null
+            ? null
+            : Guid.Parse(knowledge.ScopeId);
+        this.UserId = knowledge.UserId == null
+            ? null
+            : Guid.Parse(knowledge.UserId);
         this.Source = knowledge.Source;
         this.CreatedBy = knowledge.CreatedBy;
         this.Tags = knowledge.Tags;
