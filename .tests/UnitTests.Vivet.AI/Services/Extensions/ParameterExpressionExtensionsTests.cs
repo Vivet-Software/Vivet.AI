@@ -118,7 +118,7 @@ public class ParameterExpressionExtensionsTests
         Expression body = null;
         var param = Expression.Parameter(typeof(Knowledge), "k");
 
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => param.AddExpressionSearchFor((SearchFor)999, ref body));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => param.AddExpressionSearchFor((SearchFor)999, ref body));
     }
 
     [TestMethod]
@@ -126,6 +126,6 @@ public class ParameterExpressionExtensionsTests
     {
         Expression body = null;
 
-        Assert.ThrowsException<ArgumentNullException>(() => ((ParameterExpression)null).AddExpressionEqual("IntProp", 5, ref body));
+        Assert.ThrowsExactly<ArgumentNullException>(() => ((ParameterExpression)null).AddExpressionEqual("IntProp", 5, ref body));
     }
 }

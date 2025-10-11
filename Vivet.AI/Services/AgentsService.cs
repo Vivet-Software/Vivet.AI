@@ -35,9 +35,13 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
-// BUG: Agent Framework
-// https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview
-// https://github.com/microsoft/agent-framework
+// BUG: Read:
+// - https://www.freecodecamp.org/news/train-your-own-llm/
+// - https://modelcontextprotocol.io/docs/getting-started/intro
+// - https://dev.to/zenstack/turning-your-database-into-an-mcp-server-with-auth-32mp - Turning Your Database Into an MCP Server With Auth
+// - https://dev.to/copilotkit/30-mcp-ideas-with-complete-source-code-d8e - 30+ MCP Ideas with Complete Source Code
+// - https://n8n.io - Flexible AI workflow automation for technical teams
+// - https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview / https://github.com/microsoft/agent-framework
 
 // BUG: Blob Embedding / Handling
 // - Blobs Embedding(Audio / Video / Image to Text, Image Embeddings, Summatization, Document Intelligence, etc.)
@@ -47,16 +51,6 @@ namespace Vivet.AI.Services;
 // - https://learn.microsoft.com/en-us/azure/ai-foundry/?WT.mc_id=Portal-Microsoft_Azure_ProjectOxford
 // - Image / Video / Audio Generation, Text to Audio 
 //   - Support Image Embeddings (and Video?, Audio?, Document?) - figure out to extract as text or embed.
-
-// BUG: MCP
-// - https://dev.to/zenstack/turning-your-database-into-an-mcp-server-with-auth-32mp - Turning Your Database Into an MCP Server With Auth
-// - https://dev.to/copilotkit/30-mcp-ideas-with-complete-source-code-d8e - 30+ MCP Ideas with Complete Source Code
-// - https://n8n.io - Flexible AI workflow automation for technical teams
-// - PLUGINS: https://modelcontextprotocol.io/docs/getting-started/intro
-
-// BUG: Fine-tune models
-// BUG: Train Your Own LLM: https://www.freecodecamp.org/news/train-your-own-llm/
-// BUG: ML-Ops(Azure AI Foundry tracing and Monitoring, OpenTelemetry)
 
 /// <inheritdoc cref="IAgentsService"/>
 public class AgentsService(AgentsOptions options, IServiceProvider serviceProvider, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null)

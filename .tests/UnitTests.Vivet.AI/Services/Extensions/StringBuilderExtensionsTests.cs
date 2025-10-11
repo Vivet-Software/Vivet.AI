@@ -55,7 +55,7 @@ public class StringBuilderExtensionsTests
         StringBuilder stringBuilder = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext("Test", new DummyContext()));
+        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext("Test", new DummyContext()));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -63,7 +63,7 @@ public class StringBuilderExtensionsTests
     public void AppendBuiltInPluginContextWhenNameIsNullTest()
     {
         var stringBuilder = new StringBuilder();
-        Assert.ThrowsException<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext<DummyContext>(null));
+        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext<DummyContext>(null));
     }
 
     [TestMethod]
@@ -96,7 +96,7 @@ public class StringBuilderExtensionsTests
     {
         StringBuilder stringBuilder = null;
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext("Test", new DummyContext(), new DummyOverride()));
+        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext("Test", new DummyContext(), new DummyOverride()));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -104,7 +104,7 @@ public class StringBuilderExtensionsTests
     public void AppendBuiltInPluginContextConfigOverrideWhenNameIsNullTest()
     {
         var stringBuilder = new StringBuilder();
-        Assert.ThrowsException<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext<DummyContext, DummyOverride>(null));
+        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendBuiltInPluginContext<DummyContext, DummyOverride>(null));
     }
 
     [TestMethod]
@@ -125,7 +125,7 @@ public class StringBuilderExtensionsTests
         // ReSharper restore CollectionNeverUpdated.Local
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => stringBuilder.AppendCustomPluginsContext(plugins));
+        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendCustomPluginsContext(plugins));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -133,7 +133,7 @@ public class StringBuilderExtensionsTests
     public void AppendCustomPluginsContextWhenPluginsIsNullTest()
     {
         var stringBuilder = new StringBuilder();
-        Assert.ThrowsException<ArgumentNullException>(() => stringBuilder.AppendCustomPluginsContext(null));
+        Assert.ThrowsExactly<ArgumentNullException>(() => stringBuilder.AppendCustomPluginsContext(null));
     }
 
     [TestMethod]

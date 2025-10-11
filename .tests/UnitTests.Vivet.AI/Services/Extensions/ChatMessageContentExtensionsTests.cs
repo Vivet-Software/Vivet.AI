@@ -116,7 +116,7 @@ public class ChatMessageContentExtensionsTests
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(content.GetExternalId);
+        Assert.ThrowsExactly<ArgumentNullException>(content.GetExternalId);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -186,7 +186,7 @@ public class ChatMessageContentExtensionsTests
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => content.GetCreatedAt());
+        Assert.ThrowsExactly<ArgumentNullException>(() => content.GetCreatedAt());
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -260,7 +260,7 @@ public class ChatMessageContentExtensionsTests
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(content.GetTokenUsage);
+        Assert.ThrowsExactly<ArgumentNullException>(content.GetTokenUsage);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -329,7 +329,7 @@ public class ChatMessageContentExtensionsTests
     {
         ChatMessageContent content = null;
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(content.GetFinishReason);
+        Assert.ThrowsExactly<ArgumentNullException>(content.GetFinishReason);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
