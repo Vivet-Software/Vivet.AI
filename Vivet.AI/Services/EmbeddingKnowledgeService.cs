@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.AI;
 using Microsoft.Extensions.VectorData;
+using Microsoft.SemanticKernel.AudioToText;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -43,7 +44,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
     {
         if (request == null) 
             throw new ArgumentNullException(nameof(request));
-
+        
         request
             .Validate();
 

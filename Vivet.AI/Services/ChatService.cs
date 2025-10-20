@@ -1,5 +1,6 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.ImageToText;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -22,6 +23,8 @@ using Vivet.AI.Services.Responses.Chat;
 using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
+
+// TODO: Text to Audio (Speech streaming)
 
 /// <inheritdoc cref="IChatService"/>
 public class ChatService(ChatOptions options, IChatCompletionService chatCompletionService, IKernelBuilder kernelBuilder, IServiceProvider serviceProvider, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null) 
