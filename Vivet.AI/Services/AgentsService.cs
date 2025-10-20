@@ -39,6 +39,9 @@ namespace Vivet.AI.Services;
 // - https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview
 // - https://github.com/microsoft/agent-framework
 
+// TODO: Azure AI Foundry Agents
+// - https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview
+
 /// <inheritdoc cref="IAgentsService"/>
 public class AgentsService(AgentsOptions options, IServiceProvider serviceProvider, IKernelBuilder kernelBuilder, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null)
     : BaseService, IAgentsService
