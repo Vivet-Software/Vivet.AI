@@ -77,6 +77,10 @@ public static class ServiceCollectionExtensions
             .AddOllamaSummarizationServices(options)
             .AddOllamaAgentsServices(options);
 
+        services
+            .AddNullTranscriptionServices(options)
+            .AddNullImageExtractionServices(options);
+
         return services;
     }
     private static IServiceCollection AddOllamaChatServices(this IServiceCollection services, AiOptions options)

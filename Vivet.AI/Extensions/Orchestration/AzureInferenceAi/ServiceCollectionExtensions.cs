@@ -1,13 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AudioToText;
 using Microsoft.SemanticKernel.Connectors.AzureAIInference;
 using System;
-using System.Net.Http;
-using Microsoft.Extensions.AI;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
-using Vivet.AI.Extensions.Orchestration.AzureInferenceAi.Services;
 using Vivet.AI.Services.Extensions;
 
 namespace Vivet.AI.Extensions.Orchestration.AzureInferenceAi;
@@ -77,8 +73,11 @@ public static class ServiceCollectionExtensions
             .AddAzureAiInferenceEmbeddingServices(options)
             .AddAzureAiInferenceMetadataServices(options)
             .AddAzureAiInferenceSummarizationServices(options)
-            .AddAzureAiInferenceAgentsServices(options)
-            .AddAzureAiInferenceTranscriptionServices(options);
+            .AddAzureAiInferenceAgentsServices(options);
+
+        services
+            .AddNullTranscriptionServices(options)
+            .AddNullImageExtractionServices(options);
 
         return services;
     }
@@ -193,36 +192,6 @@ public static class ServiceCollectionExtensions
 
         services
             .AddAgentsServices<AzureAIInferencePromptExecutionSettings>(options);
-
-        return services;
-    }
-    private static IServiceCollection AddAzureAiInferenceTranscriptionServices(this IServiceCollection services, AiOptions options)
-    {
-        if (services == null)
-            throw new ArgumentNullException(nameof(services));
-
-        if (options == null)
-            throw new ArgumentNullException(nameof(options));
-
-        if (options.Transcription != null)
-        {
-            services
-                .AddAzureAiInferenceAudioToText(options.Transcription.Model.Name, options.ApiKey, new Uri(options.Endpoint), serviceId: ServiceIds.TRANSCRIPTION_SERVICE_ID);
-
-            services
-                .AddTranscriptionServices(options);
-        }
-
-        return services;
-    }
-
-    private static IServiceCollection AddAzureAiInferenceAudioToText(this IServiceCollection services, string modelId, string apiKey, Uri endpoint, HttpClient httpClient = null, string serviceId = null, string openTelemetrySourceName = null, Action<OpenTelemetryChatClient> openTelemetryConfig = null)
-    {
-        if (services == null)
-            throw new ArgumentNullException(nameof(services));
-
-        services
-            .AddScoped<IAudioToTextService, AzureAiInferenceAudioToTextService>();
 
         return services;
     }

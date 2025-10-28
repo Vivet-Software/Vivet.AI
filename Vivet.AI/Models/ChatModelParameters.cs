@@ -473,7 +473,7 @@ public class ChatModelParameters
             ResponseFormat = "text",
             StopSequences = this.StopSequences,
             Tools = null,
-            Seed = this.Seed,
+            Seed = this.Seed
         };
     }
     private GeminiPromptExecutionSettings GetGoogleGeminiPromptExecutionSettings()

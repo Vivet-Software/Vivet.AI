@@ -73,6 +73,9 @@ public static class ServiceCollectionExtensions
             .AddAzureOpenAiAgentsServices(options)
             .AddAzureOpenAiTranscriptionServices(options);
 
+        services
+            .AddNullImageExtractionServices(options);
+
         return services;
     }
     private static IServiceCollection AddAzureOpenAiChatServices(this IServiceCollection services, AiOptions options)
@@ -197,15 +200,17 @@ public static class ServiceCollectionExtensions
         if (options == null)
             throw new ArgumentNullException(nameof(options));
 
-        if (options.Transcription != null)
+        if (options.Transcription == null)
         {
-            services
-                .AddAzureOpenAIAudioToText(options.Transcription.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.TRANSCRIPTION_SERVICE_ID);
-
-            services
-                .AddTranscriptionServices(options);
+            return services;
         }
 
+        services
+            .AddAzureOpenAIAudioToText(options.Transcription.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.TRANSCRIPTION_SERVICE_ID);
+
+        services
+            .AddTranscriptionServices(options);
+        
         return services;
     }
 }

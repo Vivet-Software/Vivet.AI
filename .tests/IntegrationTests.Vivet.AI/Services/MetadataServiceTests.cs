@@ -10,7 +10,6 @@ using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Models.Blobs.Data;
 using Vivet.AI.Services.Models.MimeTypes;
 using Vivet.AI.Services.Requests.Metadata;
-using Vivet.AI.Services.Requests.Metadata.Models;
 
 namespace IntegrationTests.Vivet.AI.Services;
 

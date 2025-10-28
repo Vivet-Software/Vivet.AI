@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.SemanticKernel;
+﻿using Microsoft.SemanticKernel;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -13,8 +12,10 @@ public class ChatMessageContentExtensionsTests
 {
     private sealed class InnerContent
     {
+        // ReSharper disable UnusedAutoPropertyAccessor.Local
         public string Id { get; set; }
         public DateTimeOffset? Created { get; set; }
+        // ReSharper restore UnusedAutoPropertyAccessor.Local
     }
 
     [TestMethod]

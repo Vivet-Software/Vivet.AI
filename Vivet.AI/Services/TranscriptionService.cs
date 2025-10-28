@@ -16,6 +16,8 @@ using Vivet.AI.Services.Responses.Transcription.Models;
 
 namespace Vivet.AI.Services;
 
+// BUG: Readme: TranscriptionService (Azure OpenAI)
+
 /// <inheritdoc />
 public class TranscriptionService(IAudioToTextService audioToTextService, PromptExecutionSettings promptExecutionSettings) : ITranscriptionService
 {

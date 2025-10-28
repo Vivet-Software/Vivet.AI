@@ -75,6 +75,10 @@ public static class ServiceCollectionExtensions
             .AddGoogleGeminiAiSummarizationServices(options)
             .AddGoogleGeminiAiAgentsServices(options);
 
+        services
+            .AddNullTranscriptionServices(options)
+            .AddNullImageExtractionServices(options);
+
         return services;
     }
     private static IServiceCollection AddGoogleGeminiAiChatServices(this IServiceCollection services, AiOptions options)

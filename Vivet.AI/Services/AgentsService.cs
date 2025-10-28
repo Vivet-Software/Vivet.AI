@@ -35,6 +35,14 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
+// TODO: Text Analysis (Analyze Sentiment, Extract Key Phrases, Recognize Named Entities, Recognize / Redact PII Entities, Recognize Linked Entities, Detect Language, 
+// - https://learn.microsoft.com/en-us/azure/ai-services/language-service/overview
+// - https://github.com/Azure/azure-sdk-for-net/blob/Azure.AI.TextAnalytics_5.3.0/sdk/textanalytics/Azure.AI.TextAnalytics/README.md ("Run multiple actions Asynchronously". That's important we mirror that - at least look into it)
+
+// TODO: Translation (Text, Document?)
+// - https://learn.microsoft.com/en-us/azure/ai-services/translator/overview
+// - https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/translation
+
 // TODO: Microsoft Agent Frameowrk
 // - https://learn.microsoft.com/en-us/agent-framework/overview/agent-framework-overview
 // - https://github.com/microsoft/agent-framework

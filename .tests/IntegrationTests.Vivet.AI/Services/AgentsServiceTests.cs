@@ -13,29 +13,29 @@ public class AgentsServiceTests : BaseTests
 {
     private IAgentsService AgentsService => this.ServiceProvider.GetRequiredService<IAgentsService>();
 
-    private sealed class OrderStatusPlugin
-    {
-        [KernelFunction]
-        // ReSharper disable UnusedMember.Local
-        public string CheckOrderStatus(string orderId) => $"Order {orderId} is shipped and will arrive in 2-3 days.";
-        // ReSharper restore UnusedMember.Local
-    }
+    //private sealed class OrderStatusPlugin
+    //{
+    //    [KernelFunction]
+    //    // ReSharper disable UnusedMember.Local
+    //    public string CheckOrderStatus(string orderId) => $"Order {orderId} is shipped and will arrive in 2-3 days.";
+    //    // ReSharper restore UnusedMember.Local
+    //}
 
-    private sealed class OrderReturnPlugin
-    {
-        [KernelFunction]
-        // ReSharper disable UnusedMember.Local
-        public string ProcessReturn(string orderId, string reason) => $"Return for order {orderId} has been processed successfully. {reason}";
-        // ReSharper restore UnusedMember.Local
-    }
+    //private sealed class OrderReturnPlugin
+    //{
+    //    [KernelFunction]
+    //    // ReSharper disable UnusedMember.Local
+    //    public string ProcessReturn(string orderId, string reason) => $"Return for order {orderId} has been processed successfully. {reason}";
+    //    // ReSharper restore UnusedMember.Local
+    //}
 
-    private sealed class OrderRefundPlugin
-    {
-        [KernelFunction]
-        // ReSharper disable UnusedMember.Local
-        public string ProcessReturn(string orderId, string reason) => $"Refund for order {orderId} has been processed successfully. {reason}";
-        // ReSharper restore UnusedMember.Local
-    }
+    //private sealed class OrderRefundPlugin
+    //{
+    //    [KernelFunction]
+    //    // ReSharper disable UnusedMember.Local
+    //    public string ProcessReturn(string orderId, string reason) => $"Refund for order {orderId} has been processed successfully. {reason}";
+    //    // ReSharper restore UnusedMember.Local
+    //}
 
     [TestMethod]
     public async Task InvokeWhenOrchestrationSequentialTest()

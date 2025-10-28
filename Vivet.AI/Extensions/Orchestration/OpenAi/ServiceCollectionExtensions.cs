@@ -72,6 +72,10 @@ public static class ServiceCollectionExtensions
             .AddOpenAiSummarizationServices(options)
             .AddOpenAiAgentServices(options);
 
+        services
+            .AddNullTranscriptionServices(options)
+            .AddNullImageExtractionServices(options);
+
         return services;
     }
     private static IServiceCollection AddOpenAiChatServices(this IServiceCollection services, AiOptions options)

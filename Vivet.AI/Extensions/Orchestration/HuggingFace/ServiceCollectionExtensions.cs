@@ -73,8 +73,12 @@ public static class ServiceCollectionExtensions
             .AddHuggingFaceEmbeddingServices(options)
             .AddHuggingFaceMetadataServices(options)
             .AddHuggingFaceSummarizationServices(options)
-            .AddHuggingFaceAgentsServices(options);
+            .AddHuggingFaceAgentsServices(options)
+            .AddHuggingFaceImageExtractionServices(options);
 
+        services
+            .AddNullTranscriptionServices(options);
+        
         return services;
     }
     private static IServiceCollection AddHuggingFaceChatServices(this IServiceCollection services, AiOptions options)
@@ -184,6 +188,27 @@ public static class ServiceCollectionExtensions
 
         services
             .AddAgentsServices<HuggingFacePromptExecutionSettings>(options);
+
+        return services;
+    }
+    private static IServiceCollection AddHuggingFaceImageExtractionServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.ImageExtraction == null)
+        {
+            return services;
+        }
+
+        services
+            .AddHuggingFaceImageToText(options.Agents.Model.Name, new Uri(options.Endpoint), options.ApiKey, ServiceIds.IMAGE_EXTRACTION_SERVICE_ID);
+
+        services
+            .AddImageExtractionServices(options);
 
         return services;
     }

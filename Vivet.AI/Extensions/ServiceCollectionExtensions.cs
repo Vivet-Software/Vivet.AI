@@ -5,6 +5,7 @@ using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AudioToText;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.ImageToText;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -19,6 +20,7 @@ using Vivet.AI.Extensions.Embeddings.Pinecone;
 using Vivet.AI.Extensions.Embeddings.Postgres;
 using Vivet.AI.Extensions.Embeddings.Qdrant;
 using Vivet.AI.Extensions.Embeddings.Weaviate;
+using Vivet.AI.Hosting.HealthChecks.Extensions;
 using Vivet.AI.Models;
 using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
@@ -26,18 +28,6 @@ using Vivet.AI.Services.Interfaces;
 using ChatOptions = Vivet.AI.Config.ChatOptions;
 
 namespace Vivet.AI.Extensions;
-
-// BUG: Imgage To Text
-// BUG: Document To Text ??? (Microsoft.SemanticKernel.Plugins.Document can this nuget be usd)
-// BUG: Video To Text: AudioToText (Whisper, Azure Speech) + Frame extraction (ImageToText ) + Temporal metadata (combine with timestamps) 
-
-// TODO: Text Analysis (Analyze Sentiment, Extract Key Phrases, Recognize Named Entities, Recognize / Redact PII Entities, Recognize Linked Entities, Detect Language, 
-// - https://learn.microsoft.com/en-us/azure/ai-services/language-service/overview
-// - https://github.com/Azure/azure-sdk-for-net/blob/Azure.AI.TextAnalytics_5.3.0/sdk/textanalytics/Azure.AI.TextAnalytics/README.md ("Run multiple actions Asynchronously". That's important we mirror that - at least look into it)
-
-// TODO: Translation (Text, Document?)
-// - https://learn.microsoft.com/en-us/azure/ai-services/translator/overview
-// - https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/translation
 
 internal static class ServiceCollectionExtensions
 {
@@ -414,6 +404,38 @@ internal static class ServiceCollectionExtensions
         return services;
     }
 
+    internal static IServiceCollection AddImageExtractionServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        services
+            .AddSingleton(options.ImageExtraction);
+
+        services
+            .AddImageExtractionModelPromptExecutionSettings(ServiceIds.IMAGE_EXTRACTION_SERVICE_ID)
+            .AddScoped<IImageExtractionService>(x =>
+            {
+                var imageToTextService = x
+                    .GetRequiredKeyedService<IImageToTextService>(ServiceIds.IMAGE_EXTRACTION_SERVICE_ID);
+
+                var promptExecutionSettings = x
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.IMAGE_EXTRACTION_SERVICE_ID);
+
+                return new ImageExtractionService(imageToTextService, promptExecutionSettings);
+            });
+
+        if (options.ImageExtraction.Model.UseHealthCheck)
+        {
+            services
+                .AddImageExtractionModelHealthCheckPromptExecutionSettings(ServiceIds.HEALTH_IMAGE_EXTRACTION_SERVICE_ID)
+                .AddHealthChecks()
+                .AddImageExtractionModelCheck(ServiceIds.IMAGE_EXTRACTION_SERVICE_ID, ServiceIds.HEALTH_IMAGE_EXTRACTION_SERVICE_ID);
+        }
+
+        return services;
+    }
+
     internal static IServiceCollection AddHttpClient(this IServiceCollection services, string name, string baseAddress, TimeSpan timeout, out HttpClient httpClient)
     {
         if (services == null)
@@ -441,37 +463,6 @@ internal static class ServiceCollectionExtensions
     }
 
 
-    private static IServiceCollection AddTextSearch(this IServiceCollection services, string serviceId, WebSearchPluginOptions webSearchPluginOptions = null)
-    {
-        if (services == null) 
-            throw new ArgumentNullException(nameof(services));
-        
-        if (serviceId == null) 
-            throw new ArgumentNullException(nameof(serviceId));
-
-        if (webSearchPluginOptions == null)
-        {
-            return services;
-        }
-
-        switch (webSearchPluginOptions.Provider)
-        {
-            case WebSearchProvider.Google:
-                services
-                    .AddGoogleTextSearch(webSearchPluginOptions.Id, webSearchPluginOptions.ApiKey, serviceId: serviceId);
-                break;
-
-            case WebSearchProvider.Bing:
-                services
-                    .AddBingTextSearch(webSearchPluginOptions.ApiKey, serviceId: serviceId);
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException(nameof(webSearchPluginOptions.Provider), webSearchPluginOptions.Provider, $"The provider '{webSearchPluginOptions.Provider}' is not suppoprted.");
-        }
-
-        return services;
-    }
     private static IServiceCollection AddChatModelPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
         where T : PromptExecutionSettings, new()
     {
@@ -527,6 +518,7 @@ internal static class ServiceCollectionExtensions
 
         if (serviceId == null)
             throw new ArgumentNullException(nameof(serviceId));
+
         services
             .AddKeyedTransient(serviceId, (_, _) =>
             {
@@ -571,6 +563,76 @@ internal static class ServiceCollectionExtensions
 
                 return promptExecutionSettings;
             });
+
+        return services;
+    }
+    private static IServiceCollection AddImageExtractionModelPromptExecutionSettings(this IServiceCollection services, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddKeyedTransient(serviceId, (_, _) =>
+            {
+                var promptExecutionSettings = new PromptExecutionSettings();
+
+                return promptExecutionSettings;
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddImageExtractionModelHealthCheckPromptExecutionSettings(this IServiceCollection services, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddKeyedSingleton(serviceId, (_, _) =>
+            {
+                var promptExecutionSettings = new PromptExecutionSettings();
+
+                promptExecutionSettings
+                    .Freeze();
+
+                return promptExecutionSettings;
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddTextSearch(this IServiceCollection services, string serviceId, WebSearchPluginOptions webSearchPluginOptions = null)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        if (webSearchPluginOptions == null)
+        {
+            return services;
+        }
+
+        switch (webSearchPluginOptions.Provider)
+        {
+            case WebSearchProvider.Google:
+                services
+                    .AddGoogleTextSearch(webSearchPluginOptions.Id, webSearchPluginOptions.ApiKey, serviceId: serviceId);
+                break;
+
+            case WebSearchProvider.Bing:
+                services
+                    .AddBingTextSearch(webSearchPluginOptions.ApiKey, serviceId: serviceId);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(webSearchPluginOptions.Provider), webSearchPluginOptions.Provider, $"The provider '{webSearchPluginOptions.Provider}' is not suppoprted.");
+        }
 
         return services;
     }

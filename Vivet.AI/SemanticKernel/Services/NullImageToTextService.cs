@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ImageToText;
 
-namespace Vivet.AI.Extensions.Orchestration.AzureInferenceAi.Services;
+namespace Vivet.AI.SemanticKernel.Services;
 
 /// <inheritdoc />
-public class AzureAiInferenceImageToTextService : IImageToTextService
+public class NullImageToTextService : IImageToTextService
 {
     /// <inheritdoc />
     public virtual IReadOnlyDictionary<string, object> Attributes { get; } = new Dictionary<string, object>();

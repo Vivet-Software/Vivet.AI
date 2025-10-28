@@ -81,6 +81,10 @@ public static class ServiceCollectionExtensions
             .AddAmazonBedrockAiSummarizationServices(options, runtimeClient)
             .AddAmazonBedrockAiAgentsServices(options, runtimeClient);
 
+        services
+            .AddNullTranscriptionServices(options)
+            .AddNullImageExtractionServices(options);
+
         return services;
     }
     private static IServiceCollection AddAmazonBedrockAiChatServices(this IServiceCollection services, AiOptions options, AmazonBedrockRuntimeClient runtimeClient)
