@@ -180,7 +180,7 @@ public static class ServiceCollectionExtensions
 
         services
             .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
-            .AddHuggingFaceChatCompletion(options.Agents.Model.Name, new Uri(options.Endpoint), options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddHuggingFaceChatCompletion(options.Agents.Model.Name, new Uri(options.Endpoint), options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<HuggingFacePromptExecutionSettings>(options);

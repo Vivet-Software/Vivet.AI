@@ -184,8 +184,8 @@ public static class ServiceCollectionExtensions
         }
 
         services
-            .AddBedrockChatClient(options.Agents.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
-            .AddBedrockChatCompletionService(options.Agents.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddBedrockChatClient(options.Agents.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.AGENTS_SERVICE_ID)
+            .AddBedrockChatCompletionService(options.Agents.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAmazonAgentsServices(options);

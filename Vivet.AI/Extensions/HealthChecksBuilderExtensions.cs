@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.AudioToText;
 using Microsoft.SemanticKernel.ChatCompletion;
 using System;
 using System.Collections.Generic;
@@ -55,6 +56,33 @@ internal static class HealthChecksBuilderExtensions
                     .GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>(serviceKey: serviceId);
 
                 return new EmbeddingModelHealthCheck(embeddingGenerator);
+            },
+            failureStatus, tags);
+
+        builder
+            .Add(healthCheckRegistration);
+
+        return builder;
+    }
+
+    internal static IHealthChecksBuilder AddTranscriptionModelCheck(this IHealthChecksBuilder builder, string serviceId, string healthServiceId, HealthStatus? failureStatus = null, IEnumerable<string> tags = null)
+    {
+        if (builder == null)
+            throw new ArgumentNullException(nameof(builder));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        var healthCheckRegistration = new HealthCheckRegistration(serviceId,
+            x =>
+            {
+                var audioToTextService = x
+                    .GetRequiredKeyedService<IAudioToTextService>(serviceId);
+
+                var promptExecutionSettings = x
+                    .GetRequiredKeyedService<PromptExecutionSettings>(healthServiceId);
+
+                return new TranscriptionModelHealthCheck(audioToTextService, promptExecutionSettings);
             },
             failureStatus, tags);
 

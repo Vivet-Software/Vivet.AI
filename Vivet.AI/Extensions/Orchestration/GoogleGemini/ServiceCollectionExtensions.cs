@@ -175,7 +175,7 @@ public static class ServiceCollectionExtensions
         }
 
         services
-            .AddGoogleAIGeminiChatCompletion(options.Agents.Model.Name, options.ApiKey, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddGoogleAIGeminiChatCompletion(options.Agents.Model.Name, options.ApiKey, serviceId: ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<GeminiPromptExecutionSettings>(options);

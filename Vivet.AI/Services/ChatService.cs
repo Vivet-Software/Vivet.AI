@@ -1,6 +1,5 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.ImageToText;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -68,7 +67,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             .Start();
 
         request
-            .Validate();
+            .Validate();    
 
         var kernel = this.GetKernel(request);
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);

@@ -82,6 +82,11 @@ public class AiOptions
     public virtual AgentsOptions Agents { get; set; }
 
     /// <summary>
+    /// Transcription.
+    /// </summary>
+    public virtual TranscriptionOptions Transcription { get; set; }
+
+    /// <summary>
     /// Built-in plugins that can be enabled for the chat model.
     /// </summary>
     [Required]

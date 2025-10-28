@@ -27,7 +27,7 @@ public sealed class AudioMimeType : BaseMimeType
     /// <summary>
     /// Represents the "audio/mp4" MIME type (M4A format).
     /// </summary>
-    public static readonly AudioMimeType M4A = new("audio/mp4");
+    public static readonly AudioMimeType M4a = new("audio/mp4");
 
     /// <summary>
     /// Represents the "audio/wav" MIME type.
@@ -55,7 +55,7 @@ public sealed class AudioMimeType : BaseMimeType
     public static IReadOnlyList<AudioMimeType> All = new List<AudioMimeType>
     {
         Mp3,
-        M4A,
+        M4a,
         Wav,
         Wavx,
         Aac,

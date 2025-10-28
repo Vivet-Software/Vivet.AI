@@ -540,7 +540,7 @@ public class AgentsService(AgentsOptions options, IServiceProvider serviceProvid
             if (agent != null)
             {
                 var createdAt = chatMessageContent
-                    .GetCreatedAt();
+                    .GetAgentCreatedAt();
 
                 var elapsedTime = DateTimeOffset.UtcNow - createdAt ?? TimeSpan.Zero;
                 var agentResponseCallback = (AgentResponseCallback)agent.Kernel.Data[KernelData.AGENT_RESPONSE_CALLBACK];

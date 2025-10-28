@@ -70,7 +70,8 @@ public static class ServiceCollectionExtensions
             .AddAzureOpenAiEmbeddingServices(options)
             .AddAzureOpenAiMetadataServices(options)
             .AddAzureOpenAiSummarizationServices(options)
-            .AddAzureOpenAiAgentsServices(options);
+            .AddAzureOpenAiAgentsServices(options)
+            .AddAzureOpenAiTranscriptionServices(options);
 
         return services;
     }
@@ -180,11 +181,30 @@ public static class ServiceCollectionExtensions
 
         services
             .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
-            .AddAzureOpenAIChatClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
-            .AddAzureOpenAIChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddAzureOpenAIChatClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENTS_SERVICE_ID)
+            .AddAzureOpenAIChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<AzureOpenAIPromptExecutionSettings>(options);
+
+        return services;
+    }
+    private static IServiceCollection AddAzureOpenAiTranscriptionServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Transcription != null)
+        {
+            services
+                .AddAzureOpenAIAudioToText(options.Transcription.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.TRANSCRIPTION_SERVICE_ID);
+
+            services
+                .AddTranscriptionServices(options);
+        }
 
         return services;
     }

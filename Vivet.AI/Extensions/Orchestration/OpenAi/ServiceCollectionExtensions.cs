@@ -180,8 +180,8 @@ public static class ServiceCollectionExtensions
 
         services
             .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
-            .AddOpenAIChatClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
-            .AddOpenAIChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddOpenAIChatClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENTS_SERVICE_ID)
+            .AddOpenAIChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<OpenAIPromptExecutionSettings>(options);

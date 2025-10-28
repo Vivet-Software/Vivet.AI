@@ -9,7 +9,7 @@ using Vivet.AI.Services.Requests.Embedding.Common.Models.ConfigOverrides;
 
 namespace Vivet.AI.Services;
 
-// TODO: Embed Blob (Image, Audio, Video, Document)
+// TODO: Embed Blob (Image, Audio, Video, Document) - Use transformation services if configured
 
 /// <summary>
 /// Provides a base class for embedding services that generate embeddings from text chunks using a configured embedding generator.

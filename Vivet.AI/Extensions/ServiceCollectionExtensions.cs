@@ -3,8 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.AudioToText;
 using Microsoft.SemanticKernel.ChatCompletion;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
@@ -24,6 +26,18 @@ using Vivet.AI.Services.Interfaces;
 using ChatOptions = Vivet.AI.Config.ChatOptions;
 
 namespace Vivet.AI.Extensions;
+
+// BUG: Imgage To Text
+// BUG: Document To Text ??? (Microsoft.SemanticKernel.Plugins.Document can this nuget be usd)
+// BUG: Video To Text: AudioToText (Whisper, Azure Speech) + Frame extraction (ImageToText ) + Temporal metadata (combine with timestamps) 
+
+// TODO: Text Analysis (Analyze Sentiment, Extract Key Phrases, Recognize Named Entities, Recognize / Redact PII Entities, Recognize Linked Entities, Detect Language, 
+// - https://learn.microsoft.com/en-us/azure/ai-services/language-service/overview
+// - https://github.com/Azure/azure-sdk-for-net/blob/Azure.AI.TextAnalytics_5.3.0/sdk/textanalytics/Azure.AI.TextAnalytics/README.md ("Run multiple actions Asynchronously". That's important we mirror that - at least look into it)
+
+// TODO: Translation (Text, Document?)
+// - https://learn.microsoft.com/en-us/azure/ai-services/translator/overview
+// - https://github.com/Azure/azure-sdk-for-net/tree/main/sdk/translation
 
 internal static class ServiceCollectionExtensions
 {
@@ -90,7 +104,7 @@ internal static class ServiceCollectionExtensions
 
         services
             .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Plugins.WebSearch)
-            .AddPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
+            .AddChatModelPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
             .AddScoped<IChatService>(x =>
             {
                 var chatOptions = x
@@ -111,10 +125,13 @@ internal static class ServiceCollectionExtensions
                 return new ChatService(chatOptions, chatCompletionService, kernelBuilder, x, promptExecutionSettings, embeddingMemoryService);
             });
 
-        services
-            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_CHAT_SERVICE_ID)
-            .AddHealthChecks()
-            .AddChatModelCheck(ServiceIds.CHAT_SERVICE_ID, ServiceIds.HEALTH_CHAT_SERVICE_ID);
+        if (options.Chat.Model.UseHealthCheck)
+        {
+            services
+                .AddChatModelHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_CHAT_SERVICE_ID)
+                .AddHealthChecks()
+                .AddChatModelCheck(ServiceIds.CHAT_SERVICE_ID, ServiceIds.HEALTH_CHAT_SERVICE_ID);
+        }
 
         return services;
     }
@@ -191,9 +208,12 @@ internal static class ServiceCollectionExtensions
                 });
         }
 
-        services
-            .AddHealthChecks()
-            .AddEmbeddingModelCheck(ServiceIds.EMBEDDING_SERVICE_ID);
+        if (options.Embedding.Model.UseHealthCheck)
+        {
+            services
+                .AddHealthChecks()
+                .AddEmbeddingModelCheck(ServiceIds.EMBEDDING_SERVICE_ID);
+        }
 
         return services;
     }
@@ -219,7 +239,7 @@ internal static class ServiceCollectionExtensions
             });
 
         services
-            .AddPromptExecutionSettings<T>(options.Metadata.Model.Parameters, ServiceIds.METADATA_SERVICE_ID)
+            .AddChatModelPromptExecutionSettings<T>(options.Metadata.Model.Parameters, ServiceIds.METADATA_SERVICE_ID)
             .AddScoped<IMetadataService>(x =>
             {
                 var metadataOptions = x
@@ -237,10 +257,13 @@ internal static class ServiceCollectionExtensions
                 return new MetadataService(metadataOptions, chatCompletionService, kernelBuilder, promptExecutionSettings);
             });
 
-        services
-            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_METADATA_SERVICE_ID)
-            .AddHealthChecks()
-            .AddChatModelCheck(ServiceIds.METADATA_SERVICE_ID, ServiceIds.HEALTH_METADATA_SERVICE_ID);
+        if (options.Metadata.Model.UseHealthCheck)
+        {
+            services
+                .AddChatModelHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_METADATA_SERVICE_ID)
+                .AddHealthChecks()
+                .AddChatModelCheck(ServiceIds.METADATA_SERVICE_ID, ServiceIds.HEALTH_METADATA_SERVICE_ID);
+        }
 
         return services;
     }
@@ -269,7 +292,7 @@ internal static class ServiceCollectionExtensions
             });
 
         services
-            .AddPromptExecutionSettings<T>(options.Summarization.Model.Parameters, ServiceIds.SUMMARIZATION_SERVICE_ID)
+            .AddChatModelPromptExecutionSettings<T>(options.Summarization.Model.Parameters, ServiceIds.SUMMARIZATION_SERVICE_ID)
             .AddScoped<ISummarizationService>(x =>
             {
                 var summarizationOptions = x
@@ -287,10 +310,13 @@ internal static class ServiceCollectionExtensions
                 return new SummarizationService(summarizationOptions, chatCompletionService, kernelBuilder, promptExecutionSettings);
             });
 
-        services
-            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID)
-            .AddHealthChecks()
-            .AddChatModelCheck(ServiceIds.SUMMARIZATION_SERVICE_ID, ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID);
+        if (options.Summarization.Model.UseHealthCheck)
+        {
+            services
+                .AddChatModelHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID)
+                .AddHealthChecks()
+                .AddChatModelCheck(ServiceIds.SUMMARIZATION_SERVICE_ID, ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID);
+        }
 
         return services;
     }
@@ -305,13 +331,13 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Agents);
 
         services
-            .AddKeyedSingleton(ServiceIds.AGENT_SERVICE_ID, (x, _) =>
+            .AddKeyedSingleton(ServiceIds.AGENTS_SERVICE_ID, (x, _) =>
             {
                 var pluginsOptions = x
                     .GetService<PluginsOptions>();
 
                 var chatCompletionService = x
-                    .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.AGENT_SERVICE_ID);
+                    .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.AGENTS_SERVICE_ID);
 
                 var builder = Kernel.CreateBuilder();
 
@@ -326,18 +352,18 @@ internal static class ServiceCollectionExtensions
             });
 
         services
-            .AddTextSearch(ServiceIds.AGENT_SERVICE_ID, options.Plugins.WebSearch)
-            .AddPromptExecutionSettings<T>(options.Agents.Model.Parameters, ServiceIds.AGENT_SERVICE_ID)
+            .AddTextSearch(ServiceIds.AGENTS_SERVICE_ID, options.Plugins.WebSearch)
+            .AddChatModelPromptExecutionSettings<T>(options.Agents.Model.Parameters, ServiceIds.AGENTS_SERVICE_ID)
             .AddScoped<IAgentsService>(x =>
             {
                 var agentOptions = x
                     .GetRequiredService<AgentsOptions>();
 
                 var kernelBuilder = x
-                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.AGENT_SERVICE_ID);
+                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.AGENTS_SERVICE_ID);
 
                 var promptExecutionSettings = x
-                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.AGENT_SERVICE_ID);
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.AGENTS_SERVICE_ID);
 
                 var embeddingMemoryService = x
                     .GetService<IEmbeddingMemoryService>();
@@ -345,10 +371,45 @@ internal static class ServiceCollectionExtensions
                 return new AgentsService(agentOptions, x, kernelBuilder, promptExecutionSettings, embeddingMemoryService);
             });
 
+        if (options.Agents.Model.UseHealthCheck)
+        {
+            services
+                .AddChatModelHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_AGENTS_SERVICE_ID)
+                .AddHealthChecks()
+                .AddChatModelCheck(ServiceIds.AGENTS_SERVICE_ID, ServiceIds.HEALTH_AGENTS_SERVICE_ID);
+        }
+
+        return services;
+    }
+
+    internal static IServiceCollection AddTranscriptionServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
         services
-            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_AGENT_SERVICE_ID)
-            .AddHealthChecks()
-            .AddChatModelCheck(ServiceIds.AGENT_SERVICE_ID, ServiceIds.HEALTH_AGENT_SERVICE_ID);
+            .AddSingleton(options.Transcription);
+
+        services
+            .AddTranscriptionModelPromptExecutionSettings(options.Transcription, ServiceIds.TRANSCRIPTION_SERVICE_ID)
+            .AddScoped<ITranscriptionService>(x =>
+            {
+                var audioToTextService = x
+                    .GetRequiredKeyedService<IAudioToTextService>(ServiceIds.TRANSCRIPTION_SERVICE_ID);
+
+                var promptExecutionSettings = x
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.TRANSCRIPTION_SERVICE_ID);
+
+                return new TranscriptionService(audioToTextService, promptExecutionSettings);
+            });
+
+        if (options.Transcription.Model.UseHealthCheck)
+        {
+            services
+                .AddTranscriptionModelHealthCheckPromptExecutionSettings(ServiceIds.HEALTH_TRANSCRIPTION_SERVICE_ID)
+                .AddHealthChecks()
+                .AddTranscriptionModelCheck(ServiceIds.TRANSCRIPTION_SERVICE_ID, ServiceIds.HEALTH_TRANSCRIPTION_SERVICE_ID);
+        }
 
         return services;
     }
@@ -411,7 +472,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
+    private static IServiceCollection AddChatModelPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
         where T : PromptExecutionSettings, new()
     {
         if (services == null) 
@@ -434,7 +495,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddHealthCheckPromptExecutionSettings<T>(this IServiceCollection services, string serviceId)
+    private static IServiceCollection AddChatModelHealthCheckPromptExecutionSettings<T>(this IServiceCollection services, string serviceId)
         where T : PromptExecutionSettings, new()
     {
         if (services == null)
@@ -447,6 +508,63 @@ internal static class ServiceCollectionExtensions
             .AddKeyedSingleton(serviceId, (_, _) =>
             {
                 var promptExecutionSettings = ChatModelParameters.GetHealthPromptExecutionSettings<T>();
+
+                promptExecutionSettings
+                    .Freeze();
+
+                return promptExecutionSettings;
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddTranscriptionModelPromptExecutionSettings(this IServiceCollection services, TranscriptionOptions options, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+        services
+            .AddKeyedTransient(serviceId, (_, _) =>
+            {
+                var timestampGranularities = new List<string>
+                {
+                    "segment"
+                };
+
+                if (options.IncludeWordGranularity)
+                {
+                    timestampGranularities
+                        .Add("word");
+                }
+
+                return new PromptExecutionSettings
+                {
+                    ExtensionData = new Dictionary<string, object>
+                    {
+                        ["response_format"] = "verbose_json",
+                        ["timestamp_granularities"] = timestampGranularities
+                    }
+                };
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddTranscriptionModelHealthCheckPromptExecutionSettings(this IServiceCollection services, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddKeyedSingleton(serviceId, (_, _) =>
+            {
+                var promptExecutionSettings = new PromptExecutionSettings();
 
                 promptExecutionSettings
                     .Freeze();

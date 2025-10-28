@@ -185,8 +185,8 @@ public static class ServiceCollectionExtensions
 
         services
             .AddOllamaApiClient(nameof(options.Agents), options.Endpoint, options.Agents.Model.Name, options.Agents.Timeout, out var ollamaApiClient)
-            .AddOllamaChatClient(ollamaApiClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
-            .AddOllamaChatCompletion(ollamaApiClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddOllamaChatClient(ollamaApiClient, serviceId: ServiceIds.AGENTS_SERVICE_ID)
+            .AddOllamaChatCompletion(ollamaApiClient, serviceId: ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<OllamaPromptExecutionSettings>(options);
