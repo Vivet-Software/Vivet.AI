@@ -11,7 +11,7 @@ internal static class ChatMessageContentExtensions
         if (chatMessageContent == null)
             throw new ArgumentNullException(nameof(chatMessageContent));
 
-        var innerContentId = chatMessageContent.InnerContent
+        var innerContentId = chatMessageContent.InnerContent?
             .TryGetPropertyValue<string>("Id");
 
         if (innerContentId != null)
@@ -78,7 +78,7 @@ internal static class ChatMessageContentExtensions
         if (chatMessageContent == null)
             throw new ArgumentNullException(nameof(chatMessageContent));
 
-        var innerContentCreated = chatMessageContent.InnerContent
+        var innerContentCreated = chatMessageContent.InnerContent?
             .TryGetPropertyValue<DateTimeOffset?>("Created");
 
         if (innerContentCreated != null)
