@@ -34,7 +34,7 @@ public class StreamExtensionsTests
     {
         Stream stream = null;
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(stream.ToBase64);
+        Assert.ThrowsExactly<ArgumentNullException>(stream.ToBase64);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

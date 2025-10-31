@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Ollama;
-using OllamaSharp;
 using System;
-using System.Net.Http;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Extensions.Orchestration.Ollama.Helpers;
 using Vivet.AI.Services.Extensions;
 
 namespace Vivet.AI.Extensions.Orchestration.Ollama;
@@ -77,6 +76,10 @@ public static class ServiceCollectionExtensions
             .AddOllamaSummarizationServices(options)
             .AddOllamaAgentsServices(options);
 
+        services
+            .AddNullTranscriptionServices(options)
+            .AddNullVisionServices(options);
+
         return services;
     }
     private static IServiceCollection AddOllamaChatServices(this IServiceCollection services, AiOptions options)
@@ -92,8 +95,9 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var ollamaApiClient = OllamaApiClientFactory.GetOllamaApiClient(options.Chat.Model.Name, options.Endpoint, options.Chat.Timeout);
+
         services
-            .AddOllamaApiClient(nameof(options.Chat), options.Endpoint, options.Chat.Model.Name, options.Chat.Timeout, out var ollamaApiClient)
             .AddOllamaChatClient(ollamaApiClient, serviceId: ServiceIds.CHAT_SERVICE_ID)
             .AddOllamaChatCompletion(ollamaApiClient, serviceId: ServiceIds.CHAT_SERVICE_ID);
 
@@ -115,8 +119,9 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var ollamaApiClient = OllamaApiClientFactory.GetOllamaApiClient(options.Embedding.Model.Name, options.Endpoint, options.Embedding.Timeout);
+
         services
-            .AddOllamaApiClient(nameof(options.Embedding), options.Endpoint, options.Embedding.Model.Name, options.Embedding.Timeout, out var ollamaApiClient)
             .AddOllamaEmbeddingGenerator(ollamaApiClient, serviceId: ServiceIds.EMBEDDING_SERVICE_ID);
 
         services
@@ -137,8 +142,9 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var ollamaApiClient = OllamaApiClientFactory.GetOllamaApiClient(options.Metadata.Model.Name, options.Endpoint, options.Metadata.Timeout);
+
         services
-            .AddOllamaApiClient(nameof(options.Metadata), options.Endpoint, options.Metadata.Model.Name, options.Metadata.Timeout, out var ollamaApiClient)
             .AddOllamaChatClient(ollamaApiClient, serviceId: ServiceIds.METADATA_SERVICE_ID)
             .AddOllamaChatCompletion(ollamaApiClient, serviceId: ServiceIds.METADATA_SERVICE_ID);
 
@@ -160,8 +166,9 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var ollamaApiClient = OllamaApiClientFactory.GetOllamaApiClient(options.Summarization.Model.Name, options.Endpoint, options.Summarization.Timeout);
+
         services
-            .AddOllamaApiClient(nameof(options.Summarization), options.Endpoint, options.Summarization.Model.Name, options.Summarization.Timeout, out var ollamaApiClient)
             .AddOllamaChatClient(ollamaApiClient, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID)
             .AddOllamaChatCompletion(ollamaApiClient, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID);
 
@@ -183,48 +190,14 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var ollamaApiClient = OllamaApiClientFactory.GetOllamaApiClient(options.Agents.Model.Name, options.Endpoint, options.Agents.Timeout);
+
         services
-            .AddOllamaApiClient(nameof(options.Agents), options.Endpoint, options.Agents.Model.Name, options.Agents.Timeout, out var ollamaApiClient)
-            .AddOllamaChatClient(ollamaApiClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
-            .AddOllamaChatCompletion(ollamaApiClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddOllamaChatClient(ollamaApiClient, serviceId: ServiceIds.AGENTS_SERVICE_ID)
+            .AddOllamaChatCompletion(ollamaApiClient, serviceId: ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<OllamaPromptExecutionSettings>(options);
-
-        return services;
-    }
-
-    private static IServiceCollection AddOllamaApiClient(this IServiceCollection services, string name, string baseAddress, string modelName, TimeSpan timeout, out OllamaApiClient ollamaApiClient)
-    {
-        if (services == null)
-            throw new ArgumentNullException(nameof(services));
-
-        if (baseAddress == null)
-            throw new ArgumentNullException(nameof(baseAddress));
-
-        if (name == null)
-            throw new ArgumentNullException(nameof(name));
-
-        services
-            .AddHttpClient(name, x =>
-            {
-                x.BaseAddress = new Uri(baseAddress);
-                x.Timeout = timeout;
-            });
-
-        services
-            .AddScoped(x =>
-            {
-                var httpClient = x
-                    .GetRequiredService<IHttpClientFactory>()
-                    .CreateClient(name);
-
-                return new OllamaApiClient(httpClient, modelName);
-            });
-
-        ollamaApiClient = services
-            .BuildServiceProvider()
-            .GetRequiredService<OllamaApiClient>();
 
         return services;
     }

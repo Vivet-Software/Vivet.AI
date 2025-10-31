@@ -6,8 +6,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Vivet.AI.Extensions;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Hosting.HealthChecks.Extensions;
 
 namespace IntegrationTests.Vivet.AI.Hosting.HealthChecks;
 

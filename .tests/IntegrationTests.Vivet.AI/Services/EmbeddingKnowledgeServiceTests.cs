@@ -197,7 +197,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         {
             TenantId = this.tenantId,
             ScopeId = scopeId,
-            Blob = new ImageBlob
+            Blob = new ImageBlobMetadata
             {
                 Data = new BlobDataBase64
                 {
@@ -251,7 +251,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         {
             TenantId = this.tenantId,
             ScopeId = scopeId,
-            Blob = new ImageBlob
+            Blob = new ImageBlobMetadata
             {
                 Data = new BlobDataBase64
                 {
@@ -837,7 +837,7 @@ public class EmbeddingKnowledgeServiceTests : BaseTests
         {
             TenantId = this.tenantId,
             ScopeId = scopeId,
-            Blob = new ImageBlob
+            Blob = new ImageBlobMetadata
             {
                 Data = new BlobDataBase64
                 {

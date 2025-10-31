@@ -31,7 +31,7 @@ public class StringExtensionsTests
         string content = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(content.GetChatResponseAnswer);
+        Assert.ThrowsExactly<ArgumentNullException>(content.GetChatResponseAnswer);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -69,7 +69,7 @@ public class StringExtensionsTests
         string content = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(content.GetChatResponseThinking);
+        Assert.ThrowsExactly<ArgumentNullException>(content.GetChatResponseThinking);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -108,7 +108,7 @@ public class StringExtensionsTests
         string text = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(text.GetContentHash);
+        Assert.ThrowsExactly<ArgumentNullException>(text.GetContentHash);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -129,7 +129,7 @@ public class StringExtensionsTests
         string text = null;
  
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => text.GetUtf8ByteCount());
+        Assert.ThrowsExactly<ArgumentNullException>(() => text.GetUtf8ByteCount());
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -140,7 +140,7 @@ public class StringExtensionsTests
         string value = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        var ex = Assert.ThrowsException<ArgumentNullException>(() => value.AreSimilar("test"));
+        var ex = Assert.ThrowsExactly<ArgumentNullException>(() => value.AreSimilar("test"));
         // ReSharper restore ExpressionIsAlwaysNull
         Assert.AreEqual("value", ex.ParamName);
     }

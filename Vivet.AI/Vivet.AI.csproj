@@ -2,9 +2,9 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-		<AssemblyVersion>0.9.0.0</AssemblyVersion>
-		<FileVersion>0.9.0.0</FileVersion>
-		<Version>0.9.0.0-preview-1</Version>
+		<AssemblyVersion>0.10.0.0</AssemblyVersion>
+		<FileVersion>0.10.0.0</FileVersion>
+		<Version>0.10.0.0-preview-1</Version>
 		<PlatformTarget>AnyCPU</PlatformTarget>
 		<LangVersion>latest</LangVersion>
 		<Authors>Michael Vivet</Authors>

@@ -270,7 +270,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
             Language = this.language,
             Blobs = new List<BaseBlobMetadata>
             {
-                new ImageBlob
+                new ImageBlobMetadata
                 {
                     Data = new BlobDataBase64
                     {
@@ -336,7 +336,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
             Language = this.language,
             Blobs = new List<BaseBlobMetadata>
             {
-                new ImageBlob
+                new ImageBlobMetadata
                 {
                     Data = new BlobDataBase64
                     {
@@ -390,7 +390,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
             ThreadId = threadId,
             Blobs = new List<BaseBlobMetadata>
             {
-                new ImageBlob
+                new ImageBlobMetadata
                 {
                     Data = new BlobDataBase64
                     {
@@ -793,7 +793,7 @@ public class EmbeddingMemoryServiceTests : BaseTests
                 Language = this.language,
                 Blobs = new List<BaseBlobMetadata>
                 {
-                    new ImageBlob
+                    new ImageBlobMetadata
                     {
                         Data = new BlobDataBase64
                         {

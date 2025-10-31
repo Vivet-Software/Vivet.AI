@@ -23,6 +23,8 @@ using Vivet.AI.Services.Serialization;
 
 namespace Vivet.AI.Services;
 
+// TODO: Text to Audio (Speech streaming)
+
 /// <inheritdoc cref="IChatService"/>
 public class ChatService(ChatOptions options, IChatCompletionService chatCompletionService, IKernelBuilder kernelBuilder, IServiceProvider serviceProvider, PromptExecutionSettings promptExecutionSettings, IEmbeddingMemoryService embeddingMemoryService = null) 
     : BaseService, IChatService
@@ -65,7 +67,7 @@ public class ChatService(ChatOptions options, IChatCompletionService chatComplet
             .Start();
 
         request
-            .Validate();
+            .Validate();    
 
         var kernel = this.GetKernel(request);
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);

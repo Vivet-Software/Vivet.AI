@@ -43,7 +43,7 @@ public class EmbeddingKnowledgeService(EmbeddingOptions options, IEmbeddingGener
     {
         if (request == null) 
             throw new ArgumentNullException(nameof(request));
-
+        
         request
             .Validate();
 
