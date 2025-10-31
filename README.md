@@ -42,8 +42,8 @@ _Based on [Microsoft.SemanticKernel](https://learn.microsoft.com/en-us/semantic-
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗂️ [Metadata](#%EF%B8%8F-metadata-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✂️ [Summarization](#%EF%B8%8F-summarization-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🕹️ [Agents](#%EF%B8%8F-agents-service)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗣️ [Transcription](#%EF%B8%8F-transcription)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;👁️ [Vision](#%EF%B8%8F-vision)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗣️ [Transcription](#%EF%B8%8F-transcription-service)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;👁️ [Vision](#%EF%B8%8F-vision-service)  
 
 ### 🔌 [Plugins](#-plugins-1)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧩 [Built-In Plugins](#-built-in-plugins)  
