@@ -5,15 +5,16 @@ using Vivet.AI.Services.Requests.Transcription.Models.ConfigOverrides;
 namespace Vivet.AI.Services.Requests.Transcription;
 
 /// <summary>
-/// Represents a transcribe request.
+/// Abstract base class representing a transcribe request.
 /// </summary>
-public class TranscribeRequest
+public abstract class BaseTranscribeRequest<T>
+    where T : BaseBlob
 {
     /// <summary>
-    /// Gets or sets the the audio blob to transcribe.
+    /// Gets or sets the the blob to transcribe.
     /// </summary>
     [Required]
-    public virtual AudioBlob Blob { get; set; }
+    public virtual T Blob { get; set; }
 
     /// <summary>
     /// Gets or sets the configuration overrides for the request.

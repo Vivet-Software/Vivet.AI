@@ -1,7 +1,6 @@
 ﻿using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ImageToText;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -9,23 +8,21 @@ using System.Threading.Tasks;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
-using Vivet.AI.Services.Requests.ImageExtraction;
-using Vivet.AI.Services.Requests.ImageExtraction.Models.ConfigOverrides;
-using Vivet.AI.Services.Responses.ImageExtraction;
-using Vivet.AI.Services.Responses.ImageExtraction.Models;
+using Vivet.AI.Services.Models.Blobs;
+using Vivet.AI.Services.Requests.Vision;
+using Vivet.AI.Services.Requests.Vision.Models.ConfigOverrides;
+using Vivet.AI.Services.Responses.Vision;
+using Vivet.AI.Services.Responses.Vision.Models;
 
 namespace Vivet.AI.Services;
 
-// BUG: Readme: ImageExtractionService (HuggingFace)
-
-// BUG: Document To Text ??? (Microsoft.SemanticKernel.Plugins.Document can this nuget be used)
-
 /// <inheritdoc />
-public class ImageExtractionService(IImageToTextService imageToTextService, PromptExecutionSettings promptExecutionSettings) 
-    : IImageExtractionService
+public class VisionService(IImageToTextService imageToTextService, PromptExecutionSettings promptExecutionSettings) 
+    : IVisionService
 {
     /// <inheritdoc />
-    public virtual async Task<ImageExtractionResponse> Extract(ImageExtractionRequest request, CancellationToken cancellationToken = default)
+    public virtual async Task<TextResponse> ExtractText<T>(BaseTextExtractionRequest<T> request, CancellationToken cancellationToken = default)
+        where T : BaseBlob
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -37,14 +34,14 @@ public class ImageExtractionService(IImageToTextService imageToTextService, Prom
         request
             .Validate();
 
+        // TODO: VisionService: Document Extract Text
+
         var blobData = await request.Blob
             .GetBlobData(cancellationToken)
             .ConfigureAwait(false);
 
         var content = new ImageContent(blobData.DataUri);
         var executionSettings = this.GetPromptExecutionSettings(request.ConfigOverrides);
-
-        // TODO: Image Extraction: Extract images from image
     
         var textContents = await imageToTextService
             .GetTextContentsAsync(content, executionSettings, null, cancellationToken);
@@ -52,29 +49,10 @@ public class ImageExtractionService(IImageToTextService imageToTextService, Prom
         stopwatch
             .Stop();
 
-        return ImageExtractionService.GetResponse(textContents, stopwatch.Elapsed);
-    }
-
-
-    private PromptExecutionSettings GetPromptExecutionSettings(ImageExtractionConfigOverrides configOverrides)
-    {
-        if (configOverrides == null)
-            throw new NullReferenceException(nameof(configOverrides));
-
-        promptExecutionSettings.ModelId = configOverrides.ModelName;
-
-        return promptExecutionSettings;
-    }
-
-    private static ImageExtractionResponse GetResponse(IReadOnlyList<TextContent> textContents, TimeSpan elapsedTime)
-    {
-        if (textContents == null)
-            throw new ArgumentNullException(nameof(textContents));
-
         var tokenUsage = textContents
             .Aggregate(new TokenUsage(), (current, x) => current + x.GetTokenUsage());
 
-        return new ImageExtractionResponse
+        return new TextResponse
         {
             Texts = textContents
                 .Select(x =>
@@ -88,8 +66,34 @@ public class ImageExtractionService(IImageToTextService imageToTextService, Prom
                         Language = language
                     };
                 }),
-            ElapsedTime = elapsedTime,
+            ElapsedTime = stopwatch.Elapsed,
             TokenUsage = tokenUsage
         };
+    }
+
+    /// <inheritdoc />
+    public virtual async Task<ImagesResponse> ExtractImages<T>(BaseImagesExtractionRequest<T> request, CancellationToken cancellationToken = default)
+        where T : BaseBlob
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        // TODO: VisionService: Video Extract Images
+        // TODO: VisionService: Document Extract Images
+
+        await Task.CompletedTask;
+
+        return new ImagesResponse();
+    }
+
+
+    private PromptExecutionSettings GetPromptExecutionSettings(VisionConfigOverrides configOverrides)
+    {
+        if (configOverrides == null)
+            throw new NullReferenceException(nameof(configOverrides));
+
+        promptExecutionSettings.ModelId = configOverrides.ModelName;
+
+        return promptExecutionSettings;
     }
 }

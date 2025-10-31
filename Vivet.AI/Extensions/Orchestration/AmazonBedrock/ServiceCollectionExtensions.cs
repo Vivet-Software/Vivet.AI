@@ -1,6 +1,4 @@
-﻿using Amazon.BedrockRuntime;
-using Amazon.Runtime;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Amazon;
 using System;
@@ -71,23 +69,20 @@ public static class ServiceCollectionExtensions
         options
             .Validate();
 
-
-        var runtimeClient = ServiceCollectionExtensions.GetAmazonBedrockRuntimeClient(options);
-
         services
-            .AddAmazonBedrockAiChatServices(options, runtimeClient)
-            .AddAmazonBedrockAiEmbeddingServices(options, runtimeClient)
-            .AddAmazonBedrockAiMetadataServices(options, runtimeClient)
-            .AddAmazonBedrockAiSummarizationServices(options, runtimeClient)
-            .AddAmazonBedrockAiAgentsServices(options, runtimeClient);
+            .AddAmazonBedrockAiChatServices(options)
+            .AddAmazonBedrockAiEmbeddingServices(options)
+            .AddAmazonBedrockAiMetadataServices(options)
+            .AddAmazonBedrockAiSummarizationServices(options)
+            .AddAmazonBedrockAiAgentsServices(options);
 
         services
             .AddNullTranscriptionServices(options)
-            .AddNullImageExtractionServices(options);
+            .AddNullVisionServices(options);
 
         return services;
     }
-    private static IServiceCollection AddAmazonBedrockAiChatServices(this IServiceCollection services, AiOptions options, AmazonBedrockRuntimeClient runtimeClient)
+    private static IServiceCollection AddAmazonBedrockAiChatServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -100,16 +95,18 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var amazonBedrockRuntimeClient = AmazonBedrockRuntimeClientFactory.GetAmazonBedrockRuntimeClient(options.Chat.Model.Name, options.Endpoint, options.ApiKeyId, options.ApiKey, options.Chat.Timeout);
+
         services
-            .AddBedrockChatClient(options.Chat.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.CHAT_SERVICE_ID)
-            .AddBedrockChatCompletionService(options.Chat.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.CHAT_SERVICE_ID);
+            .AddBedrockChatClient(options.Chat.Model.Name, amazonBedrockRuntimeClient, ServiceIds.CHAT_SERVICE_ID)
+            .AddBedrockChatCompletionService(options.Chat.Model.Name, amazonBedrockRuntimeClient, ServiceIds.CHAT_SERVICE_ID);
 
         services
             .AddAmazonChatServices(options);
 
         return services;
     }
-    private static IServiceCollection AddAmazonBedrockAiEmbeddingServices(this IServiceCollection services, AiOptions options, AmazonBedrockRuntimeClient runtimeClient)
+    private static IServiceCollection AddAmazonBedrockAiEmbeddingServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -122,15 +119,17 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var amazonBedrockRuntimeClient = AmazonBedrockRuntimeClientFactory.GetAmazonBedrockRuntimeClient(options.Embedding.Model.Name, options.Endpoint, options.ApiKeyId, options.ApiKey, options.Embedding.Timeout);
+
         services
-            .AddBedrockEmbeddingGenerator(options.Embedding.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.EMBEDDING_SERVICE_ID);
+            .AddBedrockEmbeddingGenerator(options.Embedding.Model.Name, amazonBedrockRuntimeClient, ServiceIds.EMBEDDING_SERVICE_ID);
 
         services
             .AddEmbeddingServices(options);
 
         return services;
     }
-    private static IServiceCollection AddAmazonBedrockAiMetadataServices(this IServiceCollection services, AiOptions options, AmazonBedrockRuntimeClient runtimeClient)
+    private static IServiceCollection AddAmazonBedrockAiMetadataServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null) 
             throw new ArgumentNullException(nameof(services));
@@ -143,16 +142,18 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var amazonBedrockRuntimeClient = AmazonBedrockRuntimeClientFactory.GetAmazonBedrockRuntimeClient(options.Metadata.Model.Name, options.Endpoint, options.ApiKeyId, options.ApiKey, options.Metadata.Timeout);
+
         services
-            .AddBedrockChatClient(options.Metadata.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.METADATA_SERVICE_ID)
-            .AddBedrockChatCompletionService(options.Metadata.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.METADATA_SERVICE_ID);
+            .AddBedrockChatClient(options.Metadata.Model.Name, amazonBedrockRuntimeClient, ServiceIds.METADATA_SERVICE_ID)
+            .AddBedrockChatCompletionService(options.Metadata.Model.Name, amazonBedrockRuntimeClient, ServiceIds.METADATA_SERVICE_ID);
 
         services
             .AddAmazonMetadataServices(options);
 
         return services;
     }
-    private static IServiceCollection AddAmazonBedrockAiSummarizationServices(this IServiceCollection services, AiOptions options, AmazonBedrockRuntimeClient runtimeClient)
+    private static IServiceCollection AddAmazonBedrockAiSummarizationServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -165,16 +166,18 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var amazonBedrockRuntimeClient = AmazonBedrockRuntimeClientFactory.GetAmazonBedrockRuntimeClient(options.Summarization.Model.Name, options.Endpoint, options.ApiKeyId, options.ApiKey, options.Summarization.Timeout);
+
         services
-            .AddBedrockChatClient(options.Summarization.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID)
-            .AddBedrockChatCompletionService(options.Summarization.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID);
+            .AddBedrockChatClient(options.Summarization.Model.Name, amazonBedrockRuntimeClient, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID)
+            .AddBedrockChatCompletionService(options.Summarization.Model.Name, amazonBedrockRuntimeClient, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID);
 
         services
             .AddAmazonSummarizationServices(options);
 
         return services;
     }
-    private static IServiceCollection AddAmazonBedrockAiAgentsServices(this IServiceCollection services, AiOptions options, AmazonBedrockRuntimeClient runtimeClient)
+    private static IServiceCollection AddAmazonBedrockAiAgentsServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -187,9 +190,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var amazonBedrockRuntimeClient = AmazonBedrockRuntimeClientFactory.GetAmazonBedrockRuntimeClient(options.Agents.Model.Name, options.Endpoint, options.ApiKeyId, options.ApiKey, options.Agents.Timeout);
+
         services
-            .AddBedrockChatClient(options.Agents.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.AGENTS_SERVICE_ID)
-            .AddBedrockChatCompletionService(options.Agents.Model.Name, bedrockRuntime: runtimeClient, serviceId: ServiceIds.AGENTS_SERVICE_ID);
+            .AddBedrockChatClient(options.Agents.Model.Name, amazonBedrockRuntimeClient, ServiceIds.AGENTS_SERVICE_ID)
+            .AddBedrockChatCompletionService(options.Agents.Model.Name, amazonBedrockRuntimeClient, ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAmazonAgentsServices(options);
@@ -408,17 +413,5 @@ public static class ServiceCollectionExtensions
         }
 
         throw new NotSupportedException($"Model '{options.Summarization.Model.Name}' is not supported for Amazon Bedrock");
-    }
-
-    private static AmazonBedrockRuntimeClient GetAmazonBedrockRuntimeClient(AiOptions options)
-    {
-        if (options == null)
-            throw new ArgumentNullException(nameof(options));
-
-        var region = AmazonBedrockRegionEndpointHelper.FromPropertyName(options.Endpoint);
-        var awsCredentials = new BasicAWSCredentials(options.ApiKeyId, options.ApiKey);
-        var amazonBedrockRuntimeClient = new AmazonBedrockRuntimeClient(awsCredentials, region);
-
-        return amazonBedrockRuntimeClient;
     }
 }

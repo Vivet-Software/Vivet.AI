@@ -3,4 +3,4 @@
 /// <summary>
 /// Image Extraction Model.
 /// </summary>
-public class ImageExtractionModel : BaseModel;
+public class VisionModel : BaseModel;

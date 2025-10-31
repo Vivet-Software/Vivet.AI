@@ -1,4 +1,4 @@
-﻿namespace Vivet.AI.Services.Responses.ImageExtraction.Models;
+﻿namespace Vivet.AI.Services.Responses.Vision.Models;
 
 /// <summary>
 /// Represents extracted text related to the image extraction operation.
@@ -11,7 +11,7 @@ public class ExtractedText
     public virtual string Content { get; set; }
 
     /// <summary>
-    /// The language of the transcribed text.
+    /// The language of the extracted text.
     /// </summary>
     public virtual string Language { get; set; }
 }

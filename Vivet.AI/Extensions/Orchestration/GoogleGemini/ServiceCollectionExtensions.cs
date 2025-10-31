@@ -1,7 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.Logging;
+using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.Google;
 using System;
+using System.Net.Http;
+using Microsoft.Extensions.AI;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
 using Vivet.AI.Services.Extensions;
@@ -77,7 +80,7 @@ public static class ServiceCollectionExtensions
 
         services
             .AddNullTranscriptionServices(options)
-            .AddNullImageExtractionServices(options);
+            .AddNullVisionServices(options);
 
         return services;
     }
@@ -95,7 +98,7 @@ public static class ServiceCollectionExtensions
         }
 
         services
-            .AddGoogleAIGeminiChatCompletion(options.Chat.Model.Name, options.ApiKey, serviceId: ServiceIds.CHAT_SERVICE_ID);
+            .AddGoogleAiGeminiChatCompletion(options.Chat.Model.Name, options.Endpoint, options.ApiKey, options.Chat.Timeout, ServiceIds.CHAT_SERVICE_ID);
 
         services
             .AddChatServices<GeminiPromptExecutionSettings>(options);
@@ -116,7 +119,7 @@ public static class ServiceCollectionExtensions
         }
 
         services
-            .AddGoogleAIEmbeddingGenerator(options.Embedding.Model.Name, options.ApiKey, dimensions: options.Embedding.VectorSize, serviceId: ServiceIds.EMBEDDING_SERVICE_ID);
+            .AddGoogleAiEmbeddingGenerator(options.Embedding.Model.Name, options.Endpoint, options.ApiKey, options.Embedding.VectorSize, options.Embedding.Timeout, ServiceIds.EMBEDDING_SERVICE_ID);
 
         services
             .AddEmbeddingServices(options);
@@ -137,7 +140,7 @@ public static class ServiceCollectionExtensions
         }
 
         services
-            .AddGoogleAIGeminiChatCompletion(options.Metadata.Model.Name, options.ApiKey, serviceId: ServiceIds.METADATA_SERVICE_ID);
+            .AddGoogleAiGeminiChatCompletion(options.Metadata.Model.Name, options.Endpoint, options.ApiKey, options.Metadata.Timeout, ServiceIds.METADATA_SERVICE_ID);
 
         services
             .AddMetadataServices<GeminiPromptExecutionSettings>(options);
@@ -158,7 +161,7 @@ public static class ServiceCollectionExtensions
         }
 
         services
-            .AddGoogleAIGeminiChatCompletion(options.Summarization.Model.Name, options.ApiKey, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID);
+            .AddGoogleAiGeminiChatCompletion(options.Summarization.Model.Name, options.Endpoint, options.ApiKey, options.Summarization.Timeout, ServiceIds.SUMMARIZATION_SERVICE_ID);
 
         services
             .AddSummarizationServices<GeminiPromptExecutionSettings>(options);
@@ -179,10 +182,93 @@ public static class ServiceCollectionExtensions
         }
 
         services
-            .AddGoogleAIGeminiChatCompletion(options.Agents.Model.Name, options.ApiKey, serviceId: ServiceIds.AGENTS_SERVICE_ID);
+            .AddGoogleAiGeminiChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, options.Agents.Timeout, ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<GeminiPromptExecutionSettings>(options);
+
+        return services;
+    }
+
+    private static IServiceCollection AddGoogleAiGeminiChatCompletion(this IServiceCollection services, string modelId, string endpoint, string apiKey, TimeSpan timeout, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (modelId == null)
+            throw new ArgumentNullException(nameof(modelId));
+
+        if (endpoint == null)
+            throw new ArgumentNullException(nameof(endpoint));
+
+        if (apiKey == null)
+            throw new ArgumentNullException(nameof(apiKey));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddHttpClient(serviceId, x =>
+            {
+                x.BaseAddress = new Uri(endpoint);
+                x.Timeout = timeout;
+            });
+
+        services
+            .AddKeyedSingleton<IChatCompletionService>(serviceId, (x, _) =>
+            {
+                var httpClientFactory = x
+                    .GetService<IHttpClientFactory>();
+
+                var httpClient = httpClientFactory
+                    .CreateClient(serviceId);
+
+                var loggerFactory = x
+                    .GetService<ILoggerFactory>();
+
+                return new GoogleAIGeminiChatCompletionService(modelId, apiKey, GoogleAIVersion.V1, httpClient, loggerFactory);
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddGoogleAiEmbeddingGenerator(this IServiceCollection services, string modelId, string endpoint, string apiKey, int dimensions, TimeSpan timeout, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (modelId == null)
+            throw new ArgumentNullException(nameof(modelId));
+
+        if (endpoint == null)
+            throw new ArgumentNullException(nameof(endpoint));
+
+        if (apiKey == null)
+            throw new ArgumentNullException(nameof(apiKey));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddHttpClient(serviceId, x =>
+            {
+                x.BaseAddress = new Uri(endpoint);
+                x.Timeout = timeout;
+            });
+
+        services
+            .AddKeyedSingleton<IEmbeddingGenerator<string, Embedding<float>>>(serviceId, (x, _) =>
+            {
+                var httpClientFactory = x
+                    .GetService<IHttpClientFactory>();
+
+                var httpClient = httpClientFactory
+                    .CreateClient(serviceId);
+
+                var loggerFactory = x
+                    .GetService<ILoggerFactory>();
+
+                return new GoogleAIEmbeddingGenerator(modelId, apiKey, GoogleAIVersion.V1, httpClient, loggerFactory, dimensions);
+            });
 
         return services;
     }

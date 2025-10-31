@@ -31,7 +31,7 @@ internal static class ServiceCollectionExtensions
         return services;
     }
 
-    internal static IServiceCollection AddNullImageExtractionServices(this IServiceCollection services, AiOptions options)
+    internal static IServiceCollection AddNullVisionServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
@@ -39,7 +39,7 @@ internal static class ServiceCollectionExtensions
         if (options == null)
             throw new ArgumentNullException(nameof(options));
 
-        if (options.ImageExtraction == null)
+        if (options.Vision == null)
         {
             return services;
         }

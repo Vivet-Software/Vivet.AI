@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Interfaces;
 using Vivet.AI.Services.Models;
+using Vivet.AI.Services.Models.Blobs;
 using Vivet.AI.Services.Requests.Transcription;
 using Vivet.AI.Services.Requests.Transcription.Models.ConfigOverrides;
 using Vivet.AI.Services.Responses.Transcription;
@@ -16,13 +17,13 @@ using Vivet.AI.Services.Responses.Transcription.Models;
 
 namespace Vivet.AI.Services;
 
-// BUG: Readme: TranscriptionService (Azure OpenAI)
-
 /// <inheritdoc />
-public class TranscriptionService(IAudioToTextService audioToTextService, PromptExecutionSettings promptExecutionSettings) : ITranscriptionService
+public class TranscriptionService(IAudioToTextService audioToTextService, PromptExecutionSettings promptExecutionSettings) 
+    : ITranscriptionService
 {
     /// <inheritdoc />
-    public virtual async Task<TranscribeResponse> Transcribe(TranscribeRequest request, CancellationToken cancellationToken = default)
+    public virtual async Task<TranscribeResponse> Transcribe<T>(BaseTranscribeRequest<T> request, CancellationToken cancellationToken = default)
+        where T : BaseBlob
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
@@ -33,6 +34,8 @@ public class TranscriptionService(IAudioToTextService audioToTextService, Prompt
 
         request
             .Validate();
+
+        // TODO: TranscriptionService: Transcribe Video
 
         var blobData = await request.Blob
             .GetBlobData(cancellationToken)

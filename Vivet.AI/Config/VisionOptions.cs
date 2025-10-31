@@ -5,16 +5,16 @@ using Vivet.AI.Config.Models;
 namespace Vivet.AI.Config;
 
 /// <summary>
-/// Options for image extraction.
+/// Options for vision.
 /// </summary>
-public class ImageExtractionOptions
+public class VisionOptions
 {
     /// <summary>
-    /// The image extraction model name.
+    /// The vision model name.
     /// Make sure the model is configured in the choosen AI provider (e.g. Azure AI, Azure OpenAU, Ollama, etc).
     /// </summary>
     [Required]
-    public virtual ImageExtractionModel Model { get; set; } = new();
+    public virtual VisionModel Model { get; set; } = new();
 
     /// <summary>
     /// Timeout before requests are aborted.

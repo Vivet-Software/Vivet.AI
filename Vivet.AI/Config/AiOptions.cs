@@ -87,9 +87,9 @@ public class AiOptions
     public virtual TranscriptionOptions Transcription { get; set; }
 
     /// <summary>
-    /// Image Extraction.
+    /// Vision.
     /// </summary>
-    public virtual ImageExtractionOptions ImageExtraction { get; set; }
+    public virtual VisionOptions Vision { get; set; }
 
     /// <summary>
     /// Built-in plugins that can be enabled for the chat model.

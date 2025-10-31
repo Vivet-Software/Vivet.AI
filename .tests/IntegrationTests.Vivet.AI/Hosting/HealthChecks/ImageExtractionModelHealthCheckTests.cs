@@ -36,7 +36,7 @@ public class ImageExtractionModelHealthCheckTests : BaseTests
     {
         var healthReport = await this.HealthCheckService.CheckHealthAsync();
 
-        var entry = healthReport.Entries[ServiceIds.IMAGE_EXTRACTION_SERVICE_ID];
+        var entry = healthReport.Entries[ServiceIds.VISION_SERVICE_ID];
         Assert.AreEqual(HealthStatus.Healthy, entry.Status, entry.Description);
     }
 

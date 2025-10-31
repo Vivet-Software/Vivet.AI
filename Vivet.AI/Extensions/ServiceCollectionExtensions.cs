@@ -8,7 +8,6 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.ImageToText;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Definitions;
@@ -143,7 +142,7 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Embedding);
 
         services
-            .AddScoped<IEmbeddingGenerator>(x => x
+            .AddSingleton<IEmbeddingGenerator>(x => x
                 .GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>(serviceKey: ServiceIds.EMBEDDING_SERVICE_ID));
 
         services
@@ -404,60 +403,34 @@ internal static class ServiceCollectionExtensions
         return services;
     }
 
-    internal static IServiceCollection AddImageExtractionServices(this IServiceCollection services, AiOptions options)
+    internal static IServiceCollection AddVisionServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
         services
-            .AddSingleton(options.ImageExtraction);
+            .AddSingleton(options.Vision);
 
         services
-            .AddImageExtractionModelPromptExecutionSettings(ServiceIds.IMAGE_EXTRACTION_SERVICE_ID)
-            .AddScoped<IImageExtractionService>(x =>
+            .AddImageExtractionModelPromptExecutionSettings(ServiceIds.VISION_SERVICE_ID)
+            .AddScoped<IVisionService>(x =>
             {
                 var imageToTextService = x
-                    .GetRequiredKeyedService<IImageToTextService>(ServiceIds.IMAGE_EXTRACTION_SERVICE_ID);
+                    .GetRequiredKeyedService<IImageToTextService>(ServiceIds.VISION_SERVICE_ID);
 
                 var promptExecutionSettings = x
-                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.IMAGE_EXTRACTION_SERVICE_ID);
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.VISION_SERVICE_ID);
 
-                return new ImageExtractionService(imageToTextService, promptExecutionSettings);
+                return new VisionService(imageToTextService, promptExecutionSettings);
             });
 
-        if (options.ImageExtraction.Model.UseHealthCheck)
+        if (options.Vision.Model.UseHealthCheck)
         {
             services
-                .AddImageExtractionModelHealthCheckPromptExecutionSettings(ServiceIds.HEALTH_IMAGE_EXTRACTION_SERVICE_ID)
+                .AddImageExtractionModelHealthCheckPromptExecutionSettings(ServiceIds.HEALTH_VISION_SERVICE_ID)
                 .AddHealthChecks()
-                .AddImageExtractionModelCheck(ServiceIds.IMAGE_EXTRACTION_SERVICE_ID, ServiceIds.HEALTH_IMAGE_EXTRACTION_SERVICE_ID);
+                .AddImageExtractionModelCheck(ServiceIds.VISION_SERVICE_ID, ServiceIds.HEALTH_VISION_SERVICE_ID);
         }
-
-        return services;
-    }
-
-    internal static IServiceCollection AddHttpClient(this IServiceCollection services, string name, string baseAddress, TimeSpan timeout, out HttpClient httpClient)
-    {
-        if (services == null)
-            throw new ArgumentNullException(nameof(services));
-
-        if (baseAddress == null) 
-            throw new ArgumentNullException(nameof(baseAddress));
-
-        if (name == null)
-            throw new ArgumentNullException(nameof(name));
-
-        services
-            .AddHttpClient(name, x =>
-            {
-                x.BaseAddress = new Uri(baseAddress);
-                x.Timeout = timeout;
-            });
-
-        httpClient = services
-            .BuildServiceProvider()
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(name);
 
         return services;
     }
