@@ -42,6 +42,8 @@ _Based on [Microsoft.SemanticKernel](https://learn.microsoft.com/en-us/semantic-
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗂️ [Metadata](#%EF%B8%8F-metadata-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;✂️ [Summarization](#%EF%B8%8F-summarization-service)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🕹️ [Agents](#%EF%B8%8F-agents-service)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🗣️ [Transcription](#%EF%B8%8F-transcription-service)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;👁️ [Vision](#%EF%B8%8F-vision-service)  
 
 ### 🔌 [Plugins](#-plugins-1)
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🧩 [Built-In Plugins](#-built-in-plugins)  
@@ -1217,6 +1219,16 @@ var agentsService = serviceProvider.GetService<IAgentsService>();
 
 <br /><br />
 
+## 🗣️ Transcription Service
+Coming...
+
+<br /><br />
+
+## 👁️ Vision Service
+Coming...
+
+<br /><br />
+
 ## 🔌 Plugins
 **Plugins** (also called *tools*) are sets of related functions that can be exposed to a chat model.  
 They allow the model to integrate with external services or invoke custom functionality dynamically.
@@ -1467,6 +1479,18 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
       "Model": {
         "Name": "<your-chat-model>",
       }
+    },
+    "Transcription": {
+      "Model": {
+        "Name": null
+      }
+    },
+    "Vision": {
+      "Model": {
+        "Name": null
+      }
+    },
+    "Plugins": {
     }
   }
 }
@@ -1659,6 +1683,21 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
         "EnableKnowledgePlugin": true,
         "EnableWebSearchPlugin": true
       }
+    },
+    "Transcription": {
+      "Model": {
+        "Name": null,
+        "UseHealthCheck": true
+      },
+      "IncludeWordGranularity": false,
+      "Timeout": "00:01:00"
+    },
+    "Vision": {
+      "Model": {
+        "Name": null,
+        "UseHealthCheck": true
+      },
+      "Timeout": "00:01:00"
     },
     "Plugins": {
       "Memory": {
