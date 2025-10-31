@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
-using System;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using System;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Extensions.Orchestration.OpenAi.Helpers;
 using Vivet.AI.Services.Extensions;
 
 namespace Vivet.AI.Extensions.Orchestration.OpenAi;
@@ -72,6 +73,10 @@ public static class ServiceCollectionExtensions
             .AddOpenAiSummarizationServices(options)
             .AddOpenAiAgentServices(options);
 
+        services
+            .AddNullTranscriptionServices(options)
+            .AddNullVisionServices(options);
+
         return services;
     }
     private static IServiceCollection AddOpenAiChatServices(this IServiceCollection services, AiOptions options)
@@ -87,10 +92,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var openAiClient = OpenAiClientFactory.GetOpenAiClient(options.Chat.Model.Name, options.Endpoint, options.ApiKey, options.Chat.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Chat), options.Endpoint, options.Chat.Timeout, out var httpClient)
-            .AddOpenAIChatClient(options.Chat.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.CHAT_SERVICE_ID)
-            .AddOpenAIChatCompletion(options.Chat.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.CHAT_SERVICE_ID);
+            .AddOpenAIChatClient(options.Chat.Model.Name, openAiClient, ServiceIds.CHAT_SERVICE_ID)
+            .AddOpenAIChatCompletion(options.Chat.Model.Name, openAiClient, ServiceIds.CHAT_SERVICE_ID);
 
         services
             .AddChatServices<OpenAIPromptExecutionSettings>(options);
@@ -110,9 +116,10 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var openAiClient = OpenAiClientFactory.GetOpenAiClient(options.Embedding.Model.Name, options.Endpoint, options.ApiKey, options.Embedding.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Embedding), options.Endpoint, options.Embedding.Timeout, out var httpClient)
-            .AddOpenAIEmbeddingGenerator(options.Embedding.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.EMBEDDING_SERVICE_ID);
+            .AddOpenAIEmbeddingGenerator(options.Embedding.Model.Name, openAiClient, serviceId: ServiceIds.EMBEDDING_SERVICE_ID);
 
         services
             .AddEmbeddingServices(options);
@@ -132,10 +139,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var openAiClient = OpenAiClientFactory.GetOpenAiClient(options.Metadata.Model.Name, options.Endpoint, options.ApiKey, options.Metadata.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Metadata), options.Endpoint, options.Metadata.Timeout, out var httpClient)
-            .AddOpenAIChatClient(options.Metadata.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.METADATA_SERVICE_ID, httpClient: httpClient)
-            .AddOpenAIChatCompletion(options.Metadata.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.METADATA_SERVICE_ID);
+            .AddOpenAIChatClient(options.Metadata.Model.Name, openAiClient, ServiceIds.METADATA_SERVICE_ID)
+            .AddOpenAIChatCompletion(options.Metadata.Model.Name, openAiClient, ServiceIds.METADATA_SERVICE_ID);
 
         services
             .AddMetadataServices<OpenAIPromptExecutionSettings>(options);
@@ -155,10 +163,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var openAiClient = OpenAiClientFactory.GetOpenAiClient(options.Summarization.Model.Name, options.Endpoint, options.ApiKey, options.Summarization.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Summarization), options.Endpoint, options.Summarization.Timeout, out var httpClient)
-            .AddOpenAIChatClient(options.Summarization.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID, httpClient: httpClient)
-            .AddOpenAIChatCompletion(options.Summarization.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID);
+            .AddOpenAIChatClient(options.Summarization.Model.Name, openAiClient, ServiceIds.SUMMARIZATION_SERVICE_ID)
+            .AddOpenAIChatCompletion(options.Summarization.Model.Name, openAiClient, ServiceIds.SUMMARIZATION_SERVICE_ID);
 
         services
             .AddSummarizationServices<OpenAIPromptExecutionSettings>(options);
@@ -178,10 +187,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var openAiClient = OpenAiClientFactory.GetOpenAiClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, options.Agents.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
-            .AddOpenAIChatClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
-            .AddOpenAIChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddOpenAIChatClient(options.Agents.Model.Name, openAiClient, ServiceIds.AGENTS_SERVICE_ID)
+            .AddOpenAIChatCompletion(options.Agents.Model.Name, openAiClient, ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<OpenAIPromptExecutionSettings>(options);

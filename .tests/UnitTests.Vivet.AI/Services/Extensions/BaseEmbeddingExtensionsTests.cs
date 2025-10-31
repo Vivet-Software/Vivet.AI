@@ -116,7 +116,7 @@ public class BaseEmbeddingExtensionsTests
         var options = DefaultOptions(RecencyDecayStrategy.Linear);
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => record.GetRecencyScore(options));
+        Assert.ThrowsExactly<ArgumentNullException>(() => record.GetRecencyScore(options));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -125,6 +125,6 @@ public class BaseEmbeddingExtensionsTests
     {
         var record = new TestEmbedding(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
-        Assert.ThrowsException<ArgumentNullException>(() => record.GetRecencyScore(null));
+        Assert.ThrowsExactly<ArgumentNullException>(() => record.GetRecencyScore(null));
     }
 }

@@ -38,7 +38,7 @@ public class ContextDeduplicatorTests
     [TestMethod]
     public void DeduplicateMemoryResultsWhenThrowsArgumentNullExceptionTest()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => ContextDeduplicator.DeduplicateMemoryResults(null));
+        Assert.ThrowsExactly<ArgumentNullException>(() => ContextDeduplicator.DeduplicateMemoryResults(null));
     }
 
     [TestMethod]
@@ -604,7 +604,7 @@ public class ContextDeduplicatorTests
     [TestMethod]
     public void DeduplicateKnowledgeResultsWhenThrowsArgumentNullExceptionTest()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => ContextDeduplicator.DeduplicateKnowledgeResults(null));
+        Assert.ThrowsExactly<ArgumentNullException>(() => ContextDeduplicator.DeduplicateKnowledgeResults(null));
     }
 
     [TestMethod]

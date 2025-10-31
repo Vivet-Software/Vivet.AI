@@ -43,7 +43,7 @@ public class CosineSimilarityTests
         var vectorA = new float[] { 1, 2 };
         var vectorB = new float[] { 1, 2, 3 };
 
-        Assert.ThrowsException<ArgumentException>(() => CosineSimilarity.GetMatches(vectorA, vectorB));
+        Assert.ThrowsExactly<ArgumentException>(() => CosineSimilarity.GetMatches(vectorA, vectorB));
     }
 
     [TestMethod]
@@ -53,7 +53,7 @@ public class CosineSimilarityTests
         var vectorB = new float[] { 1, 2, 3 };
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => CosineSimilarity.GetMatches(vectorA, vectorB));
+        Assert.ThrowsExactly<ArgumentNullException>(() => CosineSimilarity.GetMatches(vectorA, vectorB));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 
@@ -64,7 +64,7 @@ public class CosineSimilarityTests
         float[] vectorB = null;
 
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(() => CosineSimilarity.GetMatches(vectorA, vectorB));
+        Assert.ThrowsExactly<ArgumentNullException>(() => CosineSimilarity.GetMatches(vectorA, vectorB));
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

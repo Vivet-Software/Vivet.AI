@@ -112,7 +112,7 @@ public class TypeExtensionsTests
     {
         Type type = null;
         // ReSharper disable ExpressionIsAlwaysNull
-        Assert.ThrowsException<ArgumentNullException>(type.GetMetadataType);
+        Assert.ThrowsExactly<ArgumentNullException>(type.GetMetadataType);
         // ReSharper restore ExpressionIsAlwaysNull
     }
 

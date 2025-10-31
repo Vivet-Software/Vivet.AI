@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using System;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Extensions.Orchestration.AzureOpenAi.Helpers;
 using Vivet.AI.Services.Extensions;
 
 namespace Vivet.AI.Extensions.Orchestration.AzureOpenAi;
@@ -70,7 +71,11 @@ public static class ServiceCollectionExtensions
             .AddAzureOpenAiEmbeddingServices(options)
             .AddAzureOpenAiMetadataServices(options)
             .AddAzureOpenAiSummarizationServices(options)
-            .AddAzureOpenAiAgentsServices(options);
+            .AddAzureOpenAiAgentsServices(options)
+            .AddAzureOpenAiTranscriptionServices(options);
+
+        services
+            .AddNullVisionServices(options);
 
         return services;
     }
@@ -87,10 +92,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var azureOpenAiClient = AzureOpenAiClientFactory.GetAzureOpenAiClient(options.Chat.Model.Name, options.Endpoint, options.ApiKey, options.Chat.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Chat), options.Endpoint, options.Chat.Timeout, out var httpClient)
-            .AddAzureOpenAIChatClient(options.Chat.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.CHAT_SERVICE_ID)
-            .AddAzureOpenAIChatCompletion(options.Chat.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.CHAT_SERVICE_ID);
+            .AddAzureOpenAIChatClient(options.Chat.Model.Name, azureOpenAiClient, ServiceIds.CHAT_SERVICE_ID)
+            .AddAzureOpenAIChatCompletion(options.Chat.Model.Name, azureOpenAiClient, ServiceIds.CHAT_SERVICE_ID);
 
         services
             .AddChatServices<AzureOpenAIPromptExecutionSettings>(options);
@@ -110,9 +116,10 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var azureOpenAiClient = AzureOpenAiClientFactory.GetAzureOpenAiClient(options.Embedding.Model.Name, options.Endpoint, options.ApiKey, options.Embedding.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Embedding), options.Endpoint, options.Embedding.Timeout, out var httpClient)
-            .AddAzureOpenAIEmbeddingGenerator(options.Embedding.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.EMBEDDING_SERVICE_ID);
+            .AddAzureOpenAIEmbeddingGenerator(options.Embedding.Model.Name, azureOpenAiClient, ServiceIds.EMBEDDING_SERVICE_ID);
 
         services
             .AddEmbeddingServices(options);
@@ -132,10 +139,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var azureOpenAiClient = AzureOpenAiClientFactory.GetAzureOpenAiClient(options.Metadata.Model.Name, options.Endpoint, options.ApiKey, options.Metadata.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Metadata), options.Endpoint, options.Metadata.Timeout, out var httpClient)
-            .AddAzureOpenAIChatClient(options.Metadata.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.METADATA_SERVICE_ID, httpClient: httpClient)
-            .AddAzureOpenAIChatCompletion(options.Metadata.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.METADATA_SERVICE_ID, httpClient: httpClient);
+            .AddAzureOpenAIChatClient(options.Metadata.Model.Name, azureOpenAiClient, ServiceIds.METADATA_SERVICE_ID)
+            .AddAzureOpenAIChatCompletion(options.Metadata.Model.Name, azureOpenAiClient, ServiceIds.METADATA_SERVICE_ID);
 
         services
             .AddMetadataServices<AzureOpenAIPromptExecutionSettings>(options);
@@ -155,10 +163,11 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var azureOpenAiClient = AzureOpenAiClientFactory.GetAzureOpenAiClient(options.Summarization.Model.Name, options.Endpoint, options.ApiKey, options.Summarization.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Summarization), options.Endpoint, options.Summarization.Timeout, out var httpClient)
-            .AddAzureOpenAIChatClient(options.Summarization.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID, httpClient: httpClient)
-            .AddAzureOpenAIChatCompletion(options.Summarization.Model.Name, options.Endpoint, options.ApiKey, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID, httpClient: httpClient);
+            .AddAzureOpenAIChatClient(options.Summarization.Model.Name, azureOpenAiClient, ServiceIds.SUMMARIZATION_SERVICE_ID)
+            .AddAzureOpenAIChatCompletion(options.Summarization.Model.Name, azureOpenAiClient, ServiceIds.SUMMARIZATION_SERVICE_ID);
 
         services
             .AddSummarizationServices<AzureOpenAIPromptExecutionSettings>(options);
@@ -178,14 +187,38 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var azureOpenAiClient = AzureOpenAiClientFactory.GetAzureOpenAiClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, options.Agents.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
-            .AddAzureOpenAIChatClient(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID)
-            .AddAzureOpenAIChatCompletion(options.Agents.Model.Name, options.Endpoint, options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddAzureOpenAIChatClient(options.Agents.Model.Name, azureOpenAiClient, ServiceIds.AGENTS_SERVICE_ID)
+            .AddAzureOpenAIChatCompletion(options.Agents.Model.Name, azureOpenAiClient, ServiceIds.AGENTS_SERVICE_ID);
 
         services
             .AddAgentsServices<AzureOpenAIPromptExecutionSettings>(options);
 
+        return services;
+    }
+    private static IServiceCollection AddAzureOpenAiTranscriptionServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Transcription == null)
+        {
+            return services;
+        }
+
+        var azureOpenAiClient = AzureOpenAiClientFactory.GetAzureOpenAiClient(options.Transcription.Model.Name, options.Endpoint, options.ApiKey, options.Transcription.Timeout);
+
+        services
+            .AddAzureOpenAIAudioToText(options.Transcription.Model.Name, azureOpenAiClient, ServiceIds.TRANSCRIPTION_SERVICE_ID);
+
+        services
+            .AddTranscriptionServices(options);
+        
         return services;
     }
 }

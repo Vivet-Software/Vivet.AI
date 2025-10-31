@@ -12,12 +12,13 @@ namespace Vivet.AI.Hosting.HealthChecks;
 /// </summary>
 /// <param name="chatCompletionService">The <see cref="IChatCompletionService"/>.</param>
 /// <param name="promptExecutionSettings">The <see cref="PromptExecutionSettings"/>.</param>
-public class ChatModelHealthCheck(IChatCompletionService chatCompletionService, PromptExecutionSettings promptExecutionSettings) : IHealthCheck
+public class ChatModelHealthCheck(IChatCompletionService chatCompletionService, PromptExecutionSettings promptExecutionSettings) 
+    : IHealthCheck
 {
     private readonly IChatCompletionService chatCompletionService = chatCompletionService ?? throw new ArgumentNullException(nameof(chatCompletionService));
     private readonly PromptExecutionSettings promptExecutionSettings = promptExecutionSettings ?? throw new ArgumentNullException(nameof(promptExecutionSettings));
 
-    /// <inheritdoc cref="IHealthCheck"/>
+    /// <inheritdoc />
     public virtual async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
         if (context == null) 

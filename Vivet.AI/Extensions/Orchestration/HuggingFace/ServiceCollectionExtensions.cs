@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel.Connectors.HuggingFace;
 using System;
 using Vivet.AI.Config;
 using Vivet.AI.Extensions.Consts;
+using Vivet.AI.Extensions.Helpers;
 using Vivet.AI.Services.Extensions;
 
 namespace Vivet.AI.Extensions.Orchestration.HuggingFace;
@@ -73,8 +74,12 @@ public static class ServiceCollectionExtensions
             .AddHuggingFaceEmbeddingServices(options)
             .AddHuggingFaceMetadataServices(options)
             .AddHuggingFaceSummarizationServices(options)
-            .AddHuggingFaceAgentsServices(options);
+            .AddHuggingFaceAgentsServices(options)
+            .AddHuggingFaceVisionServices(options);
 
+        services
+            .AddNullTranscriptionServices(options);
+        
         return services;
     }
     private static IServiceCollection AddHuggingFaceChatServices(this IServiceCollection services, AiOptions options)
@@ -90,9 +95,10 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var httpClient = HttpClientFactory.GetHttpClient(options.Endpoint, options.Chat.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Chat), options.Endpoint, options.Chat.Timeout, out var httpClient)
-            .AddHuggingFaceChatCompletion(options.Chat.Model.Name, new Uri(options.Endpoint), options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.CHAT_SERVICE_ID);
+            .AddHuggingFaceChatCompletion(options.Chat.Model.Name, new Uri(options.Endpoint), options.ApiKey, ServiceIds.CHAT_SERVICE_ID, httpClient);
         
         services
             .AddChatServices<HuggingFacePromptExecutionSettings>(options);
@@ -112,9 +118,10 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var httpClient = HttpClientFactory.GetHttpClient(options.Endpoint, options.Embedding.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Embedding), options.Endpoint, options.Embedding.Timeout, out var httpClient)
-            .AddHuggingFaceEmbeddingGenerator(options.Embedding.Model.Name, new Uri(options.ApiKey), options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.EMBEDDING_SERVICE_ID);
+            .AddHuggingFaceEmbeddingGenerator(options.Embedding.Model.Name, new Uri(options.Endpoint), options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.EMBEDDING_SERVICE_ID);
 
         services
             .AddEmbeddingServices(options);
@@ -134,9 +141,10 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var httpClient = HttpClientFactory.GetHttpClient(options.Endpoint, options.Metadata.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Metadata), options.Endpoint, options.Metadata.Timeout, out var httpClient)
-            .AddHuggingFaceChatCompletion(options.Metadata.Model.Name, new Uri(options.Endpoint), options.ApiKey, serviceId: ServiceIds.METADATA_SERVICE_ID, httpClient: httpClient);
+            .AddHuggingFaceChatCompletion(options.Metadata.Model.Name, new Uri(options.Endpoint), options.ApiKey, ServiceIds.METADATA_SERVICE_ID, httpClient);
 
         services
             .AddMetadataServices<HuggingFacePromptExecutionSettings>(options);
@@ -156,9 +164,10 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var httpClient = HttpClientFactory.GetHttpClient(options.Endpoint, options.Summarization.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Summarization), options.Endpoint, options.Summarization.Timeout, out var httpClient)
-            .AddHuggingFaceChatCompletion(options.Summarization.Model.Name, new Uri(options.Endpoint), options.ApiKey, serviceId: ServiceIds.SUMMARIZATION_SERVICE_ID, httpClient: httpClient);
+            .AddHuggingFaceChatCompletion(options.Summarization.Model.Name, new Uri(options.Endpoint), options.ApiKey, ServiceIds.SUMMARIZATION_SERVICE_ID, httpClient);
 
         services
             .AddSummarizationServices<HuggingFacePromptExecutionSettings>(options);
@@ -178,12 +187,36 @@ public static class ServiceCollectionExtensions
             return services;
         }
 
+        var httpClient = HttpClientFactory.GetHttpClient(options.Endpoint, options.Agents.Timeout);
+
         services
-            .AddHttpClient(nameof(options.Agents), options.Endpoint, options.Agents.Timeout, out var httpClient)
-            .AddHuggingFaceChatCompletion(options.Agents.Model.Name, new Uri(options.Endpoint), options.ApiKey, httpClient: httpClient, serviceId: ServiceIds.AGENT_SERVICE_ID);
+            .AddHuggingFaceChatCompletion(options.Agents.Model.Name, new Uri(options.Endpoint), options.ApiKey, ServiceIds.AGENTS_SERVICE_ID, httpClient);
 
         services
             .AddAgentsServices<HuggingFacePromptExecutionSettings>(options);
+
+        return services;
+    }
+    private static IServiceCollection AddHuggingFaceVisionServices(this IServiceCollection services, AiOptions options)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (options.Vision == null)
+        {
+            return services;
+        }
+
+        var httpClient = HttpClientFactory.GetHttpClient(options.Endpoint, options.Vision.Timeout);
+
+        services
+            .AddHuggingFaceImageToText(options.Vision.Model.Name, new Uri(options.Endpoint), options.ApiKey, ServiceIds.VISION_SERVICE_ID, httpClient);
+
+        services
+            .AddVisionServices(options);
 
         return services;
     }

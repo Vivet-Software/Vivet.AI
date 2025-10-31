@@ -3,9 +3,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.AudioToText;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.ImageToText;
 using System;
-using System.Net.Http;
+using System.Collections.Generic;
 using Vivet.AI.Config;
 using Vivet.AI.Config.Enums;
 using Vivet.AI.Data.Definitions;
@@ -17,6 +19,7 @@ using Vivet.AI.Extensions.Embeddings.Pinecone;
 using Vivet.AI.Extensions.Embeddings.Postgres;
 using Vivet.AI.Extensions.Embeddings.Qdrant;
 using Vivet.AI.Extensions.Embeddings.Weaviate;
+using Vivet.AI.Hosting.HealthChecks.Extensions;
 using Vivet.AI.Models;
 using Vivet.AI.Models.Enums;
 using Vivet.AI.Services;
@@ -90,7 +93,7 @@ internal static class ServiceCollectionExtensions
 
         services
             .AddTextSearch(ServiceIds.CHAT_SERVICE_ID, options.Plugins.WebSearch)
-            .AddPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
+            .AddChatModelPromptExecutionSettings<T>(options.Chat.Model.Parameters, ServiceIds.CHAT_SERVICE_ID)
             .AddScoped<IChatService>(x =>
             {
                 var chatOptions = x
@@ -111,10 +114,13 @@ internal static class ServiceCollectionExtensions
                 return new ChatService(chatOptions, chatCompletionService, kernelBuilder, x, promptExecutionSettings, embeddingMemoryService);
             });
 
-        services
-            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_CHAT_SERVICE_ID)
-            .AddHealthChecks()
-            .AddChatModelCheck(ServiceIds.CHAT_SERVICE_ID, ServiceIds.HEALTH_CHAT_SERVICE_ID);
+        if (options.Chat.Model.UseHealthCheck)
+        {
+            services
+                .AddChatModelHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_CHAT_SERVICE_ID)
+                .AddHealthChecks()
+                .AddChatModelCheck(ServiceIds.CHAT_SERVICE_ID, ServiceIds.HEALTH_CHAT_SERVICE_ID);
+        }
 
         return services;
     }
@@ -136,7 +142,7 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Embedding);
 
         services
-            .AddScoped<IEmbeddingGenerator>(x => x
+            .AddSingleton<IEmbeddingGenerator>(x => x
                 .GetRequiredKeyedService<IEmbeddingGenerator<string, Embedding<float>>>(serviceKey: ServiceIds.EMBEDDING_SERVICE_ID));
 
         services
@@ -191,9 +197,12 @@ internal static class ServiceCollectionExtensions
                 });
         }
 
-        services
-            .AddHealthChecks()
-            .AddEmbeddingModelCheck(ServiceIds.EMBEDDING_SERVICE_ID);
+        if (options.Embedding.Model.UseHealthCheck)
+        {
+            services
+                .AddHealthChecks()
+                .AddEmbeddingModelCheck(ServiceIds.EMBEDDING_SERVICE_ID);
+        }
 
         return services;
     }
@@ -219,7 +228,7 @@ internal static class ServiceCollectionExtensions
             });
 
         services
-            .AddPromptExecutionSettings<T>(options.Metadata.Model.Parameters, ServiceIds.METADATA_SERVICE_ID)
+            .AddChatModelPromptExecutionSettings<T>(options.Metadata.Model.Parameters, ServiceIds.METADATA_SERVICE_ID)
             .AddScoped<IMetadataService>(x =>
             {
                 var metadataOptions = x
@@ -237,10 +246,13 @@ internal static class ServiceCollectionExtensions
                 return new MetadataService(metadataOptions, chatCompletionService, kernelBuilder, promptExecutionSettings);
             });
 
-        services
-            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_METADATA_SERVICE_ID)
-            .AddHealthChecks()
-            .AddChatModelCheck(ServiceIds.METADATA_SERVICE_ID, ServiceIds.HEALTH_METADATA_SERVICE_ID);
+        if (options.Metadata.Model.UseHealthCheck)
+        {
+            services
+                .AddChatModelHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_METADATA_SERVICE_ID)
+                .AddHealthChecks()
+                .AddChatModelCheck(ServiceIds.METADATA_SERVICE_ID, ServiceIds.HEALTH_METADATA_SERVICE_ID);
+        }
 
         return services;
     }
@@ -269,7 +281,7 @@ internal static class ServiceCollectionExtensions
             });
 
         services
-            .AddPromptExecutionSettings<T>(options.Summarization.Model.Parameters, ServiceIds.SUMMARIZATION_SERVICE_ID)
+            .AddChatModelPromptExecutionSettings<T>(options.Summarization.Model.Parameters, ServiceIds.SUMMARIZATION_SERVICE_ID)
             .AddScoped<ISummarizationService>(x =>
             {
                 var summarizationOptions = x
@@ -287,10 +299,13 @@ internal static class ServiceCollectionExtensions
                 return new SummarizationService(summarizationOptions, chatCompletionService, kernelBuilder, promptExecutionSettings);
             });
 
-        services
-            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID)
-            .AddHealthChecks()
-            .AddChatModelCheck(ServiceIds.SUMMARIZATION_SERVICE_ID, ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID);
+        if (options.Summarization.Model.UseHealthCheck)
+        {
+            services
+                .AddChatModelHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID)
+                .AddHealthChecks()
+                .AddChatModelCheck(ServiceIds.SUMMARIZATION_SERVICE_ID, ServiceIds.HEALTH_SUMMARIZATION_SERVICE_ID);
+        }
 
         return services;
     }
@@ -305,13 +320,13 @@ internal static class ServiceCollectionExtensions
             .AddSingleton(options.Agents);
 
         services
-            .AddKeyedSingleton(ServiceIds.AGENT_SERVICE_ID, (x, _) =>
+            .AddKeyedSingleton(ServiceIds.AGENTS_SERVICE_ID, (x, _) =>
             {
                 var pluginsOptions = x
                     .GetService<PluginsOptions>();
 
                 var chatCompletionService = x
-                    .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.AGENT_SERVICE_ID);
+                    .GetRequiredKeyedService<IChatCompletionService>(ServiceIds.AGENTS_SERVICE_ID);
 
                 var builder = Kernel.CreateBuilder();
 
@@ -326,18 +341,18 @@ internal static class ServiceCollectionExtensions
             });
 
         services
-            .AddTextSearch(ServiceIds.AGENT_SERVICE_ID, options.Plugins.WebSearch)
-            .AddPromptExecutionSettings<T>(options.Agents.Model.Parameters, ServiceIds.AGENT_SERVICE_ID)
+            .AddTextSearch(ServiceIds.AGENTS_SERVICE_ID, options.Plugins.WebSearch)
+            .AddChatModelPromptExecutionSettings<T>(options.Agents.Model.Parameters, ServiceIds.AGENTS_SERVICE_ID)
             .AddScoped<IAgentsService>(x =>
             {
                 var agentOptions = x
                     .GetRequiredService<AgentsOptions>();
 
                 var kernelBuilder = x
-                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.AGENT_SERVICE_ID);
+                    .GetRequiredKeyedService<IKernelBuilder>(ServiceIds.AGENTS_SERVICE_ID);
 
                 var promptExecutionSettings = x
-                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.AGENT_SERVICE_ID);
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.AGENTS_SERVICE_ID);
 
                 var embeddingMemoryService = x
                     .GetService<IEmbeddingMemoryService>();
@@ -345,73 +360,83 @@ internal static class ServiceCollectionExtensions
                 return new AgentsService(agentOptions, x, kernelBuilder, promptExecutionSettings, embeddingMemoryService);
             });
 
-        services
-            .AddHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_AGENT_SERVICE_ID)
-            .AddHealthChecks()
-            .AddChatModelCheck(ServiceIds.AGENT_SERVICE_ID, ServiceIds.HEALTH_AGENT_SERVICE_ID);
+        if (options.Agents.Model.UseHealthCheck)
+        {
+            services
+                .AddChatModelHealthCheckPromptExecutionSettings<T>(ServiceIds.HEALTH_AGENTS_SERVICE_ID)
+                .AddHealthChecks()
+                .AddChatModelCheck(ServiceIds.AGENTS_SERVICE_ID, ServiceIds.HEALTH_AGENTS_SERVICE_ID);
+        }
 
         return services;
     }
 
-    internal static IServiceCollection AddHttpClient(this IServiceCollection services, string name, string baseAddress, TimeSpan timeout, out HttpClient httpClient)
+    internal static IServiceCollection AddTranscriptionServices(this IServiceCollection services, AiOptions options)
     {
         if (services == null)
             throw new ArgumentNullException(nameof(services));
 
-        if (baseAddress == null) 
-            throw new ArgumentNullException(nameof(baseAddress));
-
-        if (name == null)
-            throw new ArgumentNullException(nameof(name));
+        services
+            .AddSingleton(options.Transcription);
 
         services
-            .AddHttpClient(name, x =>
+            .AddTranscriptionModelPromptExecutionSettings(options.Transcription, ServiceIds.TRANSCRIPTION_SERVICE_ID)
+            .AddScoped<ITranscriptionService>(x =>
             {
-                x.BaseAddress = new Uri(baseAddress);
-                x.Timeout = timeout;
+                var audioToTextService = x
+                    .GetRequiredKeyedService<IAudioToTextService>(ServiceIds.TRANSCRIPTION_SERVICE_ID);
+
+                var promptExecutionSettings = x
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.TRANSCRIPTION_SERVICE_ID);
+
+                return new TranscriptionService(audioToTextService, promptExecutionSettings);
             });
 
-        httpClient = services
-            .BuildServiceProvider()
-            .GetRequiredService<IHttpClientFactory>()
-            .CreateClient(name);
+        if (options.Transcription.Model.UseHealthCheck)
+        {
+            services
+                .AddTranscriptionModelHealthCheckPromptExecutionSettings(ServiceIds.HEALTH_TRANSCRIPTION_SERVICE_ID)
+                .AddHealthChecks()
+                .AddTranscriptionModelCheck(ServiceIds.TRANSCRIPTION_SERVICE_ID, ServiceIds.HEALTH_TRANSCRIPTION_SERVICE_ID);
+        }
 
         return services;
     }
 
-
-    private static IServiceCollection AddTextSearch(this IServiceCollection services, string serviceId, WebSearchPluginOptions webSearchPluginOptions = null)
+    internal static IServiceCollection AddVisionServices(this IServiceCollection services, AiOptions options)
     {
-        if (services == null) 
+        if (services == null)
             throw new ArgumentNullException(nameof(services));
-        
-        if (serviceId == null) 
-            throw new ArgumentNullException(nameof(serviceId));
 
-        if (webSearchPluginOptions == null)
+        services
+            .AddSingleton(options.Vision);
+
+        services
+            .AddImageExtractionModelPromptExecutionSettings(ServiceIds.VISION_SERVICE_ID)
+            .AddScoped<IVisionService>(x =>
+            {
+                var imageToTextService = x
+                    .GetRequiredKeyedService<IImageToTextService>(ServiceIds.VISION_SERVICE_ID);
+
+                var promptExecutionSettings = x
+                    .GetRequiredKeyedService<PromptExecutionSettings>(ServiceIds.VISION_SERVICE_ID);
+
+                return new VisionService(imageToTextService, promptExecutionSettings);
+            });
+
+        if (options.Vision.Model.UseHealthCheck)
         {
-            return services;
-        }
-
-        switch (webSearchPluginOptions.Provider)
-        {
-            case WebSearchProvider.Google:
-                services
-                    .AddGoogleTextSearch(webSearchPluginOptions.Id, webSearchPluginOptions.ApiKey, serviceId: serviceId);
-                break;
-
-            case WebSearchProvider.Bing:
-                services
-                    .AddBingTextSearch(webSearchPluginOptions.ApiKey, serviceId: serviceId);
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException(nameof(webSearchPluginOptions.Provider), webSearchPluginOptions.Provider, $"The provider '{webSearchPluginOptions.Provider}' is not suppoprted.");
+            services
+                .AddImageExtractionModelHealthCheckPromptExecutionSettings(ServiceIds.HEALTH_VISION_SERVICE_ID)
+                .AddHealthChecks()
+                .AddImageExtractionModelCheck(ServiceIds.VISION_SERVICE_ID, ServiceIds.HEALTH_VISION_SERVICE_ID);
         }
 
         return services;
     }
-    private static IServiceCollection AddPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
+
+
+    private static IServiceCollection AddChatModelPromptExecutionSettings<T>(this IServiceCollection services, ChatModelParameters chatModelParameters, string serviceId)
         where T : PromptExecutionSettings, new()
     {
         if (services == null) 
@@ -434,7 +459,7 @@ internal static class ServiceCollectionExtensions
 
         return services;
     }
-    private static IServiceCollection AddHealthCheckPromptExecutionSettings<T>(this IServiceCollection services, string serviceId)
+    private static IServiceCollection AddChatModelHealthCheckPromptExecutionSettings<T>(this IServiceCollection services, string serviceId)
         where T : PromptExecutionSettings, new()
     {
         if (services == null)
@@ -453,6 +478,134 @@ internal static class ServiceCollectionExtensions
 
                 return promptExecutionSettings;
             });
+
+        return services;
+    }
+    private static IServiceCollection AddTranscriptionModelPromptExecutionSettings(this IServiceCollection services, TranscriptionOptions options, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddKeyedTransient(serviceId, (_, _) =>
+            {
+                var timestampGranularities = new List<string>
+                {
+                    "segment"
+                };
+
+                if (options.IncludeWordGranularity)
+                {
+                    timestampGranularities
+                        .Add("word");
+                }
+
+                return new PromptExecutionSettings
+                {
+                    ExtensionData = new Dictionary<string, object>
+                    {
+                        ["response_format"] = "verbose_json",
+                        ["timestamp_granularities"] = timestampGranularities
+                    }
+                };
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddTranscriptionModelHealthCheckPromptExecutionSettings(this IServiceCollection services, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddKeyedSingleton(serviceId, (_, _) =>
+            {
+                var promptExecutionSettings = new PromptExecutionSettings();
+
+                promptExecutionSettings
+                    .Freeze();
+
+                return promptExecutionSettings;
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddImageExtractionModelPromptExecutionSettings(this IServiceCollection services, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddKeyedTransient(serviceId, (_, _) =>
+            {
+                var promptExecutionSettings = new PromptExecutionSettings();
+
+                return promptExecutionSettings;
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddImageExtractionModelHealthCheckPromptExecutionSettings(this IServiceCollection services, string serviceId)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        services
+            .AddKeyedSingleton(serviceId, (_, _) =>
+            {
+                var promptExecutionSettings = new PromptExecutionSettings();
+
+                promptExecutionSettings
+                    .Freeze();
+
+                return promptExecutionSettings;
+            });
+
+        return services;
+    }
+    private static IServiceCollection AddTextSearch(this IServiceCollection services, string serviceId, WebSearchPluginOptions webSearchPluginOptions = null)
+    {
+        if (services == null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (serviceId == null)
+            throw new ArgumentNullException(nameof(serviceId));
+
+        if (webSearchPluginOptions == null)
+        {
+            return services;
+        }
+
+        switch (webSearchPluginOptions.Provider)
+        {
+            case WebSearchProvider.Google:
+                services
+                    .AddGoogleTextSearch(webSearchPluginOptions.Id, webSearchPluginOptions.ApiKey, serviceId: serviceId);
+                break;
+
+            case WebSearchProvider.Bing:
+                services
+                    .AddBingTextSearch(webSearchPluginOptions.ApiKey, serviceId: serviceId);
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(webSearchPluginOptions.Provider), webSearchPluginOptions.Provider, $"The provider '{webSearchPluginOptions.Provider}' is not suppoprted.");
+        }
 
         return services;
     }

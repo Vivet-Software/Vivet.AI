@@ -29,23 +29,23 @@ public abstract class BaseBlob
 
         switch (this)
         {
+            case ImageBlobMetadata:
             case ImageBlob:
-            case Requests.Metadata.Models.ImageBlob:
             case var x when x.GetType().IsGenericType && x.GetType().GetGenericTypeDefinition() == typeof(ImageBlob<>):
                 return new ImageContent(blobData.DataUri);
 
+            case AudioBlobMetadata:
             case AudioBlob:
-            case Requests.Metadata.Models.AudioBlob:
             case var x when x.GetType().IsGenericType && x.GetType().GetGenericTypeDefinition() == typeof(AudioBlob<>):
                 return new AudioContent(blobData.DataUri);
 
+            case DocumentBlobMetadata:
             case DocumentBlob:
-            case Requests.Metadata.Models.DocumentBlob:
             case var x when x.GetType().IsGenericType && x.GetType().GetGenericTypeDefinition() == typeof(DocumentBlob<>):
                 return new BinaryContent(blobData.DataUri);
 
+            case VideoBlobMetadata:
             case VideoBlob:
-            case Requests.Metadata.Models.VideoBlob:
             case var x when x.GetType().IsGenericType && x.GetType().GetGenericTypeDefinition() == typeof(VideoBlob<>):
                 return new BinaryContent(blobData.DataUri);
 

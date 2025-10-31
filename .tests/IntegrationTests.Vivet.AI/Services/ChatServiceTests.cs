@@ -116,7 +116,7 @@ public class ChatServiceTests : BaseTests
                 Question = QUESTION,
                 Blobs = new List<BaseBlobMetadata>
                 {
-                    new ImageBlob
+                    new ImageBlobMetadata
                     {
                         Data = new BlobDataBase64
                         {
