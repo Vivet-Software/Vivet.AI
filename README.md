@@ -1672,6 +1672,21 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
         "EnableWebSearchPlugin": true
       }
     },
+    "Transcription": {
+      "Model": {
+        "Name": null,
+        "UseHealthCheck": true
+      },
+      "IncludeWordGranularity": false,
+      "Timeout": "00:01:00"
+    },
+    "Vision": {
+      "Model": {
+        "Name": null,
+        "UseHealthCheck": true
+      },
+      "Timeout": "00:01:00"
+    },
     "Plugins": {
       "Memory": {
       },
