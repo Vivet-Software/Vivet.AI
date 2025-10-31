@@ -1479,6 +1479,18 @@ For minimal configuration, you only need to provide **Endpoint**, **API Key**, a
       "Model": {
         "Name": "<your-chat-model>",
       }
+    },
+    "Transcription": {
+      "Model": {
+        "Name": null
+      }
+    },
+    "Vision": {
+      "Model": {
+        "Name": null
+      }
+    },
+    "Plugins": {
     }
   }
 }
