@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Vivet.AI.Config;
 using Vivet.AI.Data.Models;
 using Vivet.AI.Data.Stores;
+using Vivet.AI.Extensions;
 using Vivet.AI.Services.Extensions;
 using Vivet.AI.Services.Helpers;
 using Vivet.AI.Services.Helpers.Models;
